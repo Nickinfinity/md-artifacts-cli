@@ -33,8 +33,10 @@ over RPC or only through MCP is a defect.
 ## Branching and pull requests
 
 **Work happens on `feature/<slug>`. Pull requests target `develop`, never `main`.** `main` is the
-release branch and receives changes only by promoting `develop`. The repo is local for now (no
-remote yet); the rule applies from the first push.
+release branch and receives changes only by promoting `develop`. Remote:
+`github.com/Nickinfinity/md-artifacts-cli`. `main` and `develop` are protected (PR required, one
+code-owner approval, conversations resolved, no force-push or deletion); the sole owner's own PRs
+merge with `gh pr merge --admin`.
 
 ```
 feature/<slug>  ──PR──▶  develop  ──PR──▶  main
