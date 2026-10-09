@@ -192,8 +192,8 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Error codes | `mda-ops/src/error.rs` |
 | NDJSON framing | `mda/src/serve/` (shared with `mda-mcp` later) |
 
-The on-disk format is specified by `ARTIFACT_FILE_FORMAT.md` (copied from the extension into
-`docs/reference/` today; promoted to a tracked spec by the engine-port plan). **If the spec and the
+The on-disk format is specified by **`spec/ARTIFACT_FILE_FORMAT.md`** (ported from the extension;
+§9–§10, the YAML variables and directives, are *proposed* until the engine-port W1 refinement). **If the spec and the
 parser disagree, that is a bug to reconcile, never a judgement call.**
 
 ---
