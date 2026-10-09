@@ -1,0 +1,19 @@
+[package]
+name = "mda"
+description = "The MD Artifacts engine: CLI and JSON-RPC server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+mda-ops.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+log.workspace = true
+
+[dev-dependencies]
+toml.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true

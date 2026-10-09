@@ -1,0 +1,14 @@
+[package]
+name = "mda-vault"
+description = "All filesystem access for MD Artifacts: containment, bounded reads, writes"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+mda-core.workspace = true
+thiserror.workspace = true
+log.workspace = true
+
+[lints]
+workspace = true
