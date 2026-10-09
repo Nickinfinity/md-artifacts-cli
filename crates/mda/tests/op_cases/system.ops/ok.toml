@@ -1,0 +1,7 @@
+[[expect.ops]]
+name = "system.ops"
+summary = "List every registered operation"
+
+[[expect.ops]]
+name = "system.version"
+summary = "Engine and protocol versions"

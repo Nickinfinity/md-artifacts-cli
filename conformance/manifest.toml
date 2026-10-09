@@ -1,0 +1,10 @@
+# Conformance manifest: every case the harness (crates/mda-core/tests/conformance.rs) runs.
+# A file under parse/, serialize/ or render/ that no case lists fails the suite.
+#
+# [[cases]]
+# id = "unique-id"                 # unique
+# kind = "parse"                   # parse | serialize | render
+# input = "parse/x.md"             # path relative to conformance/
+# expected = "parse/x.expected.json"
+# values = "render/x.values.json"  # render only; path relative to conformance/
+# deviates_from_ts = "reason"      # optional: a recorded, deliberate difference from the TS extension

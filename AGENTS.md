@@ -3,9 +3,11 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-09): pre-bootstrap.** The repo holds a ratatui hello-world (`src/main.rs`) and no
-> commits. Everything below marked *(W0)* is created by the engine-port plan's Wave 0
-> (`docs/plans/engine-port/`). Until then, this file describes the **target**, not the tree.
+> **Status (2026-10-09): W0 landed.** The workspace exists: `mda-core` (empty), `mda-vault` (containment +
+> bounded reads), `mda-ops` (registry, `system.version`, `system.ops`), `mda` (CLI incl. `mda call`, `serve`,
+> debug mode), the conformance harness (0 cases) and the op-case harness. Sections marked *(W0)* describe
+> the tree; everything else (parse, write, render, vault config, variables, migration) is the **target**,
+> built by the engine-port plan's W1–W7 (`docs/plans/engine-port/`).
 
 ---
 
@@ -31,8 +33,10 @@ over RPC or only through MCP is a defect.
 ## Branching and pull requests
 
 **Work happens on `feature/<slug>`. Pull requests target `develop`, never `main`.** `main` is the
-release branch and receives changes only by promoting `develop`. The repo is local for now (no
-remote yet); the rule applies from the first push.
+release branch and receives changes only by promoting `develop`. Remote:
+`github.com/Nickinfinity/md-artifacts-cli`. `main` and `develop` are protected (PR required, one
+code-owner approval, conversations resolved, no force-push or deletion); the sole owner's own PRs
+merge with `gh pr merge --admin`.
 
 ```
 feature/<slug>  ──PR──▶  develop  ──PR──▶  main
@@ -87,6 +91,7 @@ md-artifacts-cli/
 │   ├── mda-vault/             # ALL filesystem access
 │   │   └── src/
 │   │       ├── lib.rs
+│   │       ├── error.rs       # VaultError (mapped to OpError codes in mda-ops)
 │   │       ├── contain.rs     # THE containment rule (canonicalize + component compare)
 │   │       ├── write.rs       # atomic write (same-dir temp → fsync → rename) + content hash check
 │   │       ├── read.rs        # bounded reads (size limit before reading)
@@ -96,14 +101,18 @@ md-artifacts-cli/
 │   │       └── migrate.rs     # plan/apply walkers (symlink-aware)
 │   ├── mda-ops/               # THE command list — one typed request → response per operation
 │   │   └── src/
-│   │       ├── lib.rs         # the op registry: name → handler, request/response types
+│   │       ├── lib.rs         # PROTOCOL constant, re-exports (Ctx, OpSpec, OpError, dispatch, Root)
+│   │       ├── registry.rs    # Ctx, OpSpec, dispatch, the typed adapter
+│   │       ├── ops_list.rs    # THE registration list: one line per op
 │   │       ├── error.rs       # OpError { code, params } — the ONLY error shape clients see
 │   │       └── <group>.rs     # vault · types · artifact · render · index · vars · varsets · migrate · validate
-│   ├── mda/                   # the binary: `mda`
+│   ├── mda/                   # lib + bin: `mda`
 │   │   └── src/
-│   │       ├── main.rs        # clap entry; dispatches to cli/ or serve/
-│   │       ├── cli/           # one subcommand module per ops group; human printer + --json
-│   │       └── serve/         # NDJSON JSON-RPC server: framing, handshake, dispatch via the op registry
+│   │       ├── main.rs        # 3 lines: `mda::cli::run()`
+│   │       ├── lib.rs         # pub mod cli · serve · debug
+│   │       ├── cli/           # clap derive, one enum per ops group, `mda call`; human printer + --json; exit codes
+│   │       ├── serve/         # NDJSON JSON-RPC server: framing, handshake, dispatch via the op registry
+│   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
@@ -151,7 +160,8 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
-  the type registry. A major mismatch is refused.
+  the type registry (the registry is added in W1; W0 answers `{ protocol, engine }`). A major
+  mismatch is refused.
 - Every write request carries the **content hash** the client last read; a mismatch returns
   `conflict` (optimistic concurrency), never an overwrite.
 
@@ -188,7 +198,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Path containment | `mda-vault/src/contain.rs` |
 | Atomic writes + content hash | `mda-vault/src/write.rs` |
 | Configuration files | `mda-vault/src/config.rs` |
-| The operation list | `mda-ops/src/lib.rs` (the registry) |
+| The operation list | `mda-ops/src/ops_list.rs` (registered through `registry.rs`) |
 | Error codes | `mda-ops/src/error.rs` |
 | NDJSON framing | `mda/src/serve/` (shared with `mda-mcp` later) |
 
@@ -218,13 +228,15 @@ its current services, its goldens and the real vault. `tests/conformance.rs` wal
 Every op is tested **once as data, three ways**. A case is a file,
 `crates/mda/tests/op_cases/<op>/<case>.toml`: the request, the fixture vault, and either the expected
 response JSON (`expect`) or the expected error code (`expect_error`). One harness (`tests/op_cases.rs`)
-runs every case through `mda_ops::dispatch`, through `mda <cmd> --json` (exit code included), and
+runs every case through `mda_ops::dispatch`, through `mda call <op> '<json>' --json` (exit code included), and
 through a `serve` NDJSON session (asserting every stdout line is JSON).
 
 - **Coverage guard:** every registered op needs at least one `expect` case and one `expect_error`
   case, or the suite fails. A new op without cases cannot land.
 - **Human CLI output** (the non-`--json` form) is asserted per command in `tests/cli_human.rs`.
 - **Fixture vault:** `crates/mda/tests/fixtures/vault/` (with `.obsidian/`), tracked, extended per wave.
+- **Shared test helpers:** `crates/mda/tests/common/mod.rs` (spawn the binary, NDJSON session, the
+  every-stdout-line-is-JSON check), orchestrator-owned; test files import it with `mod common;`.
 - The case files double as the protocol's examples in `spec/PROTOCOL.md`.
 
 ## Debug mode *(W0)*
@@ -280,9 +292,11 @@ binary**, and they return only inside `mda-tui`.
 - Comments explain **why**. Deliberate simplifications carry `// ponytail: <ceiling> — <upgrade path>`.
 - Newtypes for validated values (`VaultRoot`, `RelPath`, `VarName`); enums over strings; `TryFrom` at
   the boundary. A value past the boundary is already valid.
-- One `thiserror` enum per crate boundary; `anyhow` only in `mda/src/main.rs`.
+- One `thiserror` enum per crate boundary; no `anyhow` (`main.rs` is three lines calling `mda::cli::run()`).
 - Workspace lints (root `Cargo.toml`): `unsafe_code = "forbid"`; clippy `unwrap_used`, `expect_used`,
-  `panic`, `print_stdout`, `dbg_macro` denied; tests opt out locally with a reason.
+  `panic`, `print_stdout`, `dbg_macro` denied; `indexing_slicing`, `cognitive_complexity` warn (deny under
+  the gate's `-D warnings`). Tests are exempted by `clippy.toml` (`allow-{unwrap,expect,panic,indexing-slicing}-in-tests`);
+  a non-test helper under `tests/` opts out at file level with a reason.
 
 ---
 
