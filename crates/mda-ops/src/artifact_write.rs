@@ -311,10 +311,7 @@ pub fn patch(ctx: &Ctx, req: PatchRequest) -> Result<WriteResponse, OpError> {
         _ => None,
     };
     let bytes = read_checked(root, &req.path, &req.expected_hash)?;
-    // Patching must not rewrite bytes outside the edit: refuse what `decode` would alter.
-    if std::str::from_utf8(&bytes).is_err() {
-        return Err(not_serializable(Refusal::NotUtf8));
-    }
+    // Lossy like `update` and Obsidian's own save: invalid UTF-8 becomes U+FFFD (decision #35).
     let content = decode(&bytes);
     let added = match &edit {
         PatchEdit::Title { value } | PatchEdit::Description { value } => value.len(),

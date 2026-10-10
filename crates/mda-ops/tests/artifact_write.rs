@@ -281,13 +281,13 @@ fn bom_survives_a_patch() {
 }
 
 #[test]
-fn invalid_utf8_is_refused_untouched() {
+fn invalid_utf8_is_rewritten_lossily_like_update() {
+    // Same as `update` and Obsidian's own save: invalid bytes become U+FFFD (decision #35).
     let v = vault("badutf");
     let mut raw = BODY.as_bytes().to_vec();
     raw.extend_from_slice(&[0xFF, 0xFE]);
     fs::write(v.dir.join("Templates/a.md"), &raw).unwrap();
-    let e = pat(&v, "Templates/a.md", mda_vault::content_hash(&raw)).unwrap_err();
-    assert_eq!(e.code, "artifact.not_serializable");
-    assert_eq!(e.params["reason"], "not_utf8");
-    assert_eq!(fs::read(v.dir.join("Templates/a.md")).unwrap(), raw);
+    pat(&v, "Templates/a.md", mda_vault::content_hash(&raw)).unwrap();
+    let want = format!("{}\u{fffd}\u{fffd}", BODY.replace("title: T", "title: X"));
+    assert_eq!(v.get("Templates/a.md"), want);
 }

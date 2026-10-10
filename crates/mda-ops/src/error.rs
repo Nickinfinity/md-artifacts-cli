@@ -74,7 +74,7 @@ pub const ARTIFACT_UNREPRESENTABLE: &str = "artifact.unrepresentable";
 /// No block with the given index and heading. Param `block` (index, or `""`).
 pub const ARTIFACT_BLOCK_NOT_FOUND: &str = "artifact.block_not_found";
 /// The engine will not rewrite this file. Param `reason` (`flagged` | `index` | `variables` |
-/// `no_frontmatter` | `no_fence` | `not_utf8`).
+/// `no_frontmatter` | `no_fence`).
 pub const ARTIFACT_NOT_SERIALIZABLE: &str = "artifact.not_serializable";
 
 /// Every code, for exhaustive checks (English table, exit codes, op cases).

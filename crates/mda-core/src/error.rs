@@ -255,9 +255,6 @@ pub enum Refusal {
     Variables,
     NoFrontmatter,
     NoFence,
-    /// The file is not valid UTF-8: a byte-surgical patch would rewrite the bytes the lossy
-    /// decode replaced, outside the edit.
-    NotUtf8,
 }
 
 impl Refusal {
@@ -269,7 +266,6 @@ impl Refusal {
             Self::Variables => "variables",
             Self::NoFrontmatter => "no_frontmatter",
             Self::NoFence => "no_fence",
-            Self::NotUtf8 => "not_utf8",
         }
     }
 }
