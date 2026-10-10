@@ -1,0 +1,23 @@
+{
+  "artifactType": "Snippet",
+  "title": "Quoted Default Snippet",
+  "description": "Tests verbatim default preservation with quoted strings.",
+  "tags": [
+    "ui",
+    "state"
+  ],
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "javascript",
+      "code": "element.className = <VK-x>;",
+      "vars": [
+        {
+          "name": "VK-x",
+          "value": "\"active\""
+        }
+      ]
+    }
+  ]
+}

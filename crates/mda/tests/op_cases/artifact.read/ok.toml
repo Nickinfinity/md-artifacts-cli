@@ -7,6 +7,7 @@ relativePath = "hello.md"
 code = "echo <VK-greeting> <VK-name>"
 vars = [{ name = "VK-greeting", defaultValue = "marker-7f3a" }]
 blocks = []
+hash = "87617fe6a519830e7978fa204d79f1e02a1c1c25bcc115dac04a9046acfd08c5"
 [expect.frontmatter]
 artifactType = "Snippet"
 title = "Hello"

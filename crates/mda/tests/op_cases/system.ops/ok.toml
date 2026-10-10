@@ -1,10 +1,26 @@
 [[expect.ops]]
+name = "artifact.create"
+summary = "Create an artifact file from a model"
+
+[[expect.ops]]
+name = "artifact.delete"
+summary = "Delete an artifact file"
+
+[[expect.ops]]
+name = "artifact.patch"
+summary = "Edit a title, description or block code in place"
+
+[[expect.ops]]
 name = "artifact.read"
 summary = "Parse one artifact file"
 
 [[expect.ops]]
 name = "artifact.tree"
 summary = "List one level of a type directory"
+
+[[expect.ops]]
+name = "artifact.update"
+summary = "Rewrite an artifact file from a model"
 
 [[expect.ops]]
 name = "system.ops"

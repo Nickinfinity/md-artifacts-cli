@@ -7,8 +7,10 @@ mod contain;
 pub mod error;
 mod listing;
 mod read;
+mod write;
 
 pub use contain::{Root, contain};
 pub use error::VaultError;
 pub use listing::{DirListing, list_dir};
 pub use read::read_bounded;
+pub use write::{content_hash, create_new, delete, replace};

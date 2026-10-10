@@ -24,13 +24,15 @@ pub const VKS_CONTROL_CHAR: &str = "vks.control_char";
 pub const VKS_LIMIT: &str = "vks.limit";
 /// A `KEY=value` line inside a fence classified as YAML.
 pub const VKS_MIXED_DIALECT: &str = "vks.mixed_dialect";
+/// A value the emitter cannot write (spec §9.5). Params `var`, `reason` ([`EmitReason`]).
+pub const VKS_UNREPRESENTABLE: &str = "vks.unrepresentable";
 
 /// Every `vks.*` code, for the `ALL_CODES` contract pin in `mda-ops`.
 ///
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_core::error::VKS_CODES.len(), 10);
+/// assert_eq!(mda_core::error::VKS_CODES.len(), 11);
 /// ```
 pub const VKS_CODES: &[&str] = &[
     VKS_SYNTAX,
@@ -43,6 +45,7 @@ pub const VKS_CODES: &[&str] = &[
     VKS_CONTROL_CHAR,
     VKS_LIMIT,
     VKS_MIXED_DIALECT,
+    VKS_UNREPRESENTABLE,
 ];
 
 /// The `rule` vocabulary of `vks.syntax`.
@@ -185,4 +188,103 @@ impl VarsError {
         self.params.insert(key.to_owned(), value.into());
         self
     }
+}
+
+/// The `reason` vocabulary of `vks.unrepresentable` (spec §9.5).
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::error::EmitReason;
+/// assert_eq!(EmitReason::TrailingNewlines.as_str(), "trailing_newlines");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EmitReason {
+    Backticks,
+    TrailingNewlines,
+    EmptyRecord,
+}
+
+impl EmitReason {
+    /// The exact spec §9.5 spelling.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Backticks => "backticks",
+            Self::TrailingNewlines => "trailing_newlines",
+            Self::EmptyRecord => "empty_record",
+        }
+    }
+}
+
+/// The `reason` vocabulary of `artifact.unrepresentable`.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::error::FieldReason;
+/// assert_eq!(FieldReason::RoundTrip.as_str(), "round_trip");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FieldReason {
+    RoundTrip,
+    MultiBlock,
+}
+
+impl FieldReason {
+    /// The protocol spelling.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::RoundTrip => "round_trip",
+            Self::MultiBlock => "multi_block",
+        }
+    }
+}
+
+/// The `reason` vocabulary of `artifact.not_serializable`: why the engine will not rewrite a file.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::error::Refusal;
+/// assert_eq!(Refusal::NoFrontmatter.as_str(), "no_frontmatter");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Refusal {
+    Flagged,
+    Index,
+    Variables,
+    NoFrontmatter,
+    NoFence,
+    /// The file is not valid UTF-8: a byte-surgical patch would rewrite the bytes the lossy
+    /// decode replaced, outside the edit.
+    NotUtf8,
+}
+
+impl Refusal {
+    /// The protocol spelling.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Flagged => "flagged",
+            Self::Index => "index",
+            Self::Variables => "variables",
+            Self::NoFrontmatter => "no_frontmatter",
+            Self::NoFence => "no_fence",
+            Self::NotUtf8 => "not_utf8",
+        }
+    }
+}
+
+/// A value the emitter refused: the top-level var it belongs to and why.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::error::{EmitReason, Unrepresentable};
+/// let u = Unrepresentable { var: "VK-a".into(), reason: EmitReason::Backticks };
+/// assert_eq!(u.reason.as_str(), "backticks");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Unrepresentable {
+    pub var: String,
+    pub reason: EmitReason,
 }

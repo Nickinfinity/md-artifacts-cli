@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/edit.md", expectedHash = "7ffb3461fc1962b281b676a111cfdeac6f9b332c5d05fb68bb5536710e3bd48c", edit = { field = "description", value = "A desc" } }
+expect = { path = "Templates/edit.md", hash = "c0b9361062b7585d283b2318f0caa490ada7db859ea5dca96d4f1dd317fd56bd" }
+expect_files = { "Templates/edit.md" = "---\nartifactType: Template\ntitle: Edit me\ndescription: A desc\nlanguage: ts\n---\n\n```ts\nexport const <VK-name> = 1;\n```\n\nvars:\n```vks\nVK-name=widget\n```\n" }

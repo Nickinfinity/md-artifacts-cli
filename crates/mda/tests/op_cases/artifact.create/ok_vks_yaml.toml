@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/vk.md", model = { artifactType = "Template", title = "Vk", blocks = [{ code = "x <VK-name> <VK-opts>", vars = [{ name = "VK-name", value = "widget" }, { name = "VK-opts", value = { a = "1", b = "two words" } }] }] } }
+expect = { path = "Templates/vk.md", hash = "d9f04465423621520183765d8b94dc5c14bf1b396eb7d7e2c2f6315f4e1b6ee7" }
+expect_files = { "Templates/vk.md" = "---\nartifactType: Template\ntitle: Vk\n---\n\n```\nx <VK-name> <VK-opts>\n```\n\nvars:\n```vks\nVK-name: widget\nVK-opts:\n  a: '1'\n  b: two words\n```\n" }

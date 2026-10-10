@@ -1,0 +1,26 @@
+{
+  "artifactType": "Command",
+  "title": "Deploy Command",
+  "description": "Deploy to a named environment and region.",
+  "tags": [
+    "deploy"
+  ],
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "",
+      "code": "./deploy.sh <VK-env> <VK-region>",
+      "vars": [
+        {
+          "name": "VK-env",
+          "value": "staging"
+        },
+        {
+          "name": "VK-region",
+          "value": "us-east-1"
+        }
+      ]
+    }
+  ]
+}

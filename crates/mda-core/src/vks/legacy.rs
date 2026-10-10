@@ -5,11 +5,16 @@ use crate::error::{VKS_CONTROL_CHAR, VarsError};
 use crate::model::ParsedVar;
 use crate::parse::text::{js_lines, js_trim};
 
+/// C0 control (TAB excepted) or DEL: the one control rule, shared by the readers and the emitter.
+pub(crate) fn is_control(c: char) -> bool {
+    (c < ' ' && c != '\t') || c == '\u{7f}'
+}
+
 /// 1-based line of the first C0 control (TAB excepted) or DEL, after CRLF splitting so a `\r\n`
 /// is never flagged. Shared with the YAML reader so both dialects agree on the rule.
 pub(crate) fn control_line(body: &str) -> Option<usize> {
     js_lines(body)
-        .position(|l| l.chars().any(|c| (c < ' ' && c != '\t') || c == '\u{7f}'))
+        .position(|l| l.chars().any(is_control))
         .map(|i| i + 1)
 }
 

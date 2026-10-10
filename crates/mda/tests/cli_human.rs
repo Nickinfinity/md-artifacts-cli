@@ -2,7 +2,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)] // reason: tests
 
 mod common;
-use common::run;
+use common::{copy_tree, run};
 
 const VAULT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/vault");
 
@@ -80,4 +80,60 @@ fn vault_text_never_reaches_stdout_with_escape() {
         assert!(!out.stdout.contains(&0x1b), "{:?}", out.stdout);
         assert!(!out.stdout.is_empty());
     }
+}
+
+fn temp_vault(name: &str) -> std::path::PathBuf {
+    let d = std::env::temp_dir().join(format!("mda-hw-{}-{name}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    copy_tree(std::path::Path::new(VAULT), &d);
+    d
+}
+
+const MODEL: &str = r#"{"artifactType":"Template","title":"N","blocks":[{"language":"ts","code":"export const x = 1;"}]}"#;
+
+#[test]
+fn new_prints_wrote_path_and_hash() {
+    let d = temp_vault("new");
+    let v = d.to_str().unwrap();
+    let m = d.join("m.json");
+    std::fs::write(&m, MODEL).unwrap();
+    let out = run(
+        &[
+            "--vault",
+            v,
+            "artifact",
+            "new",
+            "Templates/n.md",
+            "--model",
+            m.to_str().unwrap(),
+        ],
+        b"",
+    );
+    assert_eq!(out.status.code(), Some(0), "{:?}", out.stderr);
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(text.starts_with("wrote Templates/n.md  "), "{text}");
+    std::fs::remove_dir_all(d).unwrap();
+}
+
+// A path with ESC reaches stdout only through the printer.
+#[test]
+fn new_with_escape_in_path_prints_no_raw_escape() {
+    let d = temp_vault("esc");
+    let v = d.to_str().unwrap();
+    let out = run(
+        &[
+            "--vault",
+            v,
+            "artifact",
+            "new",
+            "Templates/e\x1bvil.md",
+            "--model",
+            "-",
+        ],
+        MODEL.as_bytes(),
+    );
+    assert_eq!(out.status.code(), Some(0), "{:?}", out.stderr);
+    assert!(!out.stdout.contains(&0x1b), "{:?}", out.stdout);
+    assert!(!out.stderr.contains(&0x1b), "{:?}", out.stderr);
+    std::fs::remove_dir_all(d).unwrap();
 }

@@ -2,6 +2,7 @@
 //! handler in `run_case`, not a change to the walker.
 #![allow(clippy::unwrap_used, clippy::expect_used)] // test file: a failing test is the point
 
+use mda_core::serialize::SerializeError;
 use serde::Deserialize;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -26,6 +27,9 @@ struct Case {
     #[allow(dead_code)] // recorded decision, read by humans and later kind handlers
     deviates_from_ts: Option<String>,
 }
+
+/// The engine's output limit (`MAX_ARTIFACT_BYTES`), the bound `artifact.create` passes.
+const MAX: usize = 1 << 20;
 
 /// Wave that implements each recognised kind; `None` = unknown kind.
 fn kind_wave(kind: &str) -> Option<&'static str> {
@@ -77,10 +81,36 @@ fn run_parse(dir: &Path, c: &Case) -> Result<(), String> {
     }
 }
 
+/// Model JSON -> `serialize` -> exact bytes. Compares bytes (not parse JSON): the serializer's own
+/// round-trip guard is the model-level comparator.
+fn run_serialize(dir: &Path, c: &Case) -> Result<(), String> {
+    let Some(exp) = &c.expected else {
+        return Err(format!("{}: serialize needs expected", c.id));
+    };
+    let io = |e: std::io::Error| format!("{}: {e}", c.id);
+    let model = std::fs::read_to_string(dir.join(&c.input)).map_err(io)?;
+    let model: mda_core::model::ArtifactModel =
+        serde_json::from_str(&model).map_err(|e| format!("{}: model: {e}", c.id))?;
+    let got = mda_core::serialize::serialize(&model, MAX)
+        .map_err(|e| format!("{}: refused {e:?}", c.id))?;
+    let want = std::fs::read_to_string(dir.join(exp)).map_err(io)?;
+    let (mut g, mut w) = (got.split('\n'), want.split('\n'));
+    for n in 1.. {
+        match (g.next(), w.next()) {
+            (None, None) => return Ok(()),
+            (a, b) if a == b => {}
+            (a, b) => return Err(format!("{}: line {n}: got {a:?} want {b:?}", c.id)),
+        }
+    }
+    Ok(())
+}
+
 /// The per-kind handler. Fails loudly until the wave lands; never skips.
 fn run_case(dir: &Path, c: &Case) -> Result<(), String> {
-    if c.kind == "parse" {
-        return run_parse(dir, c);
+    match c.kind.as_str() {
+        "parse" => return run_parse(dir, c),
+        "serialize" => return run_serialize(dir, c),
+        _ => {}
     }
     match kind_wave(&c.kind) {
         Some(w) => Err(format!(
@@ -191,13 +221,77 @@ fn unlisted_file_named() {
 }
 
 #[test]
-fn listed_serialize_case_not_implemented() {
+fn listed_render_case_not_implemented() {
     let d = tmp(
         "notimpl",
-        &case("c1", "serialize", "serialize/a.json"),
-        &["serialize/a.json"],
+        &case("c1", "render", "render/a.json"),
+        &["render/a.json"],
     );
-    assert!(err_of(&d).contains("c1: kind serialize not implemented until W2"));
+    assert!(err_of(&d).contains("c1: kind render not implemented until W3"));
+}
+
+const MODEL: &str = r#"{"artifactType":"Snippet","title":"Hi","blocks":[{"code":"x"}]}"#;
+const MODEL_MD: &str = "---\nartifactType: Snippet\ntitle: Hi\n---\n\n```\nx\n```\n";
+
+fn ser_case(model: &str, md: &str, name: &str) -> PathBuf {
+    let m = format!(
+        "{}expected = \"serialize/a.md\"\n",
+        case("s1", "serialize", "serialize/a.model.json")
+    );
+    tmp_with(
+        name,
+        &m,
+        &[
+            ("serialize/a.model.json", model.as_bytes()),
+            ("serialize/a.md", md.as_bytes()),
+        ],
+    )
+}
+
+#[test]
+fn serialize_case_matches() {
+    let d = ser_case(MODEL, MODEL_MD, "sok");
+    assert_eq!(check(&d), Ok(()));
+    std::fs::remove_dir_all(&d).unwrap();
+}
+
+#[test]
+fn serialize_diff_names_id_and_line() {
+    let d = ser_case(
+        MODEL,
+        "---\nartifactType: Snippet\ntitle: Wrong\n---\n\n```\nx\n```\n",
+        "sdiff",
+    );
+    let e = err_of(&d);
+    assert!(e.contains("s1: line 3: got") && e.contains("Wrong"), "{e}");
+}
+
+#[test]
+fn serialize_unknown_model_field_names_id() {
+    let d = ser_case(r#"{"artifactType":"Snippet","bogus":1}"#, MODEL_MD, "sunk");
+    let e = err_of(&d);
+    assert!(e.contains("s1") && e.contains("bogus"), "{e}");
+}
+
+#[test]
+fn serialize_refusal_names_id() {
+    let d = ser_case(
+        r#"{"artifactType":"Template","blocks":[{},{}]}"#,
+        MODEL_MD,
+        "sref",
+    );
+    assert!(err_of(&d).contains("s1: refused"));
+}
+
+#[test]
+fn serialize_case_without_expected_names_id() {
+    let m = case("s1", "serialize", "serialize/a.model.json");
+    let d = tmp_with(
+        "snoexp",
+        &m,
+        &[("serialize/a.model.json", MODEL.as_bytes())],
+    );
+    assert!(err_of(&d).contains("s1: serialize needs expected"));
 }
 
 const MD: &[u8] = b"---\ntitle: Hi\n---\n";
@@ -289,4 +383,54 @@ fn typo_field_is_rejected() {
 fn real_manifest_ok() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance");
     assert_eq!(check(&dir), Ok(()));
+}
+
+/// Parse cases the serializer refuses by design (B-RISK 3): id -> reason. Anything else refused fails.
+const ROUND_TRIP_REFUSALS: &[(&str, &str, &str)] = &[(
+    "q-legacy-dup-appended-twice",
+    "vks.duplicate_key",
+    "legacy duplicate VK key: YAML mapping cannot carry it (vks.duplicate_key)",
+)];
+
+/// D-9: every clean `parse` case re-serializes through the guard (`Ok` is the assertion).
+#[test]
+fn parse_cases_round_trip() {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance");
+    let m: Manifest =
+        toml::from_str(&std::fs::read_to_string(dir.join("manifest.toml")).unwrap()).unwrap();
+    let (mut bad, mut seen) = (Vec::new(), Vec::new());
+    for c in m.cases.iter().filter(|c| c.kind == "parse") {
+        let content = mda_core::parse::decode(&std::fs::read(dir.join(&c.input)).unwrap());
+        let p = mda_core::parse::parse_from_content(&content, c.path.as_deref().unwrap());
+        if p.vars_error.is_some()
+            || p.blocks.iter().any(|b| b.vars_error.is_some())
+            || p.frontmatter.index == Some(true)
+            || mda_core::parse::is_flagged(&content)
+        {
+            continue;
+        }
+        let model = mda_core::serialize::from_parsed(&p);
+        if let Err(e) = mda_core::serialize::serialize(&model, MAX) {
+            seen.push(c.id.as_str());
+            let code = match &e {
+                SerializeError::Vars(v) => v.code,
+                SerializeError::Field { .. } => "artifact.unrepresentable",
+                SerializeError::Vks(_) => "vks.unrepresentable",
+                SerializeError::TooLarge { .. } => "file.too_large",
+            };
+            if !ROUND_TRIP_REFUSALS
+                .iter()
+                .any(|(id, k, _)| *id == c.id && *k == code)
+            {
+                bad.push(format!("{}: refused {e:?}", c.id));
+            }
+        }
+    }
+    for (id, _, _) in ROUND_TRIP_REFUSALS {
+        if !seen.contains(id) {
+            bad.push(format!("{id}: listed but not refused (stale entry)"));
+        }
+    }
+    eprintln!("round-trip refusals: {seen:#?}");
+    assert!(bad.is_empty(), "{}", bad.join("\n"));
 }

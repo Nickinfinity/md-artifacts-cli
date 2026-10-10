@@ -6,7 +6,7 @@ use mda_vault::{Root, VaultError};
 
 pub use mda_core::error::{
     VKS_BAD_KEY, VKS_CONTROL_CHAR, VKS_DUPLICATE_KEY, VKS_INDENT, VKS_INLINE_COMMENT, VKS_LIMIT,
-    VKS_MIXED_DIALECT, VKS_MIXED_LIST, VKS_SYNTAX, VKS_UNSUPPORTED,
+    VKS_MIXED_DIALECT, VKS_MIXED_LIST, VKS_SYNTAX, VKS_UNREPRESENTABLE, VKS_UNSUPPORTED,
 };
 
 /// The only error shape clients see: a stable code plus string parameters, never prose.
@@ -63,6 +63,20 @@ pub const VAULT_NOT_SELECTED: &str = "vault.not_selected";
 /// Not an artifact path: not `.md`, or not under a type directory. Param `path`.
 pub const ARTIFACT_BAD_PATH: &str = "artifact.bad_path";
 
+/// The file's content hash differs from the one the client sent. Params `path`, `expected`, `actual`.
+pub const FILE_CONFLICT: &str = "file.conflict";
+/// A create found a file already at the path. Param `path`.
+pub const FILE_EXISTS: &str = "file.exists";
+/// The file carries a `varsError`; create/update will not write over it (D-6, W-6). Param `path`.
+pub const ARTIFACT_VARS_INVALID: &str = "artifact.vars_invalid";
+/// The model cannot be written in the file format. Params `field`, `reason` (`round_trip` | `multi_block`).
+pub const ARTIFACT_UNREPRESENTABLE: &str = "artifact.unrepresentable";
+/// No block with the given index and heading. Param `block` (index, or `""`).
+pub const ARTIFACT_BLOCK_NOT_FOUND: &str = "artifact.block_not_found";
+/// The engine will not rewrite this file. Param `reason` (`flagged` | `index` | `variables` |
+/// `no_frontmatter` | `no_fence` | `not_utf8`).
+pub const ARTIFACT_NOT_SERIALIZABLE: &str = "artifact.not_serializable";
+
 /// Every code, for exhaustive checks (English table, exit codes, op cases).
 pub const ALL_CODES: &[&str] = &[
     OP_UNKNOWN,
@@ -86,6 +100,13 @@ pub const ALL_CODES: &[&str] = &[
     VKS_CONTROL_CHAR,
     VKS_LIMIT,
     VKS_MIXED_DIALECT,
+    VKS_UNREPRESENTABLE,
+    FILE_CONFLICT,
+    FILE_EXISTS,
+    ARTIFACT_VARS_INVALID,
+    ARTIFACT_UNREPRESENTABLE,
+    ARTIFACT_BLOCK_NOT_FOUND,
+    ARTIFACT_NOT_SERIALIZABLE,
 ];
 
 /// Map a vault error from an op that holds `root`: every `path` param becomes vault-relative POSIX,
@@ -106,6 +127,8 @@ pub fn vault_error(mut e: VaultError, root: &Root) -> OpError {
     | VaultError::NotFound { path }
     | VaultError::TooLarge { path, .. }
     | VaultError::NotRegular { path }
+    | VaultError::Conflict { path, .. }
+    | VaultError::Exists { path }
     | VaultError::Io { path, .. }) = &mut e;
     if let Ok(rel) = path.strip_prefix(root.path()) {
         let posix: Vec<_> = rel
@@ -135,6 +158,17 @@ impl From<VaultError> for OpError {
                 .with("max", max.to_string()),
             VaultError::NotRegular { path } => {
                 Self::new(FILE_NOT_REGULAR).with("path", path.display().to_string())
+            }
+            VaultError::Conflict {
+                path,
+                expected,
+                actual,
+            } => Self::new(FILE_CONFLICT)
+                .with("path", path.display().to_string())
+                .with("expected", expected)
+                .with("actual", actual),
+            VaultError::Exists { path } => {
+                Self::new(FILE_EXISTS).with("path", path.display().to_string())
             }
             VaultError::Io { path, kind } => Self::new(IO_FAILED)
                 .with("path", path.display().to_string())
@@ -166,6 +200,69 @@ mod tests {
         );
         assert_eq!(e.code, PATH_OUTSIDE_ROOT);
         assert_eq!(e.params["path"], "../etc/passwd");
+    }
+
+    #[test]
+    fn conflict_maps_relative_with_hashes() {
+        let root = Root::new(&std::env::temp_dir()).unwrap();
+        let e = vault_error(
+            VaultError::Conflict {
+                path: root.path().join("Templates/a.md"),
+                expected: "a".into(),
+                actual: "b".into(),
+            },
+            &root,
+        );
+        assert_eq!(
+            serde_json::to_value(&e).unwrap(),
+            serde_json::json!({"code": "file.conflict",
+                "params": {"path": "Templates/a.md", "expected": "a", "actual": "b"}})
+        );
+    }
+
+    #[test]
+    fn exists_maps_relative() {
+        let root = Root::new(&std::env::temp_dir()).unwrap();
+        let e = vault_error(
+            VaultError::Exists {
+                path: root.path().join("Templates/a.md"),
+            },
+            &root,
+        );
+        assert_eq!(
+            serde_json::to_value(&e).unwrap(),
+            serde_json::json!({"code": "file.exists", "params": {"path": "Templates/a.md"}})
+        );
+    }
+
+    #[test]
+    fn write_codes_exact_json() {
+        let cases = [
+            (ARTIFACT_VARS_INVALID, "path", "artifact.vars_invalid"),
+            (
+                ARTIFACT_BLOCK_NOT_FOUND,
+                "block",
+                "artifact.block_not_found",
+            ),
+            (
+                ARTIFACT_NOT_SERIALIZABLE,
+                "reason",
+                "artifact.not_serializable",
+            ),
+            (
+                ARTIFACT_UNREPRESENTABLE,
+                "field",
+                "artifact.unrepresentable",
+            ),
+            (VKS_UNREPRESENTABLE, "var", "vks.unrepresentable"),
+        ];
+        for (code, key, want) in cases {
+            let e = OpError::new(code).with(key, "x");
+            assert_eq!(
+                serde_json::to_value(&e).unwrap(),
+                serde_json::json!({"code": want, "params": {key: "x"}})
+            );
+        }
     }
 
     #[test]

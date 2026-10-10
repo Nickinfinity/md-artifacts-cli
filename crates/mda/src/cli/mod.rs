@@ -1,7 +1,7 @@
 //! The command line: one subcommand per op, human output by default, `--json` for the exact
 //! response. Stub landed by H0.0b; T0.4 implements it.
 
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -39,7 +39,7 @@ pub struct Cli {
 pub enum Command {
     /// Serve JSON-RPC 2.0 over stdio, one JSON object per line.
     Serve,
-    /// Read and list artifacts.
+    /// Read, list and write artifacts.
     #[command(subcommand)]
     Artifact(ArtifactCmd),
     /// Engine information.
@@ -71,6 +71,59 @@ pub enum ArtifactCmd {
         artifact_type: String,
         /// A sub-directory of the type directory.
         dir: Option<String>,
+    },
+    /// Create an artifact file from a model (JSON file, `-` = stdin); never overwrites.
+    #[command(name = "new", alias = "create")]
+    Create {
+        /// Vault-relative path, `<TypeDir>/<rel>.md`.
+        path: String,
+        /// The `ArtifactModel` JSON file, or `-` for stdin.
+        #[arg(long)]
+        model: String,
+    },
+    /// Rewrite an artifact file from a model, when its hash is `--hash`.
+    Update {
+        /// Vault-relative path.
+        path: String,
+        /// The `ArtifactModel` JSON file, or `-` for stdin.
+        #[arg(long)]
+        model: String,
+        /// The content hash last read (`artifact show --json`).
+        #[arg(long)]
+        hash: String,
+    },
+    /// Edit a title, description or one block's code in place, when the hash is `--hash`.
+    #[command(group(clap::ArgGroup::new("edit").required(true)))]
+    Patch {
+        /// Vault-relative path.
+        path: String,
+        /// The content hash last read.
+        #[arg(long)]
+        hash: String,
+        /// New title (`""` removes it).
+        #[arg(long, group = "edit")]
+        title: Option<String>,
+        /// New description (`""` removes it).
+        #[arg(long, group = "edit")]
+        description: Option<String>,
+        /// Block index (as `artifact show` lists them); needs `--heading` and `--code-file`.
+        #[arg(long, requires_all = ["heading", "code_file"])]
+        block: Option<usize>,
+        /// The heading of `--block`.
+        #[arg(long, requires = "block")]
+        heading: Option<String>,
+        /// The new code (file, or `-` for stdin); without `--block`, the single body.
+        #[arg(long = "code-file", group = "edit")]
+        code_file: Option<String>,
+    },
+    /// Delete an artifact file, when its hash is `--hash`.
+    #[command(name = "rm", alias = "delete")]
+    Delete {
+        /// Vault-relative path.
+        path: String,
+        /// The content hash last read.
+        #[arg(long)]
+        hash: String,
     },
 }
 
@@ -130,13 +183,7 @@ pub fn run() -> ExitCode {
 fn request(cmd: Command) -> Option<(String, Result<Value, OpError>)> {
     let (op, params) = match cmd {
         Command::Serve => return None,
-        Command::Artifact(ArtifactCmd::Read { path }) => {
-            ("artifact.read".to_owned(), Ok(json!({ "path": path })))
-        }
-        Command::Artifact(ArtifactCmd::Tree { artifact_type, dir }) => (
-            "artifact.tree".to_owned(),
-            Ok(json!({ "type": artifact_type, "dir": dir })),
-        ),
+        Command::Artifact(cmd) => return Some(artifact_request(cmd)),
         Command::System(SystemCmd::Version) => ("system.version".to_owned(), Ok(json!({}))),
         Command::System(SystemCmd::Ops) => ("system.ops".to_owned(), Ok(json!({}))),
         Command::Call { op, params } => {
@@ -150,6 +197,95 @@ fn request(cmd: Command) -> Option<(String, Result<Value, OpError>)> {
         }
     };
     Some((op, params))
+}
+
+/// `mda artifact …`: write inputs (model, code) are read here, client side; the op does the vault I/O.
+fn artifact_request(cmd: ArtifactCmd) -> (String, Result<Value, OpError>) {
+    let model = |m: &str| {
+        read_input(m).and_then(|t| {
+            serde_json::from_str::<Value>(&t).map_err(|e| bad_request(&e.to_string()))
+        })
+    };
+    match cmd {
+        ArtifactCmd::Create { path, model: m } => (
+            "artifact.create".to_owned(),
+            model(&m).map(|m| json!({ "path": path, "model": m })),
+        ),
+        ArtifactCmd::Update {
+            path,
+            model: m,
+            hash,
+        } => (
+            "artifact.update".to_owned(),
+            model(&m).map(|m| json!({ "path": path, "expectedHash": hash, "model": m })),
+        ),
+        ArtifactCmd::Delete { path, hash } => (
+            "artifact.delete".to_owned(),
+            Ok(json!({ "path": path, "expectedHash": hash })),
+        ),
+        ArtifactCmd::Patch {
+            path,
+            hash,
+            title,
+            description,
+            block,
+            heading,
+            code_file,
+        } => {
+            let edit = patch_edit(title, description, block, heading, code_file);
+            let p = edit.map(|e| json!({ "path": path, "expectedHash": hash, "edit": e }));
+            ("artifact.patch".to_owned(), p)
+        }
+        ArtifactCmd::Read { path } => ("artifact.read".to_owned(), Ok(json!({ "path": path }))),
+        ArtifactCmd::Tree { artifact_type, dir } => (
+            "artifact.tree".to_owned(),
+            Ok(json!({ "type": artifact_type, "dir": dir })),
+        ),
+    }
+}
+
+/// The `edit` object of an `artifact.patch` request (clap guarantees exactly one edit kind).
+fn patch_edit(
+    title: Option<String>,
+    description: Option<String>,
+    block: Option<usize>,
+    heading: Option<String>,
+    code_file: Option<String>,
+) -> Result<Value, OpError> {
+    if let Some(v) = title {
+        return Ok(json!({ "field": "title", "value": v }));
+    }
+    if let Some(v) = description {
+        return Ok(json!({ "field": "description", "value": v }));
+    }
+    let code = read_input(code_file.as_deref().unwrap_or("-"))?;
+    Ok(match (block, heading) {
+        (Some(b), Some(h)) => json!({ "field": "code", "block": b, "heading": h, "code": code }),
+        _ => json!({ "field": "code", "code": code }),
+    })
+}
+
+/// Client-side input (`-` = stdin, else a file), capped at the protocol frame size. Not vault I/O:
+/// no `--vault` containment applies to a file the user names on their own command line.
+fn read_input(p: &str) -> Result<String, OpError> {
+    // ponytail: `--model <FIFO>` blocks until a writer appears (the user's own argument); check
+    // metadata first if a client ever passes untrusted paths here.
+    let cap = serve::MAX_LINE_BYTES as u64;
+    let mut buf = Vec::new();
+    let res = if p == "-" {
+        std::io::stdin().lock().take(cap + 1).read_to_end(&mut buf)
+    } else {
+        std::fs::File::open(p).and_then(|f| f.take(cap + 1).read_to_end(&mut buf))
+    };
+    res.map_err(|e| bad_request(&format!("cannot read input: {}", e.kind())))?;
+    if buf.len() as u64 > cap {
+        return Err(bad_request("input too large"));
+    }
+    String::from_utf8(buf).map_err(|_| bad_request("input is not UTF-8"))
+}
+
+fn bad_request(reason: &str) -> OpError {
+    OpError::new(mda_ops::error::OP_BAD_REQUEST).with("reason", reason)
 }
 
 /// Write one block to stdout; a broken pipe is an I/O failure.

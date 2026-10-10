@@ -1,0 +1,50 @@
+{
+  "artifactType": "Variables",
+  "title": "Quoting",
+  "blocks": [
+    {
+      "vars": [
+        {
+          "name": "VK-n",
+          "value": "1"
+        },
+        {
+          "name": "VK-t",
+          "value": "True"
+        },
+        {
+          "name": "VK-s",
+          "value": " x"
+        },
+        {
+          "name": "VK-c",
+          "value": "a: b"
+        },
+        {
+          "name": "VK-q",
+          "value": "it's"
+        },
+        {
+          "name": "VK-h",
+          "value": "#x"
+        },
+        {
+          "name": "VK-e",
+          "value": ""
+        },
+        {
+          "name": "VK-l",
+          "value": []
+        },
+        {
+          "name": "VK-i",
+          "value": [
+            "-",
+            "---",
+            "ok"
+          ]
+        }
+      ]
+    }
+  ]
+}

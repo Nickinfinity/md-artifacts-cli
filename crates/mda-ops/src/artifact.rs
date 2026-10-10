@@ -1,11 +1,12 @@
-//! `artifact.read` and `artifact.tree`: parse one artifact file; list one level of a type directory.
+//! `artifact.read` and `artifact.tree`: parse one artifact file (with its content hash); list one
+//! level of a type directory.
 
 use std::path::Path;
 
 use mda_core::model::ParsedArtifact;
 use mda_core::parse::{decode, parse_from_content};
 use mda_core::registry::{ArtifactType, type_for_dir};
-use mda_vault::{Root, VaultError, list_dir, read_bounded};
+use mda_vault::{Root, VaultError, content_hash, list_dir, read_bounded};
 
 use crate::error::vault_error;
 use crate::{Ctx, OpError, error};
@@ -44,6 +45,25 @@ pub struct TreeRequest {
     pub artifact_type: ArtifactType,
     #[serde(default)]
     pub dir: Option<String>,
+}
+
+/// `artifact.read` response: the parsed file plus the SHA-256 `hash` of the exact bytes parsed —
+/// the hash a client sends back with its next write (W-9).
+///
+/// # Examples
+///
+/// ```
+/// let a = mda_core::parse::parse_from_content("", "Snippets/a.md");
+/// let r = mda_ops::artifact::ReadResponse { artifact: a, hash: "h".into() };
+/// let v = serde_json::to_value(&r).unwrap();
+/// assert_eq!(v["hash"], "h");
+/// assert_eq!(v["filePath"], "Snippets/a.md");
+/// ```
+#[derive(Debug, PartialEq, Eq, serde::Serialize)]
+pub struct ReadResponse {
+    #[serde(flatten)]
+    pub artifact: ParsedArtifact,
+    pub hash: String,
 }
 
 /// One level of a type directory: sub-directory names, then files.
@@ -98,7 +118,7 @@ pub struct TreeError {
 
 /// String-level path rule (reject, never sanitise): every `/` segment non-empty, not `.`/`..`,
 /// no `\\`, no NUL. Runs before any I/O; containment is re-checked by the vault on the real path.
-fn segments(p: &str) -> Result<Vec<&str>, ()> {
+pub(crate) fn segments(p: &str) -> Result<Vec<&str>, ()> {
     let segs: Vec<&str> = p.split('/').collect();
     let ok = segs
         .iter()
@@ -106,20 +126,33 @@ fn segments(p: &str) -> Result<Vec<&str>, ()> {
     if ok { Ok(segs) } else { Err(()) }
 }
 
-fn bad_path(p: &str) -> OpError {
+pub(crate) fn bad_path(p: &str) -> OpError {
     OpError::new(error::ARTIFACT_BAD_PATH).with("path", p)
 }
 
-fn root_of(ctx: &Ctx) -> Result<&Root, OpError> {
+pub(crate) fn root_of(ctx: &Ctx) -> Result<&Root, OpError> {
     ctx.root
         .as_ref()
         .ok_or_else(|| OpError::new(error::VAULT_NOT_SELECTED))
 }
 
-fn load(root: &Root, rel: &str) -> Result<ParsedArtifact, OpError> {
+/// The artifact path rule (before any I/O): `<TypeDir>/<rel>.md`, every segment valid. Returns the
+/// type of the directory the path is in.
+pub(crate) fn artifact_path(p: &str) -> Result<ArtifactType, OpError> {
+    let segs = segments(p).map_err(|()| bad_path(p))?;
+    match segs.first().and_then(|d| type_for_dir(d)) {
+        Some(t) if segs.len() >= 2 && p.ends_with(".md") => Ok(t),
+        _ => Err(bad_path(p)),
+    }
+}
+
+fn load(root: &Root, rel: &str) -> Result<ReadResponse, OpError> {
     let bytes =
         read_bounded(root, Path::new(rel), MAX_ARTIFACT_BYTES).map_err(|e| vault_error(e, root))?;
-    Ok(parse_from_content(&decode(&bytes), rel))
+    Ok(ReadResponse {
+        artifact: parse_from_content(&decode(&bytes), rel),
+        hash: content_hash(&bytes),
+    })
 }
 
 /// `artifact.read`: parse one artifact file.
@@ -131,13 +164,9 @@ fn load(root: &Root, rel: &str) -> Result<ParsedArtifact, OpError> {
 /// let req = artifact::ReadRequest { path: "Snippets/a.md".into() };
 /// assert_eq!(artifact::read(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
-pub fn read(ctx: &Ctx, req: ReadRequest) -> Result<ParsedArtifact, OpError> {
+pub fn read(ctx: &Ctx, req: ReadRequest) -> Result<ReadResponse, OpError> {
     let root = root_of(ctx)?;
-    let segs = segments(&req.path).map_err(|()| bad_path(&req.path))?;
-    let typed = segs.first().is_some_and(|d| type_for_dir(d).is_some());
-    if !typed || segs.len() < 2 || !req.path.ends_with(".md") {
-        return Err(bad_path(&req.path));
-    }
+    artifact_path(&req.path)?;
     load(root, &req.path)
 }
 
@@ -180,7 +209,7 @@ pub fn tree(ctx: &Ctx, req: TreeRequest) -> Result<TreeResponse, OpError> {
 fn tree_file(root: &Root, rel: &str, file: &str) -> TreeFile {
     let path = format!("{rel}/{file}");
     let name = file.strip_suffix(".md").unwrap_or(file).to_owned();
-    match load(root, &path) {
+    match load(root, &path).map(|r| r.artifact) {
         Ok(a) => TreeFile {
             path,
             name,

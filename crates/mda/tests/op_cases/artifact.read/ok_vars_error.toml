@@ -8,6 +8,7 @@ code = "echo <VK-a>"
 vars = []
 blocks = []
 varsError = { code = "vks.inline_comment", params = { line = "1" } }
+hash = "c79bb8dcb33946fe92b7c19be8dfea44d49d419224a6fc3bf63d0cc1a0c2f053"
 [expect.frontmatter]
 artifactType = "Snippet"
 title = "Bad vars"

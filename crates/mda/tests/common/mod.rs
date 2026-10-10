@@ -49,3 +49,19 @@ pub fn serve_session(args: &[&str], lines: &[&str]) -> Output {
     all.push("serve");
     run(&all, input.as_bytes())
 }
+
+/// Copy the directory tree `src` to `dst` (created): regular files and directories only, std only.
+/// Write op cases run each leg on a fresh copy so no leg sees another's writes (W-13).
+pub fn copy_tree(src: &std::path::Path, dst: &std::path::Path) {
+    std::fs::create_dir_all(dst).expect("create copy dir");
+    for e in std::fs::read_dir(src).expect("read fixture dir") {
+        let e = e.expect("dir entry");
+        let ty = e.file_type().expect("file type");
+        let to = dst.join(e.file_name());
+        if ty.is_dir() {
+            copy_tree(&e.path(), &to);
+        } else if ty.is_file() {
+            std::fs::copy(e.path(), &to).expect("copy fixture file");
+        }
+    }
+}

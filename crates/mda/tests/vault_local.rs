@@ -61,10 +61,14 @@ fn real_vault_matches_ts() {
             &["--vault", &vault, "artifact", "show", &c.path, "--json"],
             b"",
         );
-        let got = common::json_lines(&out.stdout)
+        let mut got = common::json_lines(&out.stdout)
             .into_iter()
             .next()
             .unwrap_or(Value::Null);
+        // W2 adds `hash` to the read response; the TS expectations predate it.
+        if let Some(o) = got.as_object_mut() {
+            o.remove("hash");
+        }
         let want: Value =
             serde_json::from_str(&std::fs::read_to_string(dir.join(&c.expected)).unwrap()).unwrap();
         if out.status.code() != Some(0) || got != want {

@@ -1,0 +1,19 @@
+{
+  "artifactType": "Variables",
+  "title": "Local Dev",
+  "description": "Dev machine settings",
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "",
+      "code": "",
+      "vars": [
+        {
+          "name": "VK-host",
+          "value": "localhost"
+        }
+      ]
+    }
+  ]
+}

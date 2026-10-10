@@ -1,6 +1,11 @@
 //! Op cases as data: every `op_cases/<op>/<case>.toml` runs through `dispatch`, `mda call --json`
 //! and a `serve` session. Adding a case needs no Rust. A coverage guard demands, per registered op,
 //! one `expect` and one `expect_error` case.
+//!
+//! Each leg runs on a **fresh copy** of the case's fixture vault, and `expect_files` (vault-relative
+//! path → exact bytes, or `false` for absent) is asserted on that copy after the leg: the sink of
+//! every write case (W-13). Hash literals in cases are `shasum -a 256` of fixture bytes; regenerate
+//! them when a fixture file changes.
 #![allow(
     clippy::panic,
     clippy::expect_used,
@@ -10,6 +15,7 @@
 
 mod common;
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -26,6 +32,16 @@ struct Case {
     vault: Option<String>,
     expect: Option<Value>,
     expect_error: Option<String>,
+    #[serde(default)]
+    expect_files: BTreeMap<String, FileExpect>,
+}
+
+/// One `expect_files` entry: the file's exact bytes, or `false` (the file must not exist).
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum FileExpect {
+    Bytes(String),
+    Absent(bool),
 }
 
 fn empty() -> Value {
@@ -56,6 +72,16 @@ fn case_files(dir: &Path) -> Vec<PathBuf> {
 fn load(path: &Path) -> Result<Case, String> {
     let text = fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
     let case: Case = toml::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))?;
+    if case
+        .expect_files
+        .values()
+        .any(|f| matches!(f, FileExpect::Absent(true)))
+    {
+        return Err(format!(
+            "{}: expect_files takes bytes or false",
+            path.display()
+        ));
+    }
     if case.expect.is_some() == case.expect_error.is_some() {
         return Err(format!(
             "{}: need exactly one of expect, expect_error",
@@ -72,8 +98,8 @@ struct Seen {
     exit: Option<i32>,
 }
 
-fn leg_dispatch(op: &str, params: &Value, vault: Option<&str>) -> Seen {
-    let ctx = Ctx::new(vault.map(|v| Root::new(&fixture(v)).unwrap()));
+fn leg_dispatch(op: &str, params: &Value, vault: Option<&Path>) -> Seen {
+    let ctx = Ctx::new(vault.map(|v| Root::new(v).unwrap()));
     match dispatch(&ctx, op, params.clone()) {
         Ok(body) => Seen {
             body,
@@ -89,13 +115,13 @@ fn leg_dispatch(op: &str, params: &Value, vault: Option<&str>) -> Seen {
 }
 
 /// `--vault <abs>` for a case with a fixture vault, nothing otherwise.
-fn vault_args(vault: Option<&str>) -> Vec<String> {
+fn vault_args(vault: Option<&Path>) -> Vec<String> {
     vault
-        .map(|v| vec!["--vault".to_owned(), fixture(v).display().to_string()])
+        .map(|v| vec!["--vault".to_owned(), v.display().to_string()])
         .unwrap_or_default()
 }
 
-fn leg_cli(op: &str, params: &Value, vault: Option<&str>) -> Seen {
+fn leg_cli(op: &str, params: &Value, vault: Option<&Path>) -> Seen {
     let mut args = vault_args(vault);
     args.extend([
         "call".to_owned(),
@@ -117,7 +143,7 @@ fn leg_cli(op: &str, params: &Value, vault: Option<&str>) -> Seen {
     }
 }
 
-fn leg_serve(op: &str, params: &Value, vault: Option<&str>) -> Seen {
+fn leg_serve(op: &str, params: &Value, vault: Option<&Path>) -> Seen {
     let init = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.0"}}"#;
     let req = json!({"jsonrpc":"2.0","id":2,"method":op,"params":params}).to_string();
     let args = vault_args(vault);
@@ -148,14 +174,21 @@ fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
         let code = ALL_CODES.iter().find(|a| **a == c);
         code.map_or(-1, |c| i32::from(mda::cli::exit_code(&OpError::new(c))))
     });
-    let vault = case.vault.as_deref();
-    let legs: [(&str, Seen); 3] = [
-        ("dispatch", leg_dispatch(op, &case.params, vault)),
-        ("cli", leg_cli(op, &case.params, vault)),
-        ("serve", leg_serve(op, &case.params, vault)),
-    ];
     let mut fails = Vec::new();
-    for (leg, seen) in legs {
+    for leg in ["dispatch", "cli", "serve"] {
+        let copy = case.vault.as_deref().map(|v| {
+            let d = std::env::temp_dir()
+                .join(format!("mda-oc-{}-{op}-{name}-{leg}", std::process::id()));
+            let _ = fs::remove_dir_all(&d);
+            common::copy_tree(&fixture(v), &d);
+            d
+        });
+        let vault = copy.as_deref();
+        let seen = match leg {
+            "dispatch" => leg_dispatch(op, &case.params, vault),
+            "cli" => leg_cli(op, &case.params, vault),
+            _ => leg_serve(op, &case.params, vault),
+        };
         let ok = match (&case.expect, &case.expect_error) {
             (Some(e), _) => !seen.is_err && seen.body == *e && seen.exit.is_none_or(|x| x == 0),
             (_, Some(c)) => {
@@ -170,6 +203,29 @@ fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
             fails.push(format!(
                 "{op}/{name} [{leg}]: got {} (exit {:?}), want {:?}{:?}",
                 seen.body, seen.exit, case.expect, case.expect_error
+            ));
+        }
+        fails.extend(check_files(op, name, leg, case, copy.as_deref()));
+        if let Some(d) = copy {
+            let _ = fs::remove_dir_all(d);
+        }
+    }
+    fails
+}
+
+/// The `expect_files` sink, asserted on the leg's own vault copy.
+fn check_files(op: &str, name: &str, leg: &str, case: &Case, vault: Option<&Path>) -> Vec<String> {
+    let mut fails = Vec::new();
+    for (rel, want) in &case.expect_files {
+        let got = vault.and_then(|v| fs::read(v.join(rel)).ok());
+        let ok = match want {
+            FileExpect::Bytes(b) => got.as_deref() == Some(b.as_bytes()),
+            FileExpect::Absent(_) => got.is_none(),
+        };
+        if !ok {
+            fails.push(format!(
+                "{op}/{name} [{leg}]: expect_files {rel}: got {:?}",
+                got.map(|g| String::from_utf8_lossy(&g).into_owned())
             ));
         }
     }
@@ -276,4 +332,22 @@ fn real_ops_are_covered() {
 fn all_real_cases_pass_all_legs() {
     let fails = run_dir(&real_dir());
     assert!(fails.is_empty(), "{}", fails.join("\n"));
+}
+
+#[test]
+fn expect_files_mismatch_fails_every_leg() {
+    let d = tmp("files");
+    put(
+        &d,
+        "artifact.read",
+        "files",
+        "vault = \"vault\"\nparams = { path = \"x\" }\nexpect_error = \"artifact.bad_path\"\n\
+         expect_files = { \"Snippets/hello.md\" = false }\n",
+    );
+    let fails = run_dir(&d);
+    for leg in ["dispatch", "cli", "serve"] {
+        let tag = format!("artifact.read/files [{leg}]: expect_files Snippets/hello.md");
+        assert!(fails.iter().any(|f| f.contains(&tag)), "{leg}: {fails:?}");
+    }
+    let _ = fs::remove_dir_all(&d);
 }

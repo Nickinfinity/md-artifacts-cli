@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/index.md", expectedHash = "353f54e3614de701885fa1a0cef5f8a4c0e2c6d85f7edd3527cc376499b19ce2", model = { artifactType = "Template" } }
+expect_error = "artifact.not_serializable"
+expect_files = { "Templates/index.md" = "---\nartifactType: Template\ntitle: Index\nindex: true\n---\n\n[[edit]]\n" }

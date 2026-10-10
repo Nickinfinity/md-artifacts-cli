@@ -573,6 +573,21 @@ containing three backticks (it would close the fence) and a string with two or m
 An empty list is one value: `[]` reads as an empty list of strings and compares equal to an empty list
 of records.
 
+**Pinned at engine-port W2 (2026-10-10, B-RISK 4 + Role A pass 2):**
+- *Numerals* are strings that parse as a floating-point number (`1`, `-2.5`, `1e3`, `inf`, `NaN`); *special
+  words* match ASCII case-insensitively (`True`, `NULL`). Both are single-quoted.
+- `|` / `|-` is used only when no non-empty line of the value is whitespace-only (the reader would turn it
+  into an empty line) and the value is not all newlines; otherwise the value is double-quoted with `\n`
+  escapes. So the rule order for a map value is: refusals → `""` → block (when it can carry the value) →
+  double-quoted (multi-line) → plain → single-quoted.
+- A **list item** is plain only if it is also not read as an item construct (`-`, `- …`, `<<…`, `%…`, `?`,
+  `---`, `...`, `|…`, `#…`); otherwise it is quoted.
+- An **empty record** (as a value or an item) is refused: `vks.unrepresentable{var, reason: empty_record}`.
+  `vks.unrepresentable` params are `{var, reason}`, reason `backticks` · `trailing_newlines` · `empty_record`.
+- Model-side checks (create/update, before emission) apply the §9.1 key grammar, §9.7 limits and the control
+  rule to client values; U+2028 and U+2029 are rejected as `vks.control_char` (line splitting treats them as
+  line breaks, so they cannot round-trip).
+
 ### 9.6 Legacy `KEY=value` bodies and the classifier (D-6)
 
 - **Dual-read is permanent.** Per fence, the **first significant line** (not blank, not `#`) decides:
@@ -585,7 +600,8 @@ of records.
   from the extension, which accepted them.
 - Examples: `KEY=value: x` → legacy (`KEY` = `value: x`); `VK-url: http://a=b` → YAML;
   `VK-a:b=c` → legacy (`VK-a:b` = `c`); a YAML fence with a later `K=v` line → YAML error.
-- **Writing any file converts its bodies to YAML**, value-preserving: `VK-value="active"` becomes
+- **Writing a file through create/update converts its bodies to YAML**, value-preserving (a byte-surgical
+  patch of title, description or block code leaves the vks bytes as they are): `VK-value="active"` becomes
   `VK-value: '"active"'`, so the output a template produces is byte-identical before and after.
 
 ### 9.7 Limits (checked before the work they bound)

@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/edit.md", expectedHash = "7ffb3461fc1962b281b676a111cfdeac6f9b332c5d05fb68bb5536710e3bd48c", edit = { field = "code", code = "a\n```\nb" } }
+expect_error = "artifact.unrepresentable"
+expect_files = { "Templates/edit.md" = "---\nartifactType: Template\ntitle: Edit me\nlanguage: ts\n---\n\n```ts\nexport const <VK-name> = 1;\n```\n\nvars:\n```vks\nVK-name=widget\n```\n" }

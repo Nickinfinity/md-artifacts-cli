@@ -6,5 +6,7 @@
 pub mod error;
 pub mod model;
 pub mod parse;
+pub mod patch;
 pub mod registry;
+pub mod serialize;
 pub mod vks;

@@ -70,7 +70,7 @@ fn value_construct(s: &str) -> Option<Construct> {
 }
 
 /// Checked before the key grammar, so `<<: *x` is never a `bad_key`.
-fn line_construct(s: &str) -> Option<Construct> {
+pub(super) fn line_construct(s: &str) -> Option<Construct> {
     let marker = |m: &str| s == m || s.starts_with(&format!("{m} "));
     if s.starts_with("<<") {
         Some(Construct::MergeKey)
@@ -93,7 +93,7 @@ fn split_key(text: &str) -> Option<(&str, &str)> {
     })
 }
 
-fn check_key(key: &str, top: bool, line: usize) -> R<()> {
+pub(super) fn check_key(key: &str, top: bool, line: usize) -> R<()> {
     let mut cs = key.chars();
     let ok = cs.next().is_some_and(|c| c.is_ascii_alphabetic())
         && cs.all(|c| c.is_ascii_alphanumeric() || c == '_' || (top && c == '-'));
@@ -178,7 +178,7 @@ fn scalar(v: &str, line: usize) -> R<Option<String>> {
     Ok(Some(v.to_owned()))
 }
 
-fn is_dash(text: &str) -> bool {
+pub(super) fn is_dash(text: &str) -> bool {
     text == "-" || text.starts_with("- ")
 }
 

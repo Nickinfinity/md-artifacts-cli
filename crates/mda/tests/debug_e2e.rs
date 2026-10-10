@@ -151,3 +151,40 @@ fn debug_show_keeps_values_out_of_stderr() {
             .contains("marker-7f3a")
     );
 }
+
+#[test]
+fn debug_write_keeps_model_values_out_of_stderr() {
+    let d = tmp("dbgwrite");
+    std::fs::create_dir_all(d.join(".obsidian")).unwrap();
+    let m = d.join("m.json");
+    std::fs::write(
+        &m,
+        r#"{"artifactType":"Template","title":"N","blocks":[{"language":"ts","code":"marker-9c1e"}]}"#,
+    )
+    .unwrap();
+    let out = run(
+        &[
+            "--vault",
+            d.to_str().unwrap(),
+            "--debug",
+            "artifact",
+            "new",
+            "Templates/n.md",
+            "--model",
+            m.to_str().unwrap(),
+        ],
+        b"",
+    );
+    assert_eq!(out.status.code(), Some(0), "{:?}", out.stderr);
+    assert!(
+        std::fs::read_to_string(d.join("Templates/n.md"))
+            .unwrap()
+            .contains("marker-9c1e")
+    );
+    assert!(
+        !String::from_utf8(out.stderr)
+            .unwrap()
+            .contains("marker-9c1e")
+    );
+    std::fs::remove_dir_all(d).unwrap();
+}

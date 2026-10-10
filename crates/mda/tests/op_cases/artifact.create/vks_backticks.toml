@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/bt.md", model = { artifactType = "Template", blocks = [{ code = "a <VK-a>", vars = [{ name = "VK-a", value = "a```b" }] }] } }
+expect_error = "vks.unrepresentable"
+expect_files = { "Templates/bt.md" = false }

@@ -1,0 +1,14 @@
+{
+  "artifactType": "Snippet",
+  "title": "Minimal Snippet",
+  "description": "Smallest valid snippet.",
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "javascript",
+      "code": "console.log('hello');",
+      "vars": []
+    }
+  ]
+}

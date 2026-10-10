@@ -188,5 +188,5 @@ fn nested_path_reads() {
     let req = ReadRequest {
         path: "Snippets/sub/n.md".into(),
     };
-    assert_eq!(read(&v.ctx, req).unwrap().file_name, "n");
+    assert_eq!(read(&v.ctx, req).unwrap().artifact.file_name, "n");
 }

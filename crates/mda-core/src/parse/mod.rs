@@ -12,6 +12,9 @@ use std::collections::{HashMap, HashSet};
 
 pub use text::decode;
 
+pub(crate) use blocks::block_code_ranges;
+pub(crate) use frontmatter::{body_range, key_of};
+
 use crate::error::{Limit, VKS_LIMIT, VarsError};
 use crate::model::{ParsedArtifact, ParsedBlock, ParsedVar};
 use crate::registry::{ArtifactType, type_for_dir};
@@ -21,6 +24,26 @@ use text::js_trim;
 
 /// Fence language reported for a flag-delimited or bare-body payload (the note's own markdown).
 const PAYLOAD_LANG: &str = "markdown";
+
+/// True when the frontmatter-stripped body holds at least one flagged region (spec §7). The
+/// engine never rewrites such a file: text outside the flags would be lost (W-7).
+///
+/// # Examples
+///
+/// ```
+/// assert!(!mda_core::parse::is_flagged("---\nartifactType: Snippet\n---\n```js\nx\n```\n"));
+/// ```
+pub fn is_flagged(content: &str) -> bool {
+    !flags::extract_flagged_regions(frontmatter::strip(content)).is_empty()
+}
+
+/// Absolute byte range of the code of the file's first fence (the single-body payload).
+pub(crate) fn top_code_range(content: &str) -> Option<std::ops::Range<usize>> {
+    let body = frontmatter::strip(content);
+    let base = content.len() - body.len(); // `strip` returns a suffix of `content`
+    let r = fence::code_range(body)?;
+    Some(base + r.start..base + r.end)
+}
 
 /// The payload fields a file's body yields, however it is delimited.
 struct Payload {

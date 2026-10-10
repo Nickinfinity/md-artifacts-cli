@@ -1,0 +1,18 @@
+{
+  "artifactType": "Snippet",
+  "title": "S",
+  "blocks": [
+    {
+      "code": "deploy <VK-env>",
+      "vars": [
+        {
+          "name": "VK-env",
+          "value": [
+            "dev",
+            "prod"
+          ]
+        }
+      ]
+    }
+  ]
+}

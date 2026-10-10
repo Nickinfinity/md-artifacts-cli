@@ -35,6 +35,13 @@ pub fn english(code: &str) -> Option<&'static str> {
         VKS_CONTROL_CHAR => "variables block: control character",
         VKS_LIMIT => "variables block: size limit exceeded",
         VKS_MIXED_DIALECT => "variables block: KEY=value line in a YAML block",
+        VKS_UNREPRESENTABLE => "variables block: value cannot be written",
+        FILE_CONFLICT => "the file changed since it was read (hash mismatch)",
+        FILE_EXISTS => "a file already exists at that path",
+        ARTIFACT_VARS_INVALID => "the file's variables block is invalid; fix it before saving",
+        ARTIFACT_UNREPRESENTABLE => "the artifact cannot be written in the file format",
+        ARTIFACT_BLOCK_NOT_FOUND => "no block with that index and heading",
+        ARTIFACT_NOT_SERIALIZABLE => "this file cannot be rewritten by the engine",
         _ => return None,
     })
 }
@@ -75,6 +82,10 @@ pub fn success(op: &str, v: &Value) -> String {
             .unwrap_or_default(),
         "artifact.read" => show(v),
         "artifact.tree" => ls(v),
+        "artifact.create" | "artifact.update" | "artifact.patch" => {
+            format!("wrote {}  {}", s(v, "path"), s(v, "hash"))
+        }
+        "artifact.delete" => format!("deleted {}", s(v, "path")),
         _ => serde_json::to_string_pretty(v).unwrap_or_default(),
     }
 }
@@ -167,4 +178,32 @@ fn ls(v: &Value) -> String {
         });
     }
     out.join("\n")
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)] // reason: tests
+mod tests {
+    use super::success;
+    use serde_json::json;
+
+    #[test]
+    fn write_printers() {
+        let w = json!({"path": "Templates/n.md", "hash": "abc"});
+        for op in ["artifact.create", "artifact.update", "artifact.patch"] {
+            assert_eq!(success(op, &w), "wrote Templates/n.md  abc", "{op}");
+        }
+        assert_eq!(
+            success("artifact.delete", &json!({"path": "Templates/n.md"})),
+            "deleted Templates/n.md"
+        );
+    }
+
+    // The only path vault text takes to the terminal on a write.
+    #[test]
+    fn write_printers_escape_controls() {
+        let w = json!({"path": "Templates/e\u{1b}vil.md", "hash": "a\u{1b}b"});
+        for op in ["artifact.create", "artifact.delete"] {
+            assert!(!success(op, &w).contains('\u{1b}'), "{op}");
+        }
+    }
 }

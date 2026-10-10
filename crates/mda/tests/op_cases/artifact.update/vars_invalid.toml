@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Snippets/bad-vars.md", expectedHash = "c79bb8dcb33946fe92b7c19be8dfea44d49d419224a6fc3bf63d0cc1a0c2f053", model = { artifactType = "Snippet" } }
+expect_error = "artifact.vars_invalid"
+expect_files = { "Snippets/bad-vars.md" = "---\nartifactType: Snippet\ntitle: Bad vars\n---\n\n```bash\necho <VK-a>\n```\n\nvars:\n```vks\nVK-a: x # c\n```\n" }

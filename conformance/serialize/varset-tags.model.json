@@ -1,0 +1,22 @@
+{
+  "artifactType": "Variables",
+  "title": "Local Dev",
+  "tags": [
+    "api",
+    "dev"
+  ],
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "",
+      "code": "",
+      "vars": [
+        {
+          "name": "VK-host",
+          "value": "localhost"
+        }
+      ]
+    }
+  ]
+}

@@ -10,7 +10,7 @@ use serde::ser::SerializeMap;
 /// use mda_core::vks::VksValue;
 /// assert_eq!(serde_json::to_string(&VksValue::Str("a".into())).unwrap(), r#""a""#);
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum VksValue {
     Str(String),
@@ -27,7 +27,7 @@ pub enum VksValue {
 /// let l = VksList::Strings(vec!["a".into()]);
 /// assert_eq!(serde_json::to_string(&l).unwrap(), r#"["a"]"#);
 /// ```
-#[derive(Debug, Clone, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum VksList {
     Strings(Vec<String>),
@@ -66,6 +66,36 @@ impl serde::Serialize for VksRecord {
             m.serialize_entry(k, v)?;
         }
         m.end()
+    }
+}
+
+/// Reads a JSON object in source order (the model's input side, W-10).
+impl<'de> serde::Deserialize<'de> for VksRecord {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        d.deserialize_map(RecordVisitor)
+    }
+}
+
+struct RecordVisitor;
+
+impl<'de> serde::de::Visitor<'de> for RecordVisitor {
+    type Value = VksRecord;
+
+    fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str("a record (JSON object)")
+    }
+
+    /// A duplicate key is a shape error (`op.bad_request`), like the reader's `vks.duplicate_key`.
+    fn visit_map<A: serde::de::MapAccess<'de>>(self, mut m: A) -> Result<VksRecord, A::Error> {
+        let mut seen = std::collections::HashSet::new();
+        let mut out = Vec::new();
+        while let Some((k, v)) = m.next_entry::<String, VksValue>()? {
+            if !seen.insert(k.clone()) {
+                return Err(serde::de::Error::custom("duplicate key"));
+            }
+            out.push((k, v));
+        }
+        Ok(VksRecord(out))
     }
 }
 

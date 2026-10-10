@@ -2,6 +2,7 @@
 //! here and reached through [`dispatch`]: by the CLI, by `mda serve`, and later by the TUI and MCP.
 
 pub mod artifact;
+pub mod artifact_write;
 pub mod error;
 mod ops_list;
 pub mod registry;

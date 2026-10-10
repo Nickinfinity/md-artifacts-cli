@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/edit.md", expectedHash = "7ffb3461fc1962b281b676a111cfdeac6f9b332c5d05fb68bb5536710e3bd48c", model = { artifactType = "Template", title = "Edit me", blocks = [{ language = "ts", code = "export const <VK-name> = 1;", vars = [{ name = "VK-name", value = "widget" }] }] } }
+expect = { path = "Templates/edit.md", hash = "dfc9aafe5195f6f53fe66533e60baa84c3fddef72fa8d97b7e98f49be8e8dea4" }
+expect_files = { "Templates/edit.md" = "---\nartifactType: Template\ntitle: Edit me\nlanguage: ts\n---\n\n```ts\nexport const <VK-name> = 1;\n```\n\nvars:\n```vks\nVK-name: widget\n```\n" }

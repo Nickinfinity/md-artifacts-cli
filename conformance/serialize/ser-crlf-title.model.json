@@ -1,0 +1,14 @@
+{
+  "artifactType": "Snippet",
+  "title": "A\r\nB\rC",
+  "description": "X",
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "",
+      "code": "x",
+      "vars": []
+    }
+  ]
+}

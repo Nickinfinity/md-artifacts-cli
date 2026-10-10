@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "AIAgentsConf/multi.md", expectedHash = "0000000000000000000000000000000000000000000000000000000000000000", edit = { field = "title", value = "x" } }
+expect_error = "file.conflict"
+expect_files = { "AIAgentsConf/multi.md" = "---\nartifactType: AIAgentsConfig\ntitle: Multi\n---\n\n## One\n\n```bash\necho one\n```\n\n## Two\n\n```bash\necho two\n```\n" }

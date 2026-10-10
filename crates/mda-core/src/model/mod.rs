@@ -77,7 +77,11 @@ impl Frontmatter {
 /// let v = ParsedVar::text("VK-a", "1");
 /// assert!(serde_json::to_string(&v).unwrap().starts_with(r#"{"name":"VK-a","defaultValue":"#));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// Deserializes from `{name, value}` (the model's input side; asymmetric on purpose: input carries
+/// `value`, output derives `defaultValue`).
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ParsedVar {
     pub name: String,
     pub value: VksValue,
@@ -150,4 +154,66 @@ pub struct ParsedArtifact {
     pub blocks: Vec<ParsedBlock>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vars_error: Option<VarsError>,
+}
+
+/// The serializer's input and the `artifact.create`/`artifact.update` request body (W-10). Shape
+/// errors are serde errors; the semantic vks checks run in [`crate::vks::check_vars`].
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::model::ArtifactModel;
+/// let m: ArtifactModel = serde_json::from_str(r#"{"artifactType":"Snippet","title":"T"}"#).unwrap();
+/// assert_eq!(m.title, "T");
+/// assert!(serde_json::from_str::<ArtifactModel>(r#"{"artifactType":"Snippet","x":1}"#).is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ArtifactModel {
+    pub artifact_type: ArtifactType,
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    #[serde(default)]
+    pub extension: String,
+    #[serde(default)]
+    pub provider: String,
+    #[serde(default)]
+    pub model: String,
+    #[serde(default)]
+    pub version: String,
+    #[serde(default)]
+    pub env: String,
+    #[serde(default)]
+    pub target: String,
+    #[serde(default)]
+    pub blocks: Vec<ModelBlock>,
+}
+
+/// One block of an [`ArtifactModel`]: a `##` section, a Variables sub-set, or the single body.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::model::ModelBlock;
+/// let b: ModelBlock = serde_json::from_str(r#"{"code":"x"}"#).unwrap();
+/// assert_eq!(b.code, "x");
+/// assert!(b.heading.is_empty());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ModelBlock {
+    #[serde(default)]
+    pub heading: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub language: String,
+    #[serde(default)]
+    pub code: String,
+    #[serde(default)]
+    pub vars: Vec<ParsedVar>,
 }

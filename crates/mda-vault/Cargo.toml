@@ -9,6 +9,7 @@ rust-version.workspace = true
 mda-core.workspace = true
 thiserror.workspace = true
 log.workspace = true
+sha2.workspace = true
 
 [lints]
 workspace = true

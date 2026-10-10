@@ -1,0 +1,13 @@
+{
+  "artifactType": "AIAgentsConfig",
+  "title": "Code reviewer",
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "md",
+      "code": "review it",
+      "vars": []
+    }
+  ]
+}

@@ -2,11 +2,13 @@
 //! §9), chosen per fence by [`classify`]. Every rejection is an `Err(VarsError)`, never a partial list.
 
 mod classify;
+mod emit;
 mod legacy;
 pub mod value;
 mod yaml;
 
 pub use classify::{Dialect, classify};
+pub use emit::{check_vars, emit_body};
 pub use value::{VksList, VksRecord, VksValue};
 
 use crate::error::{Limit, VKS_LIMIT, VarsError};

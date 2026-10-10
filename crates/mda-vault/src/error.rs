@@ -26,6 +26,16 @@ pub enum VaultError {
     /// Not a regular file (FIFO, device, directory); refused before opening.
     #[error("not a regular file: {path:?}")]
     NotRegular { path: PathBuf },
+    /// The file's content hash is not the one the client last read (optimistic concurrency).
+    #[error("conflict on {path:?}: expected {expected}, actual {actual}")]
+    Conflict {
+        path: PathBuf,
+        expected: String,
+        actual: String,
+    },
+    /// A create found a file already at the target; it is never overwritten.
+    #[error("file exists: {path:?}")]
+    Exists { path: PathBuf },
     /// Any other I/O failure.
     #[error("io failed on {path:?}: {kind}")]
     Io {

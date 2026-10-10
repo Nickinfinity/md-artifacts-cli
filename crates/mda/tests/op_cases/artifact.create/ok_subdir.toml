@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/sub/deep.md", model = { artifactType = "Template", title = "Deep", blocks = [{ code = "echo hi" }] } }
+expect = { path = "Templates/sub/deep.md", hash = "4319e46ff5c1ced88907487e934857bc69581987648fe65bea6e59499ad1aa74" }
+expect_files = { "Templates/sub/deep.md" = "---\nartifactType: Template\ntitle: Deep\n---\n\n```\necho hi\n```\n" }

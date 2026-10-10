@@ -1,5 +1,6 @@
 //! Code fences and the vars section (`parser.service.ts:47-48, 210-276, 581-585`).
 
+use std::ops::Range;
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -30,6 +31,12 @@ pub(super) fn code_block(s: &str) -> Option<(String, Option<String>)> {
     let lang = c.get(1).map(|m| m.as_str()).filter(|l| !l.is_empty());
     let code = c.get(2).map_or("", |m| js_trim_end(m.as_str()));
     Some((code.to_owned(), lang.map(str::to_owned)))
+}
+
+/// Byte range of the first fence's code (CODE_FENCE_RE group 2) in `s`: the parser's own span, so
+/// a mid-line closing fence ends it exactly where the parser does.
+pub(crate) fn code_range(s: &str) -> Option<Range<usize>> {
+    CODE_FENCE_RE.captures(s)?.get(2).map(|m| m.range())
 }
 
 /// The raw body of the first ```` ```vks ```` fence in `s`.

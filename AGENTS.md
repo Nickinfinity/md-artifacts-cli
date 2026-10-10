@@ -3,14 +3,15 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-09): W1 landed.** The workspace exists: `mda-core` (model, type registry, parse incl.
-> flags and `<VK-…>` detection, the vks codec reading legacy and YAML bodies), `mda-vault` (containment, bounded
-> reads, directory listing), `mda-ops` (`system.version`, `system.ops`, `artifact.read`, `artifact.tree`), `mda`
-> (CLI incl. `mda call` and `mda artifact show|ls`, `serve` with `initialize.types`, debug mode), the conformance
-> harness (121 `parse` cases) and the op-case harness with a fixture vault. Sections marked *(W0)* describe the
-> tree; everything else (write, render, vault config, variables, migration) is the **target**, built by the
-> engine-port plan's W2–W7 (`docs/plans/engine-port/`).
-
+> **Status (2026-10-10): W2 landed.** The workspace exists: `mda-core` (model, type registry, parse incl.
+> flags and `<VK-…>` detection, the vks codec reading legacy and YAML bodies and emitting YAML, the `.md`
+> serializer with its re-parse guard, the byte-surgical patcher), `mda-vault` (containment, bounded reads,
+> directory listing, atomic writes with the SHA-256 content hash), `mda-ops` (`system.version`, `system.ops`,
+> `artifact.read` (+ `hash`), `artifact.tree`, `artifact.create|update|patch|delete`), `mda` (CLI incl. `mda call`
+> and `mda artifact show|ls|new|update|patch|rm`, `serve` with `initialize.types`, debug mode), the conformance
+> harness (121 `parse` + 26 `serialize` cases) and the op-case harness (per-leg fixture copies, `expect_files`).
+> Sections marked *(W0)* describe the tree; everything else (render, vault config, variables, migration) is the
+> **target**, built by the engine-port plan's W3–W7 (`docs/plans/engine-port/`).
 ---
 
 ## What this project is
@@ -82,7 +83,7 @@ md-artifacts-cli/
 │   │       ├── language.rs    # language alias / fence / extension tables
 │   │       ├── parse/         # frontmatter · code fence · ## blocks · vars · tokens · flags
 │   │       │   └── text.rs    # JS string semantics (trim, line split) + decode
-│   │       ├── vks/           # {mod, classify, legacy, yaml, value}.rs — the vks codec (both dialects)
+│   │       ├── vks/           # {mod, classify, legacy, yaml, value, emit}.rs — the vks codec (read both dialects, emit YAML)
 │   │       ├── serialize.rs   # THE .md emitter
 │   │       ├── patch.rs       # surgical in-place edits
 │   │       ├── render.rs      # token resolution (plain tokens; vks template engine later)
@@ -195,7 +196,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Artifact types and their properties | `mda-core/src/registry.rs` |
 | Language tables | `mda-core/src/language.rs` |
 | `.md` parsing | `mda-core/src/parse/` |
-| `.md` emission | `mda-core/src/serialize.rs` |
+| `.md` emission, frontmatter key order, the single-line rule | `mda-core/src/serialize.rs` |
 | `<VK-…>` token grammar | `mda-core/src/parse/tokens.rs` (`TOKEN_PATTERN`) |
 | The vks codec | `mda-core/src/vks/` |
 | `vks.*` codes | `mda-core/src/error.rs` (listed in `mda-ops` `ALL_CODES`) |
@@ -203,7 +204,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Slugs and file names | `mda-core/src/naming.rs` |
 | Vault-authored relative paths (index links, `paths:`) | `mda-core/src/multi_index.rs` — `safe_rel_path` |
 | Path containment | `mda-vault/src/contain.rs` |
-| Atomic writes + content hash | `mda-vault/src/write.rs` |
+| Atomic writes + content hash (`content_hash`, SHA-256) | `mda-vault/src/write.rs` |
 | Configuration files | `mda-vault/src/config.rs` |
 | The operation list | `mda-ops/src/ops_list.rs` (registered through `registry.rs`) |
 | Error codes | `mda-ops/src/error.rs` |

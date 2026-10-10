@@ -172,6 +172,28 @@ impl ArtifactType {
         }
     }
 
+    /// The exact PascalCase name, the inverse of [`ArtifactType::from_name`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mda_core::registry::{ArtifactType, TYPES};
+    /// for t in &TYPES {
+    ///     let a = t.artifact_type;
+    ///     assert_eq!(ArtifactType::from_name(a.as_str()), Some(a));
+    /// }
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Snippet => "Snippet",
+            Self::AIAgentsConfig => "AIAgentsConfig",
+            Self::Command => "Command",
+            Self::Template => "Template",
+            Self::Variables => "Variables",
+            Self::AIPrompt => "AIPrompt",
+        }
+    }
+
     /// The type named exactly `s` (case-sensitive, as `parser.service.ts:12,160`).
     pub fn from_name(s: &str) -> Option<Self> {
         Some(match s {

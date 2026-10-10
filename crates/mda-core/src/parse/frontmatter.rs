@@ -1,5 +1,6 @@
 //! Frontmatter (`parser.service.ts:14-46, 71-73, 126-195`).
 
+use std::ops::Range;
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -28,11 +29,26 @@ pub(super) fn parse(content: &str, default: ArtifactType) -> Frontmatter {
         return fm;
     };
     for line in js_lines(block.as_str()) {
-        if let Some((key, raw)) = line.split_once(':') {
-            apply(&mut fm, js_trim(key), js_trim(raw));
+        if let Some((key, raw)) = split_kv(line) {
+            apply(&mut fm, key, raw);
         }
     }
     fm
+}
+
+/// `key: raw` split at the first `:`, both sides `js_trim`med: the parser's line rule.
+fn split_kv(line: &str) -> Option<(&str, &str)> {
+    line.split_once(':').map(|(k, r)| (js_trim(k), js_trim(r)))
+}
+
+/// The key a frontmatter `line` sets, by the parser's own rule (the patcher finds lines with it).
+pub(crate) fn key_of(line: &str) -> Option<&str> {
+    split_kv(line).map(|(k, _)| k)
+}
+
+/// Byte range of the frontmatter text between the dashes (BLOCK_RE group 1); `None` without a block.
+pub(crate) fn body_range(content: &str) -> Option<Range<usize>> {
+    BLOCK_RE.captures(content)?.get(1).map(|m| m.range())
 }
 
 fn apply(fm: &mut Frontmatter, key: &str, raw: &str) {

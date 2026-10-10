@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Templates/edit.md", expectedHash = "0000000000000000000000000000000000000000000000000000000000000000", x = 1 }
+expect_error = "op.bad_request"

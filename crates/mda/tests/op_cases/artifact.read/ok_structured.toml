@@ -7,6 +7,7 @@ relativePath = "structured.md"
 code = "VK-db:\n  zeta: z\n  alpha: a"
 blocks = []
 vars = [{ name = "VK-db", defaultValue = "", value = { zeta = "z", alpha = "a" } }]
+hash = "fe47e0fa73cab4a397271c85cf822dfde724d680303c8e282ebccb1244aac4de"
 [expect.frontmatter]
 artifactType = "Variables"
 title = "Structured"

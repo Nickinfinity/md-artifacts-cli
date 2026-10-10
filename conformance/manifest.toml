@@ -980,3 +980,197 @@ input = "parse/tfd-explicit-frontmatter-always-wins-over-the-direct.md"
 expected = "parse/tfd-explicit-frontmatter-always-wins-over-the-direct.expected.json"
 path = "Commands/x.md"
 origin = "ts@b368c20"
+
+[[cases]]
+id = "form-command-with-defaults"
+kind = "serialize"
+input = "serialize/form-command-with-defaults.model.json"
+expected = "serialize/form-command-with-defaults.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "form-snippet-minimal"
+kind = "serialize"
+input = "serialize/form-snippet-minimal.model.json"
+expected = "serialize/form-snippet-minimal.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "form-snippet-multi-block"
+kind = "serialize"
+input = "serialize/form-snippet-multi-block.model.json"
+expected = "serialize/form-snippet-multi-block.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "form-snippet-orphan-default"
+kind = "serialize"
+input = "serialize/form-snippet-orphan-default.model.json"
+expected = "serialize/form-snippet-orphan-default.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "form-snippet-plain-text"
+kind = "serialize"
+input = "serialize/form-snippet-plain-text.model.json"
+expected = "serialize/form-snippet-plain-text.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "form-snippet-quoted-default"
+kind = "serialize"
+input = "serialize/form-snippet-quoted-default.model.json"
+expected = "serialize/form-snippet-quoted-default.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "varset-bare"
+kind = "serialize"
+input = "serialize/varset-bare.model.json"
+expected = "serialize/varset-bare.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "varset-description"
+kind = "serialize"
+input = "serialize/varset-description.model.json"
+expected = "serialize/varset-description.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "varset-tags"
+kind = "serialize"
+input = "serialize/varset-tags.model.json"
+expected = "serialize/varset-tags.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "varset-full"
+kind = "serialize"
+input = "serialize/varset-full.model.json"
+expected = "serialize/varset-full.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "varset-multi-var"
+kind = "serialize"
+input = "serialize/varset-multi-var.model.json"
+expected = "serialize/varset-multi-var.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "varset-equals"
+kind = "serialize"
+input = "serialize/varset-equals.model.json"
+expected = "serialize/varset-equals.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "varset-quotes"
+kind = "serialize"
+input = "serialize/varset-quotes.model.json"
+expected = "serialize/varset-quotes.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "ser-newline-title"
+kind = "serialize"
+input = "serialize/ser-newline-title.model.json"
+expected = "serialize/ser-newline-title.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ser-crlf-title"
+kind = "serialize"
+input = "serialize/ser-crlf-title.model.json"
+expected = "serialize/ser-crlf-title.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ser-empty-default"
+kind = "serialize"
+input = "serialize/ser-empty-default.model.json"
+expected = "serialize/ser-empty-default.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ser-empty-subset"
+kind = "serialize"
+input = "serialize/ser-empty-subset.model.json"
+expected = "serialize/ser-empty-subset.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission"
+
+[[cases]]
+id = "agent-keys-order"
+kind = "serialize"
+input = "serialize/agent-keys-order.model.json"
+expected = "serialize/agent-keys-order.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "agent-empty-keys"
+kind = "serialize"
+input = "serialize/agent-empty-keys.model.json"
+expected = "serialize/agent-empty-keys.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "agent-injection"
+kind = "serialize"
+input = "serialize/agent-injection.model.json"
+expected = "serialize/agent-injection.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "rs-ser-structured"
+kind = "serialize"
+input = "serialize/rs-ser-structured.model.json"
+expected = "serialize/rs-ser-structured.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-block-scalars"
+kind = "serialize"
+input = "serialize/rs-ser-block-scalars.model.json"
+expected = "serialize/rs-ser-block-scalars.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-quoting"
+kind = "serialize"
+input = "serialize/rs-ser-quoting.model.json"
+expected = "serialize/rs-ser-quoting.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-sets"
+kind = "serialize"
+input = "serialize/rs-ser-sets.model.json"
+expected = "serialize/rs-ser-sets.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-blank"
+kind = "serialize"
+input = "serialize/rs-ser-blank.model.json"
+expected = "serialize/rs-ser-blank.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-snippet-structured"
+kind = "serialize"
+input = "serialize/rs-ser-snippet-structured.model.json"
+expected = "serialize/rs-ser-snippet-structured.md"
+origin = "rust"

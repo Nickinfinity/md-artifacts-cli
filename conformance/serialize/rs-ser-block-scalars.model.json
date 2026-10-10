@@ -1,0 +1,28 @@
+{
+  "artifactType": "Variables",
+  "title": "Blocks",
+  "blocks": [
+    {
+      "vars": [
+        {
+          "name": "VK-a",
+          "value": "line1\nline2"
+        },
+        {
+          "name": "VK-b",
+          "value": "x\n"
+        },
+        {
+          "name": "VK-c",
+          "value": "a\n \nb"
+        },
+        {
+          "name": "VK-d",
+          "value": [
+            "p\nq"
+          ]
+        }
+      ]
+    }
+  ]
+}
