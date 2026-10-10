@@ -1,0 +1,3 @@
+# file_subpath
+params = { source = "file", type = "Snippet", text = "x", fileName = "sub/b.ts" }
+expect_error = "naming.path_injection"

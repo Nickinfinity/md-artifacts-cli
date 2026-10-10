@@ -146,7 +146,7 @@ pub(crate) fn artifact_path(p: &str) -> Result<ArtifactType, OpError> {
     }
 }
 
-fn load(root: &Root, rel: &str) -> Result<ReadResponse, OpError> {
+pub(crate) fn load(root: &Root, rel: &str) -> Result<ReadResponse, OpError> {
     let bytes =
         read_bounded(root, Path::new(rel), MAX_ARTIFACT_BYTES).map_err(|e| vault_error(e, root))?;
     Ok(ReadResponse {

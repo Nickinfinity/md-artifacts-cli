@@ -1,0 +1,13 @@
+{
+  "output": "<VK-nope></VK-nope> </VK-nope>",
+  "warnings": [
+    {
+      "code": "render.unknown_var",
+      "params": {
+        "line": "1",
+        "name": "VK-nope"
+      }
+    }
+  ],
+  "containsEscape": false
+}

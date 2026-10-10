@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/component.md", workspaceRoot = "$WORKSPACE", destDir = "../out" }
+expect_error = "path.outside_root"
+expect_workspace_files = { "out" = false, "x" = false, "Btn" = false, "CON.txt" = false }

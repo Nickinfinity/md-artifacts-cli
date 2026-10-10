@@ -5,6 +5,10 @@ use std::collections::BTreeMap;
 use mda_vault::{Root, VaultError};
 
 pub use mda_core::error::{
+    NAMING_CONTROL_CHAR, NAMING_EDGE_DOT, NAMING_EDGE_SPACE, NAMING_EMPTY, NAMING_ILLEGAL_CHAR,
+    NAMING_PATH_INJECTION, NAMING_RESERVED, NAMING_TOO_LONG, RENDER_EACH_NOT_LIST,
+    RENDER_JOIN_EMPTY, RENDER_JOIN_RECORD, RENDER_NOT_SCALAR, RENDER_SELF_NESTED,
+    RENDER_UNKNOWN_VAR, RENDER_UNMATCHED_END, RENDER_UNTERMINATED, RENDER_WARNING_CODES,
     VKS_BAD_KEY, VKS_CONTROL_CHAR, VKS_DUPLICATE_KEY, VKS_INDENT, VKS_INLINE_COMMENT, VKS_LIMIT,
     VKS_MIXED_DIALECT, VKS_MIXED_LIST, VKS_SYNTAX, VKS_UNREPRESENTABLE, VKS_UNSUPPORTED,
 };
@@ -77,6 +81,18 @@ pub const ARTIFACT_BLOCK_NOT_FOUND: &str = "artifact.block_not_found";
 /// `no_frontmatter` | `no_fence`).
 pub const ARTIFACT_NOT_SERIALIZABLE: &str = "artifact.not_serializable";
 
+/// A render expansion limit was reached; the whole render is refused. Params `limit`
+/// (`output_bytes` | `iterations` | `steps` | `depth`), `max`.
+pub const RENDER_LIMIT: &str = "render.limit";
+/// The human CLI refuses to print rendered output holding an ESC character (`--json` returns it).
+pub const RENDER_CONTAINS_ESCAPE: &str = "render.contains_escape";
+/// `artifact.write_file` on a type that does not write a file. Param `type`.
+pub const ARTIFACT_NOT_WHOLE_FILE: &str = "artifact.not_whole_file";
+/// `artifact.write_file` on a whole-file artifact with more than one block. Param `count`.
+pub const ARTIFACT_MULTI_BLOCK: &str = "artifact.multi_block";
+/// `artifact.write_file` on a template index (an index is run, never written). No params.
+pub const ARTIFACT_IS_INDEX: &str = "artifact.is_index";
+
 /// Every code, for exhaustive checks (English table, exit codes, op cases).
 pub const ALL_CODES: &[&str] = &[
     OP_UNKNOWN,
@@ -107,6 +123,19 @@ pub const ALL_CODES: &[&str] = &[
     ARTIFACT_UNREPRESENTABLE,
     ARTIFACT_BLOCK_NOT_FOUND,
     ARTIFACT_NOT_SERIALIZABLE,
+    RENDER_LIMIT,
+    RENDER_CONTAINS_ESCAPE,
+    NAMING_PATH_INJECTION,
+    NAMING_EMPTY,
+    NAMING_EDGE_SPACE,
+    NAMING_EDGE_DOT,
+    NAMING_ILLEGAL_CHAR,
+    NAMING_CONTROL_CHAR,
+    NAMING_RESERVED,
+    NAMING_TOO_LONG,
+    ARTIFACT_NOT_WHOLE_FILE,
+    ARTIFACT_MULTI_BLOCK,
+    ARTIFACT_IS_INDEX,
 ];
 
 /// Map a vault error from an op that holds `root`: every `path` param becomes vault-relative POSIX,
@@ -173,6 +202,29 @@ impl From<VaultError> for OpError {
             VaultError::Io { path, kind } => Self::new(IO_FAILED)
                 .with("path", path.display().to_string())
                 .with("kind", kind.to_string()),
+        }
+    }
+}
+
+// A rejected client value (render `values`): the codec's `{code, params}` moved over unchanged.
+impl From<mda_core::error::VarsError> for OpError {
+    fn from(e: mda_core::error::VarsError) -> Self {
+        Self {
+            code: e.code,
+            params: e.params,
+        }
+    }
+}
+
+// A rejected output file name: `field` on injection, `max` on length, nothing else.
+impl From<mda_core::naming::NameError> for OpError {
+    fn from(e: mda_core::naming::NameError) -> Self {
+        use mda_core::naming::{MAX_NAME_BYTES, NameError};
+        let op = Self::new(e.code());
+        match e {
+            NameError::PathInjection(f) => op.with("field", f.as_str()),
+            NameError::TooLong => op.with("max", MAX_NAME_BYTES.to_string()),
+            _ => op,
         }
     }
 }
@@ -263,6 +315,80 @@ mod tests {
                 serde_json::json!({"code": want, "params": {key: "x"}})
             );
         }
+    }
+
+    #[test]
+    fn naming_codes_listed() {
+        for c in mda_core::error::NAMING_CODES {
+            assert!(ALL_CODES.contains(c), "{c}");
+        }
+    }
+
+    #[test]
+    fn warning_codes_are_not_error_codes() {
+        for c in RENDER_WARNING_CODES {
+            assert!(!ALL_CODES.contains(c), "{c}");
+        }
+    }
+
+    #[test]
+    fn w3_codes_exact_json() {
+        let bare = [
+            (RENDER_CONTAINS_ESCAPE, "render.contains_escape"),
+            (NAMING_EMPTY, "naming.empty"),
+            (NAMING_EDGE_SPACE, "naming.edge_space"),
+            (NAMING_EDGE_DOT, "naming.edge_dot"),
+            (NAMING_ILLEGAL_CHAR, "naming.illegal_char"),
+            (NAMING_CONTROL_CHAR, "naming.control_char"),
+            (NAMING_RESERVED, "naming.reserved"),
+            (ARTIFACT_IS_INDEX, "artifact.is_index"),
+        ];
+        for (code, want) in bare {
+            assert_eq!(
+                serde_json::to_value(OpError::new(code)).unwrap(),
+                serde_json::json!({"code": want, "params": {}})
+            );
+        }
+        let with = [
+            (NAMING_PATH_INJECTION, "field", "naming.path_injection"),
+            (NAMING_TOO_LONG, "max", "naming.too_long"),
+            (ARTIFACT_NOT_WHOLE_FILE, "type", "artifact.not_whole_file"),
+            (ARTIFACT_MULTI_BLOCK, "count", "artifact.multi_block"),
+        ];
+        for (code, key, want) in with {
+            assert_eq!(
+                serde_json::to_value(OpError::new(code).with(key, "x")).unwrap(),
+                serde_json::json!({"code": want, "params": {key: "x"}})
+            );
+        }
+        let limit = OpError::new(RENDER_LIMIT)
+            .with("limit", "steps")
+            .with("max", "1000000");
+        assert_eq!(
+            serde_json::to_value(limit).unwrap(),
+            serde_json::json!({"code": "render.limit", "params": {"limit": "steps", "max": "1000000"}})
+        );
+    }
+
+    #[test]
+    fn name_error_maps_field() {
+        use mda_core::naming::{NameError, NameField};
+        let e = OpError::from(NameError::PathInjection(NameField::Title));
+        assert_eq!(
+            serde_json::to_value(e).unwrap(),
+            serde_json::json!({"code": "naming.path_injection", "params": {"field": "title"}})
+        );
+        let e = OpError::from(NameError::TooLong);
+        assert_eq!(e.params["max"], "255");
+        assert!(OpError::from(NameError::Reserved).params.is_empty());
+    }
+
+    #[test]
+    fn vars_error_maps_unchanged() {
+        let v = mda_core::error::VarsError::new(VKS_CONTROL_CHAR, 0).with("var", "VK-a");
+        let e = OpError::from(v);
+        assert_eq!(e.code, "vks.control_char");
+        assert_eq!(e.params["var"], "VK-a");
     }
 
     #[test]

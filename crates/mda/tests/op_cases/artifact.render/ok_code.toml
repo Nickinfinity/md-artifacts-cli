@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Snippets/hello.md", code = "hi <VK-name>", values = { "VK-name" = "bob" } }
+expect = { output = "hi bob", warnings = [], containsEscape = false }

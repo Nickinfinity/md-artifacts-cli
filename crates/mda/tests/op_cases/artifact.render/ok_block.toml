@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "AIAgentsConf/multi.md", block = 1 }
+expect = { output = "echo two", warnings = [], containsEscape = false }

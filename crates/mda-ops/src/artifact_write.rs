@@ -13,6 +13,7 @@ use mda_vault::{Root, content_hash, create_new, delete as vault_delete, read_bou
 
 use crate::artifact::{MAX_ARTIFACT_BYTES, artifact_path, bad_path, root_of};
 use crate::error::vault_error;
+use crate::write_file::exists_actual;
 use crate::{Ctx, OpError, error};
 
 /// `artifact.create` params: the new file's vault-relative path and its model.
@@ -225,7 +226,8 @@ pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
         return Err(bad_path(&req.path));
     }
     let text = serialize(&req.model, max_bytes()).map_err(|e| map_serialize(e, &req.path))?;
-    create_new(root, Path::new(&req.path), text.as_bytes()).map_err(|e| vault_error(e, root))?;
+    let rel = Path::new(&req.path);
+    create_new(root, rel, text.as_bytes()).map_err(|e| exists_actual(root, rel, e))?;
     Ok(written(req.path, &text))
 }
 

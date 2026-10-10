@@ -1,0 +1,3 @@
+# terminal
+params = { source = "terminal", type = "Command", text = "ls -la", languageId = "shellscript" }
+expect = { artifactType = "Command", title = "", description = "", tags = [], extension = "", provider = "", model = "", version = "", env = "", target = "", blocks = [{ heading = "", description = "", language = "", code = "ls -la", vars = [] }] }

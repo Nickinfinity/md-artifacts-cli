@@ -167,7 +167,10 @@ pub struct ParsedArtifact {
 /// assert_eq!(m.title, "T");
 /// assert!(serde_json::from_str::<ArtifactModel>(r#"{"artifactType":"Snippet","x":1}"#).is_err());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+// Serialize (the `artifact.prefill` response): every field written, none skipped, so
+// `create(prefill(x))` round-trips. `ParsedVar` keeps its read-shape Serialize; prefill always emits
+// `vars: []`, so the asymmetry never reaches a client.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ArtifactModel {
     pub artifact_type: ArtifactType,
@@ -203,7 +206,7 @@ pub struct ArtifactModel {
 /// assert_eq!(b.code, "x");
 /// assert!(b.heading.is_empty());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ModelBlock {
     #[serde(default)]

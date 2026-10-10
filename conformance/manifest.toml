@@ -7,7 +7,8 @@
 # input = "parse/x.md"             # path relative to conformance/
 # expected = "parse/x.expected.json"
 # values = "render/x.values.json"  # render only; path relative to conformance/
-# path = "<TypeDir>/<rel>.md"      # parse only: drives the type, filePath, fileName, relativePath
+# path = "<TypeDir>/<rel>.md"      # parse and render: drives the type, filePath, fileName, relativePath
+# block = 0                        # render only: the block index (spec block-selection rules)
 # origin = "ts@b368c20"            # or "rust" (hand-derived from the spec, never run through TS)
 # deviates_from_ts = "reason"      # optional: a recorded, deliberate difference from the TS extension
 
@@ -1173,4 +1174,341 @@ id = "rs-ser-snippet-structured"
 kind = "serialize"
 input = "serialize/rs-ser-snippet-structured.model.json"
 expected = "serialize/rs-ser-snippet-structured.md"
+origin = "rust"
+
+[[cases]]
+id = "ts-render-pair-once"
+kind = "render"
+input = "render/ts-render-pair-once.md"
+expected = "render/ts-render-pair-once.expected.json"
+values = "render/ts-render-pair-once.values.json"
+path = "Snippets/ts-render-pair-once.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-lone-closing"
+kind = "render"
+input = "render/ts-render-lone-closing.md"
+expected = "render/ts-render-lone-closing.expected.json"
+values = "render/ts-render-lone-closing.values.json"
+path = "Snippets/ts-render-lone-closing.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-mismatched-pair"
+kind = "render"
+input = "render/ts-render-mismatched-pair.md"
+expected = "render/ts-render-mismatched-pair.expected.json"
+values = "render/ts-render-mismatched-pair.values.json"
+path = "Snippets/ts-render-mismatched-pair.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-split-pair"
+kind = "render"
+input = "render/ts-render-split-pair.md"
+expected = "render/ts-render-split-pair.expected.json"
+values = "render/ts-render-split-pair.values.json"
+path = "Snippets/ts-render-split-pair.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-unknown-both-spellings"
+kind = "render"
+input = "render/ts-render-unknown-both-spellings.md"
+expected = "render/ts-render-unknown-both-spellings.expected.json"
+values = "render/ts-render-unknown-both-spellings.values.json"
+path = "Snippets/ts-render-unknown-both-spellings.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-empty-value-pair"
+kind = "render"
+input = "render/ts-render-empty-value-pair.md"
+expected = "render/ts-render-empty-value-pair.expected.json"
+values = "render/ts-render-empty-value-pair.values.json"
+path = "Snippets/ts-render-empty-value-pair.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-markdown-payload"
+kind = "render"
+input = "render/ts-render-markdown-payload.md"
+expected = "render/ts-render-markdown-payload.expected.json"
+values = "render/ts-render-markdown-payload.values.json"
+path = "Snippets/ts-render-markdown-payload.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-single"
+kind = "render"
+input = "render/ts-render-single.md"
+expected = "render/ts-render-single.expected.json"
+values = "render/ts-render-single.values.json"
+path = "Snippets/ts-render-single.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-multiple"
+kind = "render"
+input = "render/ts-render-multiple.md"
+expected = "render/ts-render-multiple.expected.json"
+values = "render/ts-render-multiple.values.json"
+path = "Snippets/ts-render-multiple.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-repeated"
+kind = "render"
+input = "render/ts-render-repeated.md"
+expected = "render/ts-render-repeated.expected.json"
+values = "render/ts-render-repeated.values.json"
+path = "Snippets/ts-render-repeated.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-absent"
+kind = "render"
+input = "render/ts-render-absent.md"
+expected = "render/ts-render-absent.expected.json"
+path = "Snippets/ts-render-absent.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-partial"
+kind = "render"
+input = "render/ts-render-partial.md"
+expected = "render/ts-render-partial.expected.json"
+values = "render/ts-render-partial.values.json"
+path = "Snippets/ts-render-partial.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-no-tokens"
+kind = "render"
+input = "render/ts-render-no-tokens.md"
+expected = "render/ts-render-no-tokens.expected.json"
+values = "render/ts-render-no-tokens.values.json"
+path = "Snippets/ts-render-no-tokens.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-empty-map"
+kind = "render"
+input = "render/ts-render-empty-map.md"
+expected = "render/ts-render-empty-map.expected.json"
+path = "Snippets/ts-render-empty-map.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-typed-wins"
+kind = "render"
+input = "render/ts-render-typed-wins.md"
+expected = "render/ts-render-typed-wins.expected.json"
+values = "render/ts-render-typed-wins.values.json"
+path = "Snippets/ts-render-typed-wins.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-empty-falls-back"
+kind = "render"
+input = "render/ts-render-empty-falls-back.md"
+expected = "render/ts-render-empty-falls-back.expected.json"
+values = "render/ts-render-empty-falls-back.values.json"
+path = "Snippets/ts-render-empty-falls-back.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-no-value-no-default"
+kind = "render"
+input = "render/ts-render-no-value-no-default.md"
+expected = "render/ts-render-no-value-no-default.expected.json"
+path = "Snippets/ts-render-no-value-no-default.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-missing-falls-back"
+kind = "render"
+input = "render/ts-render-missing-falls-back.md"
+expected = "render/ts-render-missing-falls-back.expected.json"
+path = "Snippets/ts-render-missing-falls-back.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "rs-render-worked-example"
+kind = "render"
+input = "render/rs-render-worked-example.md"
+expected = "render/rs-render-worked-example.expected.json"
+path = "Templates/rs-render-worked-example.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-rescan"
+kind = "render"
+input = "render/rs-render-rescan.md"
+expected = "render/rs-render-rescan.expected.json"
+values = "render/rs-render-rescan.values.json"
+path = "Snippets/rs-render-rescan.md"
+origin = "rust"
+deviates_from_ts = "R-11: values never re-scanned"
+
+[[cases]]
+id = "rs-render-path"
+kind = "render"
+input = "render/rs-render-path.md"
+expected = "render/rs-render-path.expected.json"
+path = "Templates/rs-render-path.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-inline-sep"
+kind = "render"
+input = "render/rs-render-inline-sep.md"
+expected = "render/rs-render-inline-sep.expected.json"
+path = "Templates/rs-render-inline-sep.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-block-sep"
+kind = "render"
+input = "render/rs-render-block-sep.md"
+expected = "render/rs-render-block-sep.expected.json"
+path = "Templates/rs-render-block-sep.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-block-nosep"
+kind = "render"
+input = "render/rs-render-block-nosep.md"
+expected = "render/rs-render-block-nosep.expected.json"
+path = "Templates/rs-render-block-nosep.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-block-crlf"
+kind = "render"
+input = "render/rs-render-block-crlf.md"
+expected = "render/rs-render-block-crlf.expected.json"
+path = "Templates/rs-render-block-crlf.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-empty-inline"
+kind = "render"
+input = "render/rs-render-empty-inline.md"
+expected = "render/rs-render-empty-inline.expected.json"
+path = "Templates/rs-render-empty-inline.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-empty-block"
+kind = "render"
+input = "render/rs-render-empty-block.md"
+expected = "render/rs-render-empty-block.expected.json"
+path = "Templates/rs-render-empty-block.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-nested"
+kind = "render"
+input = "render/rs-render-nested.md"
+expected = "render/rs-render-nested.expected.json"
+path = "Templates/rs-render-nested.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-default"
+kind = "render"
+input = "render/rs-render-join-default.md"
+expected = "render/rs-render-join-default.expected.json"
+path = "Templates/rs-render-join-default.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-custom"
+kind = "render"
+input = "render/rs-render-join-custom.md"
+expected = "render/rs-render-join-custom.expected.json"
+path = "Templates/rs-render-join-custom.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-in-loop"
+kind = "render"
+input = "render/rs-render-join-in-loop.md"
+expected = "render/rs-render-join-in-loop.expected.json"
+path = "Templates/rs-render-join-in-loop.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-choice-default"
+kind = "render"
+input = "render/rs-render-choice-default.md"
+expected = "render/rs-render-choice-default.expected.json"
+path = "Templates/rs-render-choice-default.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-choice-client"
+kind = "render"
+input = "render/rs-render-choice-client.md"
+expected = "render/rs-render-choice-client.expected.json"
+values = "render/rs-render-choice-client.values.json"
+path = "Templates/rs-render-choice-client.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-sep-gt-not-a-token"
+kind = "render"
+input = "render/rs-render-sep-gt-not-a-token.md"
+expected = "render/rs-render-sep-gt-not-a-token.expected.json"
+path = "Templates/rs-render-sep-gt-not-a-token.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-unterminated"
+kind = "render"
+input = "render/rs-render-unterminated.md"
+expected = "render/rs-render-unterminated.expected.json"
+path = "Templates/rs-render-unterminated.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-crossing"
+kind = "render"
+input = "render/rs-render-crossing.md"
+expected = "render/rs-render-crossing.expected.json"
+path = "Templates/rs-render-crossing.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-self-nested"
+kind = "render"
+input = "render/rs-render-self-nested.md"
+expected = "render/rs-render-self-nested.expected.json"
+path = "Templates/rs-render-self-nested.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-each-not-list"
+kind = "render"
+input = "render/rs-render-each-not-list.md"
+expected = "render/rs-render-each-not-list.expected.json"
+path = "Templates/rs-render-each-not-list.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-record"
+kind = "render"
+input = "render/rs-render-join-record.md"
+expected = "render/rs-render-join-record.expected.json"
+path = "Templates/rs-render-join-record.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-empty"
+kind = "render"
+input = "render/rs-render-join-empty.md"
+expected = "render/rs-render-join-empty.expected.json"
+path = "Templates/rs-render-join-empty.md"
 origin = "rust"

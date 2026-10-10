@@ -3,17 +3,19 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-10): W2 landed.** The workspace exists: `mda-core` (model, type registry, parse incl.
+> **Status (2026-10-10): W3 landed (MAC-5).** The workspace exists: `mda-core` (model, type registry, parse incl.
 > flags and `<VK-…>` detection, the vks codec reading legacy and YAML bodies and emitting YAML, the `.md`
-> serializer with its re-parse guard, the byte-surgical patcher), `mda-vault` (containment, bounded reads,
+> serializer with its re-parse guard, the byte-surgical patcher, the render engine `render/` with the directive
+> engine and its four expansion limits, `language.rs`, `naming.rs`), `mda-vault` (containment, bounded reads,
 > directory listing, atomic writes with the SHA-256 content hash), `mda-ops` (`system.version`, `system.ops`,
-> `artifact.read` (+ `hash`), `artifact.tree`, `artifact.create|update|patch|delete`), `mda` (CLI incl. `mda call`
-> and `mda artifact show|ls|new|update|patch|rm`, `serve` with `initialize.types`, debug mode), the conformance
-> harness (121 `parse` + 26 `serialize` cases) and the op-case harness (per-leg fixture copies, `expect_files`).
-> Sections marked *(W0)* describe the tree; everything else (render, naming, template indexes, vault config,
-> variables, migration) is the **target**, built by the engine-port plan's W3, W3b and W4–W7
-> (`docs/plans/engine-port/`). W3 = render engine (`render/`), `language.rs`, `naming.rs`,
-> `artifact.render|write_file|prefill`; W3b = `multi_index.rs` + `index.plan|run|create`.
+> `artifact.read` (+ `hash`), `artifact.tree`, `artifact.create|update|patch|delete`,
+> `artifact.render|write_file|prefill`), `mda` (CLI incl. `mda call` and
+> `mda artifact show|ls|new|update|patch|rm|render|write-file|prefill`, `serve` with `initialize.types`, debug
+> mode), the conformance harness (121 `parse` + 26 `serialize` + 40 `render` cases) and the op-case harness
+> (per-leg fixture copies, `expect_files`, per-leg workspace + `expect_workspace_files`).
+> Sections marked *(W0)* describe the tree; everything else (template indexes, vault config, variables,
+> migration) is the **target**, built by the engine-port plan's W3b and W4–W7 (`docs/plans/engine-port/`).
+> W3b = `multi_index.rs` + `index.plan|run|create`.
 ---
 
 ## What this project is
@@ -112,6 +114,7 @@ md-artifacts-cli/
 │   │       ├── registry.rs    # Ctx, OpSpec, dispatch, the typed adapter
 │   │       ├── ops_list.rs    # THE registration list: one line per op
 │   │       ├── error.rs       # OpError { code, params } — the ONLY error shape clients see
+│   │       ├── render.rs · write_file.rs · prefill.rs  # artifact.render / write_file / prefill (W3)
 │   │       └── <group>.rs     # vault · types · artifact · render · index · vars · varsets · migrate · validate
 │   ├── mda/                   # lib + bin: `mda`
 │   │   └── src/

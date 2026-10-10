@@ -1,0 +1,3 @@
+# An unknown request field reaches deny_unknown_fields (prefill needs no vault).
+params = { source = "selection", type = "Snippet", text = "x", nope = 1 }
+expect_error = "op.bad_request"

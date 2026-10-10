@@ -1,0 +1,5 @@
+# The spec §10 worked example through the op: paths, block-mode each with a separator, inline nested
+# each over an empty list, join outside a loop — §9.3 defaults, no client values.
+vault = "vault"
+params = { path = "Templates/users.md" }
+expect = { output = "const users = [\n  { id: 1, name: \"Alice Smith\", tags: [\"core\", \"ops\"] },\n  { id: 2, name: \"Bob Jones\", tags: [] }\n];\n// all tags: core | ops", warnings = [], containsEscape = false }

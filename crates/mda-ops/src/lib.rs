@@ -5,8 +5,11 @@ pub mod artifact;
 pub mod artifact_write;
 pub mod error;
 mod ops_list;
+pub mod prefill;
 pub mod registry;
+pub mod render;
 pub mod system;
+pub mod write_file;
 
 pub use error::OpError;
 pub use mda_core::registry::{ArtifactType, TYPES};

@@ -1,0 +1,3 @@
+# file_no_name
+params = { source = "file", type = "Snippet", text = "x" }
+expect_error = "op.bad_request"

@@ -1,0 +1,13 @@
+{
+  "output": "<VK-host>",
+  "warnings": [
+    {
+      "code": "render.unknown_var",
+      "params": {
+        "line": "1",
+        "name": "VK-host"
+      }
+    }
+  ],
+  "containsEscape": false
+}

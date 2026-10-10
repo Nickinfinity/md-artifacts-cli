@@ -1,0 +1,20 @@
+{
+  "output": "<VK-each:users>[B<VK-end:users>CB<VK-end:users>C]",
+  "warnings": [
+    {
+      "code": "render.unmatched_end",
+      "params": {
+        "line": "1",
+        "path": "VK-users"
+      }
+    },
+    {
+      "code": "render.unterminated",
+      "params": {
+        "line": "1",
+        "path": "VK-users"
+      }
+    }
+  ],
+  "containsEscape": false
+}

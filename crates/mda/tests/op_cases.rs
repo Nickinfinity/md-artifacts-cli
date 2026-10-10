@@ -6,6 +6,12 @@
 //! path → exact bytes, or `false` for absent) is asserted on that copy after the leg: the sink of
 //! every write case (W-13). Hash literals in cases are `shasum -a 256` of fixture bytes; regenerate
 //! them when a fixture file changes.
+//!
+//! Ops that write outside the vault (`artifact.write_file`) get a **per-leg temp workspace** when a
+//! case sets `workspace` (a fixture under `tests/fixtures/` copied in), `expect_workspace_files`, or
+//! writes `$WORKSPACE` in a params string: every `$WORKSPACE` in `params` becomes that dir's path,
+//! and `expect_workspace_files` (workspace-relative paths) is asserted on it after the leg (R-24).
+//! Paths inside `expect` are workspace-relative, so no machine path appears in a case.
 #![allow(
     clippy::panic,
     clippy::expect_used,
@@ -34,6 +40,10 @@ struct Case {
     expect_error: Option<String>,
     #[serde(default)]
     expect_files: BTreeMap<String, FileExpect>,
+    #[serde(default)]
+    workspace: Option<String>,
+    #[serde(default)]
+    expect_workspace_files: BTreeMap<String, FileExpect>,
 }
 
 /// One `expect_files` entry: the file's exact bytes, or `false` (the file must not exist).
@@ -75,10 +85,11 @@ fn load(path: &Path) -> Result<Case, String> {
     if case
         .expect_files
         .values()
+        .chain(case.expect_workspace_files.values())
         .any(|f| matches!(f, FileExpect::Absent(true)))
     {
         return Err(format!(
-            "{}: expect_files takes bytes or false",
+            "{}: expect_files / expect_workspace_files take bytes or false",
             path.display()
         ));
     }
@@ -183,11 +194,16 @@ fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
             common::copy_tree(&fixture(v), &d);
             d
         });
+        let ws = workspace_for(op, name, leg, case);
+        let params = match &ws {
+            Some(w) => subst(&case.params, &w.display().to_string()),
+            None => case.params.clone(),
+        };
         let vault = copy.as_deref();
         let seen = match leg {
-            "dispatch" => leg_dispatch(op, &case.params, vault),
-            "cli" => leg_cli(op, &case.params, vault),
-            _ => leg_serve(op, &case.params, vault),
+            "dispatch" => leg_dispatch(op, &params, vault),
+            "cli" => leg_cli(op, &params, vault),
+            _ => leg_serve(op, &params, vault),
         };
         let ok = match (&case.expect, &case.expect_error) {
             (Some(e), _) => !seen.is_err && seen.body == *e && seen.exit.is_none_or(|x| x == 0),
@@ -205,26 +221,76 @@ fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
                 seen.body, seen.exit, case.expect, case.expect_error
             ));
         }
-        fails.extend(check_files(op, name, leg, case, copy.as_deref()));
-        if let Some(d) = copy {
+        let tag = format!("{op}/{name} [{leg}]");
+        fails.extend(check_files(
+            &tag,
+            "expect_files",
+            &case.expect_files,
+            copy.as_deref(),
+        ));
+        fails.extend(check_files(
+            &tag,
+            "expect_workspace_files",
+            &case.expect_workspace_files,
+            ws.as_deref(),
+        ));
+        for d in [copy, ws].into_iter().flatten() {
             let _ = fs::remove_dir_all(d);
         }
     }
     fails
 }
 
-/// The `expect_files` sink, asserted on the leg's own vault copy.
-fn check_files(op: &str, name: &str, leg: &str, case: &Case, vault: Option<&Path>) -> Vec<String> {
+/// A fresh per-leg workspace dir when the case uses one (seeded from `workspace` if set).
+fn workspace_for(op: &str, name: &str, leg: &str, case: &Case) -> Option<PathBuf> {
+    let wanted = case.workspace.is_some()
+        || !case.expect_workspace_files.is_empty()
+        || case.params.to_string().contains("$WORKSPACE");
+    if !wanted {
+        return None;
+    }
+    let d = std::env::temp_dir().join(format!(
+        "mda-oc-{}-{op}-{name}-{leg}-ws",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&d);
+    match &case.workspace {
+        Some(w) => common::copy_tree(&fixture(w), &d),
+        None => fs::create_dir_all(&d).unwrap(),
+    }
+    Some(d)
+}
+
+/// `v` with `$WORKSPACE` replaced by `ws` in every JSON string, at any depth.
+fn subst(v: &Value, ws: &str) -> Value {
+    match v {
+        Value::String(s) => Value::String(s.replace("$WORKSPACE", ws)),
+        Value::Array(a) => Value::Array(a.iter().map(|x| subst(x, ws)).collect()),
+        Value::Object(m) => {
+            Value::Object(m.iter().map(|(k, x)| (k.clone(), subst(x, ws))).collect())
+        }
+        other => other.clone(),
+    }
+}
+
+/// A file-expectation sink (`label` = which map), asserted on `dir` (the leg's vault copy or
+/// workspace).
+fn check_files(
+    tag: &str,
+    label: &str,
+    map: &BTreeMap<String, FileExpect>,
+    dir: Option<&Path>,
+) -> Vec<String> {
     let mut fails = Vec::new();
-    for (rel, want) in &case.expect_files {
-        let got = vault.and_then(|v| fs::read(v.join(rel)).ok());
+    for (rel, want) in map {
+        let got = dir.and_then(|v| fs::read(v.join(rel)).ok());
         let ok = match want {
             FileExpect::Bytes(b) => got.as_deref() == Some(b.as_bytes()),
             FileExpect::Absent(_) => got.is_none(),
         };
         if !ok {
             fails.push(format!(
-                "{op}/{name} [{leg}]: expect_files {rel}: got {:?}",
+                "{tag}: {label} {rel}: got {:?}",
                 got.map(|g| String::from_utf8_lossy(&g).into_owned())
             ));
         }
@@ -350,4 +416,31 @@ fn expect_files_mismatch_fails_every_leg() {
         assert!(fails.iter().any(|f| f.contains(&tag)), "{leg}: {fails:?}");
     }
     let _ = fs::remove_dir_all(&d);
+}
+
+#[test]
+fn expect_workspace_files_mismatch_fails_every_leg() {
+    let d = tmp("wsfiles");
+    put(
+        &d,
+        "artifact.read",
+        "ws",
+        "vault = \"vault\"\nparams = { path = \"x\" }\nexpect_error = \"artifact.bad_path\"\n\
+         expect_workspace_files = { \"x\" = \"y\" }\n",
+    );
+    let fails = run_dir(&d);
+    for leg in ["dispatch", "cli", "serve"] {
+        let tag = format!("artifact.read/ws [{leg}]: expect_workspace_files x");
+        assert!(fails.iter().any(|f| f.contains(&tag)), "{leg}: {fails:?}");
+    }
+    let _ = fs::remove_dir_all(&d);
+}
+
+#[test]
+fn substitutes_workspace_in_nested_strings() {
+    let v = json!({"a": "$WORKSPACE/x", "b": [{"c": "$WORKSPACE"}], "n": 1});
+    assert_eq!(
+        subst(&v, "/w"),
+        json!({"a": "/w/x", "b": [{"c": "/w"}], "n": 1})
+    );
 }

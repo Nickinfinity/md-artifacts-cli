@@ -1,0 +1,13 @@
+{
+  "output": "<VK-join:db>",
+  "warnings": [
+    {
+      "code": "render.join_record",
+      "params": {
+        "line": "1",
+        "path": "VK-db"
+      }
+    }
+  ],
+  "containsEscape": false
+}

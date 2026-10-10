@@ -1,0 +1,13 @@
+{
+  "output": "a<VK-x></VK-x>b",
+  "warnings": [
+    {
+      "code": "render.unknown_var",
+      "params": {
+        "line": "1",
+        "name": "VK-x"
+      }
+    }
+  ],
+  "containsEscape": false
+}

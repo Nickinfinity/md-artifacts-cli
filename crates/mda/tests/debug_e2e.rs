@@ -188,3 +188,31 @@ fn debug_write_keeps_model_values_out_of_stderr() {
     );
     std::fs::remove_dir_all(d).unwrap();
 }
+
+// L-9: debug never logs variable values.
+#[test]
+fn debug_render_does_not_log_values() {
+    let out = run(
+        &[
+            "--vault",
+            concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/vault"),
+            "--debug",
+            "artifact",
+            "render",
+            "Snippets/hello.md",
+            "--values",
+            "-",
+        ],
+        br#"{"VK-name":"marker-3b9e"}"#,
+    );
+    assert_eq!(out.status.code(), Some(0));
+    let err = String::from_utf8(out.stderr).unwrap();
+    assert!(!err.contains("marker-3b9e"), "{err}");
+    // Not vacuous: the debug logger ran, and the value really rendered.
+    assert!(err.contains("artifact.render"), "{err}");
+    assert!(
+        String::from_utf8(out.stdout)
+            .unwrap()
+            .contains("marker-3b9e")
+    );
+}

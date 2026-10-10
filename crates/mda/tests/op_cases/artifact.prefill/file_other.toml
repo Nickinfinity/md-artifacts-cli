@@ -1,0 +1,3 @@
+# file_other
+params = { source = "file", type = "Snippet", text = "x", fileName = "a.ts", languageId = "typescript" }
+expect = { artifactType = "Snippet", title = "", description = "", tags = [], extension = "", provider = "", model = "", version = "", env = "", target = "", blocks = [{ heading = "", description = "", language = "typescript", code = "x", vars = [] }] }

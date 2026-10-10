@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "AIAgentsConf/reviewer.md", values = { "VK-repo" = "mda" } }
+expect = { output = "You review mda.", warnings = [], containsEscape = false }

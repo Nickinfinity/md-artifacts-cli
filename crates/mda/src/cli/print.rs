@@ -42,6 +42,31 @@ pub fn english(code: &str) -> Option<&'static str> {
         ARTIFACT_UNREPRESENTABLE => "the artifact cannot be written in the file format",
         ARTIFACT_BLOCK_NOT_FOUND => "no block with that index and heading",
         ARTIFACT_NOT_SERIALIZABLE => "this file cannot be rewritten by the engine",
+        RENDER_LIMIT => "rendering exceeds a size limit",
+        RENDER_CONTAINS_ESCAPE => {
+            "rendered output contains an ESC character; use --json to receive it"
+        }
+        NAMING_PATH_INJECTION => "the output file name contains a path separator, \"..\", or NUL",
+        NAMING_EMPTY => "the output file name is empty",
+        NAMING_EDGE_SPACE => "the output file name starts or ends with a space",
+        NAMING_EDGE_DOT => "the output file name ends with a dot",
+        NAMING_ILLEGAL_CHAR => {
+            "the output file name contains an illegal character (\\ / : * ? \" < > |)"
+        }
+        NAMING_CONTROL_CHAR => "the output file name contains a control character",
+        NAMING_RESERVED => "the output file name is a reserved system name",
+        NAMING_TOO_LONG => "the output file name is longer than 255 bytes",
+        ARTIFACT_NOT_WHOLE_FILE => "this artifact type does not write a file",
+        ARTIFACT_MULTI_BLOCK => "a whole-file artifact must have a single block",
+        ARTIFACT_IS_INDEX => "a template index is run, not written",
+        RENDER_UNKNOWN_VAR => "variable has no value; token left as written",
+        RENDER_EACH_NOT_LIST => "each: the value is not a list",
+        RENDER_UNTERMINATED => "each without a matching end",
+        RENDER_UNMATCHED_END => "end without a matching each",
+        RENDER_SELF_NESTED => "each over a list it is already inside",
+        RENDER_NOT_SCALAR => "the token reaches a list or record outside a loop",
+        RENDER_JOIN_RECORD => "join reaches a record",
+        RENDER_JOIN_EMPTY => "join found no values",
         _ => return None,
     })
 }
@@ -49,11 +74,56 @@ pub fn english(code: &str) -> Option<&'static str> {
 /// `<code>: <English>` plus params. Values are Debug-escaped: they can echo client text, and a raw
 /// ESC or newline must not reach the terminal.
 pub fn error_line(e: &OpError) -> String {
-    let mut s = format!("{}: {}", e.code, english(e.code).unwrap_or("unknown error"));
-    for (k, v) in &e.params {
+    coded_line(e.code, e.params.iter())
+}
+
+/// `<code>: <English> k="v" …`, the one shape of errors and warnings.
+fn coded_line<'a>(code: &str, params: impl Iterator<Item = (&'a String, &'a String)>) -> String {
+    let mut s = format!("{code}: {}", english(code).unwrap_or("unknown error"));
+    for (k, v) in params {
         s.push_str(&format!(" {k}={v:?}"));
     }
     s
+}
+
+/// A refusal of a successful response the human CLI will not print (R-2: rendered output holding
+/// ESC); `None` to print it.
+///
+/// # Examples
+///
+/// ```
+/// let _ = mda::cli::print::refuse("system.ops", &serde_json::json!({}));
+/// ```
+pub fn refuse(op: &str, v: &Value) -> Option<OpError> {
+    // ponytail: refuses ESC only; C1 U+009B (single-char CSI) passes — R-25(15); refuse C1 too if a terminal client needs it.
+    // write_file output goes to a file, so only render can reach the terminal.
+    (op == "artifact.render" && v["containsEscape"] == true)
+        .then(|| OpError::new(mda_ops::error::RENDER_CONTAINS_ESCAPE))
+}
+
+/// One stderr line per render warning in a response (Debug-escaped params).
+///
+/// # Examples
+///
+/// ```
+/// let _ = mda::cli::print::warnings(&serde_json::json!({}));
+/// ```
+pub fn warnings(v: &Value) -> Vec<String> {
+    v["warnings"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|w| {
+            let params: std::collections::BTreeMap<String, String> = w["params"]
+                .as_object()
+                .into_iter()
+                .flatten()
+                .map(|(k, x)| (k.clone(), x.as_str().unwrap_or("").to_owned()))
+                .collect();
+            let line = coded_line(w["code"].as_str().unwrap_or("?"), params.iter());
+            format!("warning: {line}")
+        })
+        .collect()
 }
 
 /// Human text for a successful response of `op`; pretty JSON when no printer exists.
@@ -82,7 +152,8 @@ pub fn success(op: &str, v: &Value) -> String {
             .unwrap_or_default(),
         "artifact.read" => show(v),
         "artifact.tree" => ls(v),
-        "artifact.create" | "artifact.update" | "artifact.patch" => {
+        "artifact.render" => v["output"].as_str().unwrap_or("").to_owned(),
+        "artifact.create" | "artifact.update" | "artifact.patch" | "artifact.write_file" => {
             format!("wrote {}  {}", s(v, "path"), s(v, "hash"))
         }
         "artifact.delete" => format!("deleted {}", s(v, "path")),

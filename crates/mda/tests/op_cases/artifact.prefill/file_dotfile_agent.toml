@@ -1,0 +1,3 @@
+# file_dotfile_agent
+params = { source = "file", type = "AIAgentsConfig", text = "x", fileName = ".cursorrules" }
+expect = { artifactType = "AIAgentsConfig", title = "", description = "", tags = [], extension = "", provider = "", model = "", version = "", env = "", target = ".cursorrules", blocks = [{ heading = "", description = "", language = "", code = "x", vars = [] }] }

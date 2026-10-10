@@ -1,7 +1,7 @@
 //! THE registration list: one line per op, sorted by name. Orchestrator-owned.
 
 use crate::registry::{OpSpec, typed};
-use crate::{artifact, artifact_write, system};
+use crate::{artifact, artifact_write, prefill, render, system, write_file};
 
 pub(crate) static OPS: &[OpSpec] = &[
     OpSpec {
@@ -20,9 +20,19 @@ pub(crate) static OPS: &[OpSpec] = &[
         handler: |c, v| typed(c, v, artifact_write::patch),
     },
     OpSpec {
+        name: "artifact.prefill",
+        summary: "Build an artifact model from editor, file or terminal text",
+        handler: |c, v| typed(c, v, prefill::prefill),
+    },
+    OpSpec {
         name: "artifact.read",
         summary: "Parse one artifact file",
         handler: |c, v| typed(c, v, artifact::read),
+    },
+    OpSpec {
+        name: "artifact.render",
+        summary: "Render a block with variable values",
+        handler: |c, v| typed(c, v, render::render),
     },
     OpSpec {
         name: "artifact.tree",
@@ -33,6 +43,11 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "artifact.update",
         summary: "Rewrite an artifact file from a model",
         handler: |c, v| typed(c, v, artifact_write::update),
+    },
+    OpSpec {
+        name: "artifact.write_file",
+        summary: "Render a whole-file artifact into a workspace file",
+        handler: |c, v| typed(c, v, write_file::write_file),
     },
     OpSpec {
         name: "system.ops",

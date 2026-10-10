@@ -22,7 +22,7 @@ use crate::model::ParsedVar;
 /// ```
 pub const TOKEN_PATTERN: &str = r#"<(?:/VK-([A-Za-z][A-Za-z0-9_]*)>|VK-([A-Za-z][A-Za-z0-9_]*)(?:\.[A-Za-z][A-Za-z0-9_]*)*>|VK-(?:each|join):([A-Za-z][A-Za-z0-9_]*)(?:\.[A-Za-z][A-Za-z0-9_]*)*(?::"(?:[^"\\>\r\n]|\\[\\"nt])*")?>|VK-end:([A-Za-z][A-Za-z0-9_]*)(?:\.[A-Za-z][A-Za-z0-9_]*)*>)"#;
 
-static TOKEN_RE: LazyLock<Regex> = LazyLock::new(|| compile(TOKEN_PATTERN));
+pub(crate) static TOKEN_RE: LazyLock<Regex> = LazyLock::new(|| compile(TOKEN_PATTERN));
 
 /// The root `VK-<name>` of every token in `code`, deduped in first-appearance order, each with an
 /// empty default.

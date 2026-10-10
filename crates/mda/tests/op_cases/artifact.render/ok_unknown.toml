@@ -1,0 +1,6 @@
+vault = "vault"
+params = { path = "Snippets/hello.md" }
+[expect]
+output = "echo marker-7f3a <VK-name>"
+containsEscape = false
+warnings = [{ code = "render.unknown_var", params = { line = "1", name = "VK-name" } }]

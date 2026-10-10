@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Templates/esc.md" }
+expect = { output = "printf '\u001b[31mred\u001b[0m'", warnings = [], containsEscape = true }

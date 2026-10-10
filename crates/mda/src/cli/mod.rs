@@ -1,7 +1,7 @@
 //! The command line: one subcommand per op, human output by default, `--json` for the exact
 //! response. Stub landed by H0.0b; T0.4 implements it.
 
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -11,7 +11,10 @@ use serde_json::{Value, json};
 
 use crate::{debug, serve};
 
+mod input;
 pub mod print;
+
+use input::{WriteFileArgs, bad_request, patch_edit, read_input};
 
 /// Global flags and the subcommand.
 #[derive(clap::Parser)]
@@ -116,6 +119,62 @@ pub enum ArtifactCmd {
         #[arg(long = "code-file", group = "edit")]
         code_file: Option<String>,
     },
+    /// Render an artifact (or one block) with variable values.
+    Render {
+        /// Vault-relative path.
+        path: String,
+        /// Block index (as `artifact show` lists them).
+        #[arg(long)]
+        block: Option<usize>,
+        /// Unsaved code to render instead of the stored block (file, or `-` for stdin).
+        #[arg(long = "code-file")]
+        code_file: Option<String>,
+        /// Values as a JSON object (file, or `-` for stdin).
+        #[arg(long)]
+        values: Option<String>,
+    },
+    /// Render a whole-file artifact (Template, AIAgentsConfig) into a workspace folder.
+    #[command(name = "write-file")]
+    WriteFile {
+        /// Vault-relative path.
+        path: String,
+        /// The workspace root (made absolute); every write stays inside it.
+        #[arg(long)]
+        workspace: PathBuf,
+        /// Destination folder, workspace-relative (default: the root).
+        #[arg(long, default_value = "")]
+        dest: String,
+        /// The output file name (default: from the artifact).
+        #[arg(long)]
+        name: Option<String>,
+        /// Block index.
+        #[arg(long)]
+        block: Option<usize>,
+        /// Values as a JSON object (file, or `-` for stdin).
+        #[arg(long)]
+        values: Option<String>,
+        /// Overwrite: the hash of the existing file (from `file.exists`).
+        #[arg(long)]
+        hash: Option<String>,
+    },
+    /// Build an artifact model from editor, file or terminal text.
+    Prefill {
+        /// `selection`, `file` or `terminal`.
+        #[arg(long)]
+        source: String,
+        /// The artifact type, exact spelling.
+        #[arg(long = "type")]
+        artifact_type: String,
+        /// The source text (file, or `-` for stdin).
+        #[arg(long = "text-file")]
+        text_file: String,
+        /// The editor language id.
+        #[arg(long = "language-id")]
+        language_id: Option<String>,
+        /// The source file name (`file` source).
+        #[arg(long = "file-name")]
+        file_name: Option<String>,
+    },
     /// Delete an artifact file, when its hash is `--hash`.
     #[command(name = "rm", alias = "delete")]
     Delete {
@@ -167,13 +226,15 @@ pub fn run() -> ExitCode {
     };
     // Every subcommand goes through dispatch only: one code path, one dispatch log line.
     match params.and_then(|p| mda_ops::dispatch(&ctx, &op, p)) {
+        Ok(v) if cli.json => emit(&v.to_string()),
         Ok(v) => {
-            let text = if cli.json {
-                v.to_string()
-            } else {
-                print::success(&op, &v)
-            };
-            emit(&text)
+            if let Some(e) = print::refuse(&op, &v) {
+                return fail(&e, false);
+            }
+            for w in print::warnings(&v) {
+                let _ = writeln!(std::io::stderr().lock(), "{w}");
+            }
+            emit(&print::success(&op, &v))
         }
         Err(e) => fail(&e, cli.json),
     }
@@ -241,51 +302,61 @@ fn artifact_request(cmd: ArtifactCmd) -> (String, Result<Value, OpError>) {
             "artifact.tree".to_owned(),
             Ok(json!({ "type": artifact_type, "dir": dir })),
         ),
+        cmd => w3_request(cmd),
     }
 }
 
-/// The `edit` object of an `artifact.patch` request (clap guarantees exactly one edit kind).
-fn patch_edit(
-    title: Option<String>,
-    description: Option<String>,
-    block: Option<usize>,
-    heading: Option<String>,
-    code_file: Option<String>,
-) -> Result<Value, OpError> {
-    if let Some(v) = title {
-        return Ok(json!({ "field": "title", "value": v }));
+/// The W3 subcommands (render, write-file, prefill); kept apart so `artifact_request` stays short.
+fn w3_request(cmd: ArtifactCmd) -> (String, Result<Value, OpError>) {
+    match cmd {
+        ArtifactCmd::Render {
+            path,
+            block,
+            code_file,
+            values,
+        } => (
+            "artifact.render".to_owned(),
+            input::render_params(path, block, code_file, values),
+        ),
+        ArtifactCmd::WriteFile {
+            path,
+            workspace,
+            dest,
+            name,
+            block,
+            values,
+            hash,
+        } => {
+            let args = WriteFileArgs {
+                path,
+                workspace,
+                dest,
+                name,
+                block,
+                values,
+                hash,
+            };
+            (
+                "artifact.write_file".to_owned(),
+                input::write_file_params(args),
+            )
+        }
+        ArtifactCmd::Prefill {
+            source,
+            artifact_type,
+            text_file,
+            language_id,
+            file_name,
+        } => (
+            "artifact.prefill".to_owned(),
+            input::prefill_params(source, artifact_type, &text_file, language_id, file_name),
+        ),
+        // Every other subcommand is handled by `artifact_request` before reaching here.
+        _ => (
+            "artifact.read".to_owned(),
+            Err(bad_request("unreachable subcommand")),
+        ),
     }
-    if let Some(v) = description {
-        return Ok(json!({ "field": "description", "value": v }));
-    }
-    let code = read_input(code_file.as_deref().unwrap_or("-"))?;
-    Ok(match (block, heading) {
-        (Some(b), Some(h)) => json!({ "field": "code", "block": b, "heading": h, "code": code }),
-        _ => json!({ "field": "code", "code": code }),
-    })
-}
-
-/// Client-side input (`-` = stdin, else a file), capped at the protocol frame size. Not vault I/O:
-/// no `--vault` containment applies to a file the user names on their own command line.
-fn read_input(p: &str) -> Result<String, OpError> {
-    // ponytail: `--model <FIFO>` blocks until a writer appears (the user's own argument); check
-    // metadata first if a client ever passes untrusted paths here.
-    let cap = serve::MAX_LINE_BYTES as u64;
-    let mut buf = Vec::new();
-    let res = if p == "-" {
-        std::io::stdin().lock().take(cap + 1).read_to_end(&mut buf)
-    } else {
-        std::fs::File::open(p).and_then(|f| f.take(cap + 1).read_to_end(&mut buf))
-    };
-    res.map_err(|e| bad_request(&format!("cannot read input: {}", e.kind())))?;
-    if buf.len() as u64 > cap {
-        return Err(bad_request("input too large"));
-    }
-    String::from_utf8(buf).map_err(|_| bad_request("input is not UTF-8"))
-}
-
-fn bad_request(reason: &str) -> OpError {
-    OpError::new(mda_ops::error::OP_BAD_REQUEST).with("reason", reason)
 }
 
 /// Write one block to stdout; a broken pipe is an I/O failure.

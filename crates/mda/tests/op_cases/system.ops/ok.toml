@@ -11,8 +11,16 @@ name = "artifact.patch"
 summary = "Edit a title, description or block code in place"
 
 [[expect.ops]]
+name = "artifact.prefill"
+summary = "Build an artifact model from editor, file or terminal text"
+
+[[expect.ops]]
 name = "artifact.read"
 summary = "Parse one artifact file"
+
+[[expect.ops]]
+name = "artifact.render"
+summary = "Render a block with variable values"
 
 [[expect.ops]]
 name = "artifact.tree"
@@ -21,6 +29,10 @@ summary = "List one level of a type directory"
 [[expect.ops]]
 name = "artifact.update"
 summary = "Rewrite an artifact file from a model"
+
+[[expect.ops]]
+name = "artifact.write_file"
+summary = "Render a whole-file artifact into a workspace file"
 
 [[expect.ops]]
 name = "system.ops"

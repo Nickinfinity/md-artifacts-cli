@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Snippets/hello.md", values = { "VK-name" = "\u001b" } }
+expect_error = "vks.control_char"

@@ -1,0 +1,5 @@
+vault = "vault"
+workspace = "workspace"
+params = { path = "Templates/component.md", workspaceRoot = "$WORKSPACE", destDir = "out" }
+expect_error = "file.exists"
+expect_workspace_files = { "out/Button.tsx" = "old\n" }

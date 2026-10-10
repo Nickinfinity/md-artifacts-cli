@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/component.md", workspaceRoot = "$WORKSPACE", destDir = "", values = { VK-name = "a\u0001b" } }
+expect_error = "vks.control_char"
+expect_workspace_files = { "Button.tsx" = false }

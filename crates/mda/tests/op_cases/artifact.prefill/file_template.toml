@@ -1,0 +1,3 @@
+# file_template
+params = { source = "file", type = "Template", text = "x", fileName = "Button.tsx", languageId = "typescriptreact" }
+expect = { artifactType = "Template", title = "", description = "", tags = [], extension = "tsx", provider = "", model = "", version = "", env = "", target = "", blocks = [{ heading = "", description = "", language = "tsx", code = "x", vars = [] }] }

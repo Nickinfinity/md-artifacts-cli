@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/component.md", workspaceRoot = "$WORKSPACE", destDir = "", fileName = "CON.txt" }
+expect_error = "naming.reserved"
+expect_workspace_files = { "out" = false, "x" = false, "Btn" = false, "CON.txt" = false }

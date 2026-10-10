@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "AIAgentsConf/multi.md", workspaceRoot = "$WORKSPACE", destDir = "" }
+expect_error = "artifact.multi_block"
+expect_workspace_files = { "out" = false, "x" = false, "Btn" = false, "CON.txt" = false }
