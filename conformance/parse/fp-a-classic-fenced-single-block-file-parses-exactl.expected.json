@@ -1,0 +1,17 @@
+{
+  "blocks": [],
+  "code": "const x = <VK-name>;",
+  "fileName": "x",
+  "filePath": "Snippets/x.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "javascript"
+  },
+  "relativePath": "x.md",
+  "vars": [
+    {
+      "defaultValue": "hi",
+      "name": "VK-name"
+    }
+  ]
+}

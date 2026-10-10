@@ -1,0 +1,38 @@
+{
+  "blocks": [
+    {
+      "code": "VK-host=localhost\nVK-port=3000",
+      "description": "",
+      "fenceLang": "vks",
+      "heading": "Local Dev",
+      "vars": [
+        {
+          "defaultValue": "localhost",
+          "name": "VK-host"
+        },
+        {
+          "defaultValue": "3000",
+          "name": "VK-port"
+        }
+      ]
+    }
+  ],
+  "code": "VK-host=localhost\nVK-port=3000",
+  "fileName": "pb-vks-fence-parses-key-value-pairs-into-block-vars",
+  "filePath": "Variables/pb-vks-fence-parses-key-value-pairs-into-block-vars.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "pb-vks-fence-parses-key-value-pairs-into-block-vars.md",
+  "vars": [
+    {
+      "defaultValue": "localhost",
+      "name": "VK-host"
+    },
+    {
+      "defaultValue": "3000",
+      "name": "VK-port"
+    }
+  ]
+}

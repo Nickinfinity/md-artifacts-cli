@@ -1,0 +1,13 @@
+{
+  "blocks": [],
+  "code": "1. [[dir_2/subdir1/Button]]\n2. [T](dir_2/subdir1/Button.test.md)\n3. [[../escape]]\n4. [[dir_1/barrel]]",
+  "fileName": "index",
+  "filePath": "Templates/multi-index/index.md",
+  "frontmatter": {
+    "artifactType": "Template",
+    "index": true,
+    "language": "markdown"
+  },
+  "relativePath": "multi-index/index.md",
+  "vars": []
+}

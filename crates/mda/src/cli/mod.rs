@@ -7,7 +7,7 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use mda_ops::{Ctx, OpError, Root};
-use serde_json::json;
+use serde_json::{Value, json};
 
 use crate::{debug, serve};
 
@@ -39,6 +39,9 @@ pub struct Cli {
 pub enum Command {
     /// Serve JSON-RPC 2.0 over stdio, one JSON object per line.
     Serve,
+    /// Read and list artifacts.
+    #[command(subcommand)]
+    Artifact(ArtifactCmd),
     /// Engine information.
     #[command(subcommand)]
     System(SystemCmd),
@@ -48,6 +51,26 @@ pub enum Command {
         op: String,
         /// JSON params.
         params: Option<String>,
+    },
+}
+
+/// `mda artifact …`
+#[derive(clap::Subcommand)]
+pub enum ArtifactCmd {
+    /// Parse one artifact file.
+    #[command(name = "show", alias = "read")]
+    Read {
+        /// Vault-relative path, `<TypeDir>/<rel>.md`.
+        path: String,
+    },
+    /// List one level of a type directory.
+    #[command(name = "ls", alias = "tree")]
+    Tree {
+        /// The artifact type, exact spelling (`Snippet`, `AIPrompt`, …).
+        #[arg(value_name = "TYPE")]
+        artifact_type: String,
+        /// A sub-directory of the type directory.
+        dir: Option<String>,
     },
 }
 
@@ -83,24 +106,11 @@ pub fn run() -> ExitCode {
         Err(e) => return fail(&OpError::from(e), cli.json),
     };
     let ctx = Ctx::new(root);
-    let (op, params) = match cli.command {
-        Command::Serve => {
-            return match serve::run(&ctx, std::io::stdin().lock(), std::io::stdout().lock()) {
-                Ok(()) => ExitCode::SUCCESS,
-                Err(_) => ExitCode::from(3),
-            };
-        }
-        Command::System(SystemCmd::Version) => ("system.version".to_owned(), Ok(json!({}))),
-        Command::System(SystemCmd::Ops) => ("system.ops".to_owned(), Ok(json!({}))),
-        Command::Call { op, params } => {
-            let p = match params {
-                None => Ok(json!({})),
-                Some(s) => serde_json::from_str(&s).map_err(|e| {
-                    OpError::new(mda_ops::error::OP_BAD_REQUEST).with("reason", e.to_string())
-                }),
-            };
-            (op, p)
-        }
+    let Some((op, params)) = request(cli.command) else {
+        return match serve::run(&ctx, std::io::stdin().lock(), std::io::stdout().lock()) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(_) => ExitCode::from(3),
+        };
     };
     // Every subcommand goes through dispatch only: one code path, one dispatch log line.
     match params.and_then(|p| mda_ops::dispatch(&ctx, &op, p)) {
@@ -114,6 +124,32 @@ pub fn run() -> ExitCode {
         }
         Err(e) => fail(&e, cli.json),
     }
+}
+
+/// The op and params a subcommand stands for; `None` for `serve`.
+fn request(cmd: Command) -> Option<(String, Result<Value, OpError>)> {
+    let (op, params) = match cmd {
+        Command::Serve => return None,
+        Command::Artifact(ArtifactCmd::Read { path }) => {
+            ("artifact.read".to_owned(), Ok(json!({ "path": path })))
+        }
+        Command::Artifact(ArtifactCmd::Tree { artifact_type, dir }) => (
+            "artifact.tree".to_owned(),
+            Ok(json!({ "type": artifact_type, "dir": dir })),
+        ),
+        Command::System(SystemCmd::Version) => ("system.version".to_owned(), Ok(json!({}))),
+        Command::System(SystemCmd::Ops) => ("system.ops".to_owned(), Ok(json!({}))),
+        Command::Call { op, params } => {
+            let p = match params {
+                None => Ok(json!({})),
+                Some(s) => serde_json::from_str(&s).map_err(|e| {
+                    OpError::new(mda_ops::error::OP_BAD_REQUEST).with("reason", e.to_string())
+                }),
+            };
+            (op, p)
+        }
+    };
+    Some((op, params))
 }
 
 /// Write one block to stdout; a broken pipe is an I/O failure.

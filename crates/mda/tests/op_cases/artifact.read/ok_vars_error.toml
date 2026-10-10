@@ -1,0 +1,14 @@
+vault = "vault"
+params = { path = "Snippets/bad-vars.md" }
+[expect]
+filePath = "Snippets/bad-vars.md"
+fileName = "bad-vars"
+relativePath = "bad-vars.md"
+code = "echo <VK-a>"
+vars = []
+blocks = []
+varsError = { code = "vks.inline_comment", params = { line = "1" } }
+[expect.frontmatter]
+artifactType = "Snippet"
+title = "Bad vars"
+language = "bash"

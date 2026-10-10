@@ -1,0 +1,26 @@
+{
+  "blocks": [],
+  "code": "VK-api_key=abc123\nVK-region=us-east-1",
+  "fileName": "single-subset",
+  "filePath": "Variables/vars-edit/single-subset.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "description": "A single, heading-less variable set",
+    "language": "vks",
+    "tags": [
+      "solo"
+    ],
+    "title": "Solo"
+  },
+  "relativePath": "vars-edit/single-subset.md",
+  "vars": [
+    {
+      "defaultValue": "abc123",
+      "name": "VK-api_key"
+    },
+    {
+      "defaultValue": "us-east-1",
+      "name": "VK-region"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "blocks": [
+    {
+      "code": "VK-host=localhost",
+      "description": "",
+      "fenceLang": "vks",
+      "heading": "Dev",
+      "vars": [
+        {
+          "defaultValue": "localhost",
+          "name": "VK-host"
+        }
+      ]
+    },
+    {
+      "code": "VK-host=prod.example.com",
+      "description": "",
+      "fenceLang": "vks",
+      "heading": "Prod",
+      "vars": [
+        {
+          "defaultValue": "prod.example.com",
+          "name": "VK-host"
+        }
+      ]
+    }
+  ],
+  "code": "VK-host=localhost",
+  "fileName": "pb-multi-block-variable-file-each-vks-fence-yields",
+  "filePath": "Variables/pb-multi-block-variable-file-each-vks-fence-yields.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "pb-multi-block-variable-file-each-vks-fence-yields.md",
+  "vars": [
+    {
+      "defaultValue": "localhost",
+      "name": "VK-host"
+    }
+  ]
+}

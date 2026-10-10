@@ -5,8 +5,10 @@
 
 mod contain;
 pub mod error;
+mod listing;
 mod read;
 
 pub use contain::{Root, contain};
 pub use error::VaultError;
+pub use listing::{DirListing, list_dir};
 pub use read::read_bounded;

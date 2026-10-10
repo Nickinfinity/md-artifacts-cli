@@ -1,0 +1,48 @@
+{
+  "blocks": [],
+  "code": "VK-env:\n  - dev\n  - prod\nVK-users:\n  - id: 1\n    name: Alice Smith\n    tags:\n      - core\n      - ops\n  - id: 2\n    name: Bob Jones\n    tags: []\nVK-db:\n  host: localhost\n  port: \"5432\"",
+  "fileName": "rs-yaml-spec-example",
+  "filePath": "Variables/rs-yaml-spec-example.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-yaml-spec-example.md",
+  "vars": [
+    {
+      "defaultValue": "dev",
+      "name": "VK-env",
+      "value": [
+        "dev",
+        "prod"
+      ]
+    },
+    {
+      "defaultValue": "",
+      "name": "VK-users",
+      "value": [
+        {
+          "id": "1",
+          "name": "Alice Smith",
+          "tags": [
+            "core",
+            "ops"
+          ]
+        },
+        {
+          "id": "2",
+          "name": "Bob Jones",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "defaultValue": "",
+      "name": "VK-db",
+      "value": {
+        "host": "localhost",
+        "port": "5432"
+      }
+    }
+  ]
+}

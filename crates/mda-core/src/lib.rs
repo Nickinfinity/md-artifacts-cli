@@ -2,3 +2,9 @@
 //!
 //! This crate performs no I/O: no filesystem, no process, no clock, no environment, no stdout.
 //! Every client reaches it through `mda-ops`.
+
+pub mod error;
+pub mod model;
+pub mod parse;
+pub mod registry;
+pub mod vks;

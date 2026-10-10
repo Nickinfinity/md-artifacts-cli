@@ -1,0 +1,25 @@
+{
+  "blocks": [],
+  "code": "VK-a: |\n  line1\n  # kept\n\nVK-b: |-\n  x\nVK-c: |",
+  "fileName": "rs-yaml-block-scalars",
+  "filePath": "Variables/rs-yaml-block-scalars.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-yaml-block-scalars.md",
+  "vars": [
+    {
+      "defaultValue": "line1\n# kept\n",
+      "name": "VK-a"
+    },
+    {
+      "defaultValue": "x",
+      "name": "VK-b"
+    },
+    {
+      "defaultValue": "",
+      "name": "VK-c"
+    }
+  ]
+}

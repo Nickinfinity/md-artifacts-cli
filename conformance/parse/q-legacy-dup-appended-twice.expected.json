@@ -1,0 +1,42 @@
+{
+  "blocks": [
+    {
+      "code": "echo <VK-a>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "H",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-a"
+        },
+        {
+          "defaultValue": "1",
+          "name": "VK-b"
+        },
+        {
+          "defaultValue": "2",
+          "name": "VK-b"
+        }
+      ]
+    }
+  ],
+  "code": "echo <VK-a>",
+  "fileName": "q-legacy-dup",
+  "filePath": "Snippets/q-legacy-dup.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "q-legacy-dup.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-b"
+    },
+    {
+      "defaultValue": "2",
+      "name": "VK-b"
+    }
+  ]
+}

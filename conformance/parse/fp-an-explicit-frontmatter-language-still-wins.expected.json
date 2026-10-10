@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "key: value",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "yaml"
+  },
+  "relativePath": "reviewer.md",
+  "vars": []
+}

@@ -14,7 +14,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use mda_ops::error::{ALL_CODES, OpError};
-use mda_ops::{Ctx, dispatch, ops};
+use mda_ops::{Ctx, Root, dispatch, ops};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
@@ -23,7 +23,6 @@ use serde_json::{Value, json};
 struct Case {
     #[serde(default = "empty")]
     params: Value,
-    #[allow(dead_code)] // reason: schema field, fixture vaults arrive after W0
     vault: Option<String>,
     expect: Option<Value>,
     expect_error: Option<String>,
@@ -31,6 +30,13 @@ struct Case {
 
 fn empty() -> Value {
     json!({})
+}
+
+/// A fixture vault under `tests/fixtures/`.
+fn fixture(v: &str) -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures")
+        .join(v)
 }
 
 fn real_dir() -> PathBuf {
@@ -66,8 +72,9 @@ struct Seen {
     exit: Option<i32>,
 }
 
-fn leg_dispatch(op: &str, params: &Value) -> Seen {
-    match dispatch(&Ctx::new(None), op, params.clone()) {
+fn leg_dispatch(op: &str, params: &Value, vault: Option<&str>) -> Seen {
+    let ctx = Ctx::new(vault.map(|v| Root::new(&fixture(v)).unwrap()));
+    match dispatch(&ctx, op, params.clone()) {
         Ok(body) => Seen {
             body,
             is_err: false,
@@ -81,8 +88,23 @@ fn leg_dispatch(op: &str, params: &Value) -> Seen {
     }
 }
 
-fn leg_cli(op: &str, params: &Value) -> Seen {
-    let out = common::run(&["call", op, &params.to_string(), "--json"], b"");
+/// `--vault <abs>` for a case with a fixture vault, nothing otherwise.
+fn vault_args(vault: Option<&str>) -> Vec<String> {
+    vault
+        .map(|v| vec!["--vault".to_owned(), fixture(v).display().to_string()])
+        .unwrap_or_default()
+}
+
+fn leg_cli(op: &str, params: &Value, vault: Option<&str>) -> Seen {
+    let mut args = vault_args(vault);
+    args.extend([
+        "call".to_owned(),
+        op.to_owned(),
+        params.to_string(),
+        "--json".to_owned(),
+    ]);
+    let args: Vec<&str> = args.iter().map(String::as_str).collect();
+    let out = common::run(&args, b"");
     let exit = out.status.code();
     let body = common::json_lines(&out.stdout)
         .into_iter()
@@ -95,10 +117,12 @@ fn leg_cli(op: &str, params: &Value) -> Seen {
     }
 }
 
-fn leg_serve(op: &str, params: &Value) -> Seen {
+fn leg_serve(op: &str, params: &Value, vault: Option<&str>) -> Seen {
     let init = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.0"}}"#;
     let req = json!({"jsonrpc":"2.0","id":2,"method":op,"params":params}).to_string();
-    let out = common::serve_session(&[init, &req]);
+    let args = vault_args(vault);
+    let args: Vec<&str> = args.iter().map(String::as_str).collect();
+    let out = common::serve_session(&args, &[init, &req]);
     let lines = common::json_lines(&out.stdout);
     let res = lines.get(1).cloned().unwrap_or(Value::Null);
     match res.get("error") {
@@ -124,10 +148,11 @@ fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
         let code = ALL_CODES.iter().find(|a| **a == c);
         code.map_or(-1, |c| i32::from(mda::cli::exit_code(&OpError::new(c))))
     });
+    let vault = case.vault.as_deref();
     let legs: [(&str, Seen); 3] = [
-        ("dispatch", leg_dispatch(op, &case.params)),
-        ("cli", leg_cli(op, &case.params)),
-        ("serve", leg_serve(op, &case.params)),
+        ("dispatch", leg_dispatch(op, &case.params, vault)),
+        ("cli", leg_cli(op, &case.params, vault)),
+        ("serve", leg_serve(op, &case.params, vault)),
     ];
     let mut fails = Vec::new();
     for (leg, seen) in legs {

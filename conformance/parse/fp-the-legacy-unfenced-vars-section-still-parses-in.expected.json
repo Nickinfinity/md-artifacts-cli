@@ -1,0 +1,17 @@
+{
+  "blocks": [],
+  "code": "x = <VK-a>;",
+  "fileName": "x",
+  "filePath": "Snippets/x.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "js"
+  },
+  "relativePath": "x.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-a"
+    }
+  ]
+}

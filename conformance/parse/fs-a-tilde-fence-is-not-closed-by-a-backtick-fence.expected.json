@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "~~~\n```\n%%oa:end%%\n~~~\ntail",
+  "fileName": "fs-a-tilde-fence-is-not-closed-by-a-backtick-fence",
+  "filePath": "AIPrompts/fs-a-tilde-fence-is-not-closed-by-a-backtick-fence.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-a-tilde-fence-is-not-closed-by-a-backtick-fence.md",
+  "vars": []
+}

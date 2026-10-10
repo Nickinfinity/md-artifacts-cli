@@ -1,0 +1,13 @@
+vault = "vault"
+params = { path = "Variables/structured.md" }
+[expect]
+filePath = "Variables/structured.md"
+fileName = "structured"
+relativePath = "structured.md"
+code = "VK-db:\n  zeta: z\n  alpha: a"
+blocks = []
+vars = [{ name = "VK-db", defaultValue = "", value = { zeta = "z", alpha = "a" } }]
+[expect.frontmatter]
+artifactType = "Variables"
+title = "Structured"
+language = "vks"

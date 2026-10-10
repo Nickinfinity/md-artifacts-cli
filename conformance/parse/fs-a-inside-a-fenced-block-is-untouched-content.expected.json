@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "```md\n***\nstyled\n***\n```",
+  "fileName": "fs-a-inside-a-fenced-block-is-untouched-content",
+  "filePath": "AIPrompts/fs-a-inside-a-fenced-block-is-untouched-content.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-a-inside-a-fenced-block-is-untouched-content.md",
+  "vars": []
+}

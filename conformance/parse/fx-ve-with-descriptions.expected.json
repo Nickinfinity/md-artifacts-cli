@@ -1,0 +1,170 @@
+{
+  "blocks": [
+    {
+      "code": "VK-array=users\nVK-result=activeUsers\nVK-property=status\nVK-value=\"active\"",
+      "description": "Active users keyed by `status`; works for filter, find, map, group and dedupe.",
+      "fenceLang": "vks",
+      "heading": "Users",
+      "vars": [
+        {
+          "defaultValue": "users",
+          "name": "VK-array"
+        },
+        {
+          "defaultValue": "activeUsers",
+          "name": "VK-result"
+        },
+        {
+          "defaultValue": "status",
+          "name": "VK-property"
+        },
+        {
+          "defaultValue": "\"active\"",
+          "name": "VK-value"
+        }
+      ]
+    },
+    {
+      "code": "VK-array=products\nVK-result=stationery\nVK-property=category\nVK-value=\"stationery\"",
+      "description": "A product catalogue grouped or filtered by `category`.",
+      "fenceLang": "vks",
+      "heading": "Products",
+      "vars": [
+        {
+          "defaultValue": "products",
+          "name": "VK-array"
+        },
+        {
+          "defaultValue": "stationery",
+          "name": "VK-result"
+        },
+        {
+          "defaultValue": "category",
+          "name": "VK-property"
+        },
+        {
+          "defaultValue": "\"stationery\"",
+          "name": "VK-value"
+        }
+      ]
+    },
+    {
+      "code": "VK-array=orders\nVK-result=revenue\nVK-property=total\nVK-value=100",
+      "description": "Orders summed or sorted by their numeric `total`.",
+      "fenceLang": "vks",
+      "heading": "Orders",
+      "vars": [
+        {
+          "defaultValue": "orders",
+          "name": "VK-array"
+        },
+        {
+          "defaultValue": "revenue",
+          "name": "VK-result"
+        },
+        {
+          "defaultValue": "total",
+          "name": "VK-property"
+        },
+        {
+          "defaultValue": "100",
+          "name": "VK-value"
+        }
+      ]
+    },
+    {
+      "code": "VK-array=tasks\nVK-result=urgentTasks\nVK-property=priority\nVK-value=\"high\"",
+      "description": "A to-do list filtered by `priority`.",
+      "fenceLang": "vks",
+      "heading": "Tasks",
+      "vars": [
+        {
+          "defaultValue": "tasks",
+          "name": "VK-array"
+        },
+        {
+          "defaultValue": "urgentTasks",
+          "name": "VK-result"
+        },
+        {
+          "defaultValue": "priority",
+          "name": "VK-property"
+        },
+        {
+          "defaultValue": "\"high\"",
+          "name": "VK-value"
+        }
+      ]
+    },
+    {
+      "code": "VK-array=response.data\nVK-result=pages\nVK-size=25",
+      "description": "Chunk an API response into pages of 25.",
+      "fenceLang": "vks",
+      "heading": "API page",
+      "vars": [
+        {
+          "defaultValue": "response.data",
+          "name": "VK-array"
+        },
+        {
+          "defaultValue": "pages",
+          "name": "VK-result"
+        },
+        {
+          "defaultValue": "25",
+          "name": "VK-size"
+        }
+      ]
+    },
+    {
+      "code": "VK-array=tags\nVK-result=uniqueTags",
+      "description": "A flat array of strings — for Deduplicate primitives and Flatten one level.",
+      "fenceLang": "vks",
+      "heading": "Tags",
+      "vars": [
+        {
+          "defaultValue": "tags",
+          "name": "VK-array"
+        },
+        {
+          "defaultValue": "uniqueTags",
+          "name": "VK-result"
+        }
+      ]
+    }
+  ],
+  "code": "VK-array=users\nVK-result=activeUsers\nVK-property=status\nVK-value=\"active\"",
+  "fileName": "with-descriptions",
+  "filePath": "Variables/vars-edit/with-descriptions.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "description": "Real-world collections for the JavaScript Array Utilities snippet — each sub-set names the array, the field to work on, a sample value and the result variable",
+    "language": "vks",
+    "tags": [
+      "javascript",
+      "array",
+      "utils",
+      "collections"
+    ],
+    "title": "JavaScript Array Domains"
+  },
+  "relativePath": "vars-edit/with-descriptions.md",
+  "vars": [
+    {
+      "defaultValue": "users",
+      "name": "VK-array"
+    },
+    {
+      "defaultValue": "activeUsers",
+      "name": "VK-result"
+    },
+    {
+      "defaultValue": "status",
+      "name": "VK-property"
+    },
+    {
+      "defaultValue": "\"active\"",
+      "name": "VK-value"
+    }
+  ]
+}

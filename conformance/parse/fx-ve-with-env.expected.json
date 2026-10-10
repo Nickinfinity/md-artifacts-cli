@@ -1,0 +1,61 @@
+{
+  "blocks": [
+    {
+      "code": "VK-host=localhost\nVK-port=3000",
+      "description": "",
+      "fenceLang": "vks",
+      "heading": "Dev",
+      "vars": [
+        {
+          "defaultValue": "localhost",
+          "name": "VK-host"
+        },
+        {
+          "defaultValue": "3000",
+          "name": "VK-port"
+        }
+      ]
+    },
+    {
+      "code": "VK-host=prod.example.com\nVK-port=443",
+      "description": "",
+      "fenceLang": "vks",
+      "heading": "Prod",
+      "vars": [
+        {
+          "defaultValue": "prod.example.com",
+          "name": "VK-host"
+        },
+        {
+          "defaultValue": "443",
+          "name": "VK-port"
+        }
+      ]
+    }
+  ],
+  "code": "VK-host=localhost\nVK-port=3000",
+  "fileName": "with-env",
+  "filePath": "Variables/vars-edit/with-env.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "description": "Per-environment settings",
+    "env": "staging",
+    "language": "vks",
+    "tags": [
+      "api",
+      "dev"
+    ],
+    "title": "Bundles"
+  },
+  "relativePath": "vars-edit/with-env.md",
+  "vars": [
+    {
+      "defaultValue": "localhost",
+      "name": "VK-host"
+    },
+    {
+      "defaultValue": "3000",
+      "name": "VK-port"
+    }
+  ]
+}

@@ -124,3 +124,30 @@ fn params_secret_never_logged_at_debug() {
         "{log:?}"
     );
 }
+
+#[test]
+fn debug_show_keeps_values_out_of_stderr() {
+    let vault = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/vault");
+    let out = run(
+        &[
+            "--vault",
+            vault,
+            "--debug",
+            "artifact",
+            "show",
+            "Snippets/hello.md",
+        ],
+        b"",
+    );
+    assert_eq!(out.status.code(), Some(0));
+    assert!(
+        String::from_utf8(out.stdout)
+            .unwrap()
+            .contains("marker-7f3a")
+    );
+    assert!(
+        !String::from_utf8(out.stderr)
+            .unwrap()
+            .contains("marker-7f3a")
+    );
+}

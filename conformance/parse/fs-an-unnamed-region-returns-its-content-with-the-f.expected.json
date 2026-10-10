@@ -1,0 +1,17 @@
+{
+  "blocks": [],
+  "code": "Review <VK-file>.",
+  "fileName": "fs-an-unnamed-region-returns-its-content-with-the-f",
+  "filePath": "AIPrompts/fs-an-unnamed-region-returns-its-content-with-the-f.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-an-unnamed-region-returns-its-content-with-the-f.md",
+  "vars": [
+    {
+      "defaultValue": "",
+      "name": "VK-file"
+    }
+  ]
+}

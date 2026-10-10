@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "ls",
+  "fileName": "q-empty-frontmatter",
+  "filePath": "Snippets/q-empty-frontmatter.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "q-empty-frontmatter.md",
+  "vars": []
+}

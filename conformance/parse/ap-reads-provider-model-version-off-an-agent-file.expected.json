@@ -1,0 +1,16 @@
+{
+  "blocks": [],
+  "code": "You are a reviewer.",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "md",
+    "model": "Opus",
+    "provider": "Claude",
+    "title": "Code reviewer",
+    "version": "4.8"
+  },
+  "relativePath": "reviewer.md",
+  "vars": []
+}

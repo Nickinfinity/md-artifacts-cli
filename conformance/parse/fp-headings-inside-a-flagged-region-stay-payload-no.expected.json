@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "## Style\n```md\nbe terse\n```\n## Scope\n```md\nsrc only\n```",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "markdown"
+  },
+  "relativePath": "reviewer.md",
+  "vars": []
+}

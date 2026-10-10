@@ -1,0 +1,13 @@
+{
+  "blocks": [],
+  "code": "hi",
+  "fileName": "bare",
+  "filePath": "AIAgentsConf/bare.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "md",
+    "title": "Bare"
+  },
+  "relativePath": "bare.md",
+  "vars": []
+}

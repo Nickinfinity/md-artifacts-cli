@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "ls",
+  "fileName": "q-type-key",
+  "filePath": "Commands/q-type-key.md",
+  "frontmatter": {
+    "artifactType": "Command",
+    "language": "bash"
+  },
+  "relativePath": "q-type-key.md",
+  "vars": []
+}

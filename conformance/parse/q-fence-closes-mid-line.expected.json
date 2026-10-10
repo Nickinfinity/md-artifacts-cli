@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "echo",
+  "fileName": "q-fence-mid-line",
+  "filePath": "Snippets/q-fence-mid-line.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "q-fence-mid-line.md",
+  "vars": []
+}

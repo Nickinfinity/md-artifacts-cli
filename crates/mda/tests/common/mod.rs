@@ -42,8 +42,10 @@ pub fn json_lines(out: &[u8]) -> Vec<serde_json::Value> {
         .collect()
 }
 
-/// Run `mda serve` with `lines` as NDJSON input (each followed by `\n`), then EOF.
-pub fn serve_session(lines: &[&str]) -> Output {
+/// Run `mda <args> serve` with `lines` as NDJSON input (each followed by `\n`), then EOF.
+pub fn serve_session(args: &[&str], lines: &[&str]) -> Output {
     let input: String = lines.iter().map(|l| format!("{l}\n")).collect();
-    run(&["serve"], input.as_bytes())
+    let mut all = args.to_vec();
+    all.push("serve");
+    run(&all, input.as_bytes())
 }

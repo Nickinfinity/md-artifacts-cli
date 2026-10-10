@@ -105,7 +105,8 @@ fn initialize(ctx: &Ctx, params: &Value) -> Result<Value, OpError> {
             .with("server", PROTOCOL));
     }
     let engine = version(ctx, VersionRequest {})?.engine;
-    Ok(json!({ "protocol": PROTOCOL, "engine": engine }))
+    let types = serde_json::to_value(&mda_ops::TYPES).map_err(|_| OpError::new(OP_INTERNAL))?;
+    Ok(json!({ "protocol": PROTOCOL, "engine": engine, "types": types }))
 }
 
 fn respond(id: &Value, result: Result<Value, OpError>) -> Value {

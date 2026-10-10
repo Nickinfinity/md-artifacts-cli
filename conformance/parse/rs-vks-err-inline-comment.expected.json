@@ -1,0 +1,18 @@
+{
+  "blocks": [],
+  "code": "VK-a: x # c",
+  "fileName": "rs-vks-err-inline-comment",
+  "filePath": "Variables/rs-vks-err-inline-comment.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-vks-err-inline-comment.md",
+  "vars": [],
+  "varsError": {
+    "code": "vks.inline_comment",
+    "params": {
+      "line": "1"
+    }
+  }
+}

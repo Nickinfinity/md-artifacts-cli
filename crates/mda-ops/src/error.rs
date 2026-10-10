@@ -2,7 +2,12 @@
 
 use std::collections::BTreeMap;
 
-use mda_vault::VaultError;
+use mda_vault::{Root, VaultError};
+
+pub use mda_core::error::{
+    VKS_BAD_KEY, VKS_CONTROL_CHAR, VKS_DUPLICATE_KEY, VKS_INDENT, VKS_INLINE_COMMENT, VKS_LIMIT,
+    VKS_MIXED_DIALECT, VKS_MIXED_LIST, VKS_SYNTAX, VKS_UNSUPPORTED,
+};
 
 /// The only error shape clients see: a stable code plus string parameters, never prose.
 ///
@@ -53,6 +58,10 @@ pub const FILE_NOT_REGULAR: &str = "file.not_regular";
 pub const IO_FAILED: &str = "io.failed";
 /// An engine defect: an op produced a response that could not be serialized. No params.
 pub const OP_INTERNAL: &str = "op.internal";
+/// The op needs a vault and none was given (`--vault`). No params.
+pub const VAULT_NOT_SELECTED: &str = "vault.not_selected";
+/// Not an artifact path: not `.md`, or not under a type directory. Param `path`.
+pub const ARTIFACT_BAD_PATH: &str = "artifact.bad_path";
 
 /// Every code, for exhaustive checks (English table, exit codes, op cases).
 pub const ALL_CODES: &[&str] = &[
@@ -65,8 +74,50 @@ pub const ALL_CODES: &[&str] = &[
     FILE_NOT_REGULAR,
     IO_FAILED,
     OP_INTERNAL,
+    VAULT_NOT_SELECTED,
+    ARTIFACT_BAD_PATH,
+    VKS_SYNTAX,
+    VKS_INDENT,
+    VKS_BAD_KEY,
+    VKS_DUPLICATE_KEY,
+    VKS_UNSUPPORTED,
+    VKS_MIXED_LIST,
+    VKS_INLINE_COMMENT,
+    VKS_CONTROL_CHAR,
+    VKS_LIMIT,
+    VKS_MIXED_DIALECT,
 ];
 
+/// Map a vault error from an op that holds `root`: every `path` param becomes vault-relative POSIX,
+/// so no machine path reaches a client. A path not under the root (an `OutsideRoot` candidate is
+/// client text) is echoed as given. Every op holding a `Root` maps through this, never `From`.
+///
+/// # Examples
+///
+/// ```
+/// use mda_ops::{Root, error::vault_error};
+/// use mda_vault::VaultError;
+/// let root = Root::new(&std::env::temp_dir()).unwrap();
+/// let e = vault_error(VaultError::NotFound { path: root.path().join("Snippets/x.md") }, &root);
+/// assert_eq!(e.params["path"], "Snippets/x.md");
+/// ```
+pub fn vault_error(mut e: VaultError, root: &Root) -> OpError {
+    let (VaultError::OutsideRoot { path }
+    | VaultError::NotFound { path }
+    | VaultError::TooLarge { path, .. }
+    | VaultError::NotRegular { path }
+    | VaultError::Io { path, .. }) = &mut e;
+    if let Ok(rel) = path.strip_prefix(root.path()) {
+        let posix: Vec<_> = rel
+            .components()
+            .map(|c| c.as_os_str().to_string_lossy())
+            .collect();
+        *path = posix.join("/").into();
+    }
+    OpError::from(e)
+}
+
+// For root-less errors only (`Root::new` on the user's own `--vault`): the path is the user's.
 // ponytail: paths become params via display(), lossy on non-UTF-8 names; carry raw bytes if a
 // client ever needs to round-trip such a name.
 impl From<VaultError> for OpError {
@@ -88,6 +139,39 @@ impl From<VaultError> for OpError {
             VaultError::Io { path, kind } => Self::new(IO_FAILED)
                 .with("path", path.display().to_string())
                 .with("kind", kind.to_string()),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vault_error_relativizes_paths() {
+        let root = Root::new(&std::env::temp_dir()).unwrap();
+        let abs = root.path().join("Snippets/x.md");
+        let e = vault_error(VaultError::NotFound { path: abs }, &root);
+        assert_eq!(e.params["path"], "Snippets/x.md");
+    }
+
+    #[test]
+    fn vault_error_echoes_outside_candidate() {
+        let root = Root::new(&std::env::temp_dir()).unwrap();
+        let e = vault_error(
+            VaultError::OutsideRoot {
+                path: "../etc/passwd".into(),
+            },
+            &root,
+        );
+        assert_eq!(e.code, PATH_OUTSIDE_ROOT);
+        assert_eq!(e.params["path"], "../etc/passwd");
+    }
+
+    #[test]
+    fn vks_codes_listed() {
+        for c in mda_core::error::VKS_CODES {
+            assert!(ALL_CODES.contains(c), "{c}");
         }
     }
 }

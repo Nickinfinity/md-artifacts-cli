@@ -1,0 +1,21 @@
+{
+  "blocks": [],
+  "code": "Review <VK-repo> on <VK-branch>.",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "markdown"
+  },
+  "relativePath": "reviewer.md",
+  "vars": [
+    {
+      "defaultValue": "md-artifacts",
+      "name": "VK-repo"
+    },
+    {
+      "defaultValue": "",
+      "name": "VK-branch"
+    }
+  ]
+}

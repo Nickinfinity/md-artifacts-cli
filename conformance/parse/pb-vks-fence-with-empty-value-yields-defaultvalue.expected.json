@@ -1,0 +1,30 @@
+{
+  "blocks": [
+    {
+      "code": "VK-token=",
+      "description": "",
+      "fenceLang": "vks",
+      "heading": "Empty Defaults",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-token"
+        }
+      ]
+    }
+  ],
+  "code": "VK-token=",
+  "fileName": "pb-vks-fence-with-empty-value-yields-defaultvalue",
+  "filePath": "Variables/pb-vks-fence-with-empty-value-yields-defaultvalue.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "pb-vks-fence-with-empty-value-yields-defaultvalue.md",
+  "vars": [
+    {
+      "defaultValue": "",
+      "name": "VK-token"
+    }
+  ]
+}

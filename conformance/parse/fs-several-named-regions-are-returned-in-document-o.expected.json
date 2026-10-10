@@ -1,0 +1,27 @@
+{
+  "blocks": [
+    {
+      "code": "dev payload",
+      "description": "",
+      "fenceLang": "markdown",
+      "heading": "Dev",
+      "vars": []
+    },
+    {
+      "code": "prod payload",
+      "description": "",
+      "fenceLang": "markdown",
+      "heading": "Prod",
+      "vars": []
+    }
+  ],
+  "code": "dev payload",
+  "fileName": "fs-several-named-regions-are-returned-in-document-o",
+  "filePath": "AIPrompts/fs-several-named-regions-are-returned-in-document-o.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-several-named-regions-are-returned-in-document-o.md",
+  "vars": []
+}

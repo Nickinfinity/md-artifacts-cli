@@ -1,0 +1,18 @@
+{
+  "blocks": [],
+  "code": "VK-a:\n   - x",
+  "fileName": "rs-vks-err-indent",
+  "filePath": "Variables/rs-vks-err-indent.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-vks-err-indent.md",
+  "vars": [],
+  "varsError": {
+    "code": "vks.indent",
+    "params": {
+      "line": "2"
+    }
+  }
+}

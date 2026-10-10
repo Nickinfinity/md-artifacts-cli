@@ -1,0 +1,21 @@
+{
+  "blocks": [],
+  "code": "VK-a: 'it''s'\nVK-b: \"t\\tq\\\"\\n\"",
+  "fileName": "rs-yaml-quoted",
+  "filePath": "Variables/rs-yaml-quoted.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-yaml-quoted.md",
+  "vars": [
+    {
+      "defaultValue": "it's",
+      "name": "VK-a"
+    },
+    {
+      "defaultValue": "t\tq\"\n",
+      "name": "VK-b"
+    }
+  ]
+}

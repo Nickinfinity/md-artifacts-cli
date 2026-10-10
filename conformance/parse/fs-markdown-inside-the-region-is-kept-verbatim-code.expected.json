@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "# Heading\n\n- bullet\n\n```bash\nnpm test\n```",
+  "fileName": "fs-markdown-inside-the-region-is-kept-verbatim-code",
+  "filePath": "AIPrompts/fs-markdown-inside-the-region-is-kept-verbatim-code.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-markdown-inside-the-region-is-kept-verbatim-code.md",
+  "vars": []
+}

@@ -1,0 +1,18 @@
+{
+  "blocks": [],
+  "code": "VK-a:\n  - x\n  - k: v",
+  "fileName": "rs-vks-err-mixed-list",
+  "filePath": "Variables/rs-vks-err-mixed-list.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-vks-err-mixed-list.md",
+  "vars": [],
+  "varsError": {
+    "code": "vks.mixed_list",
+    "params": {
+      "line": "3"
+    }
+  }
+}

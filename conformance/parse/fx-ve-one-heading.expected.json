@@ -1,0 +1,35 @@
+{
+  "blocks": [
+    {
+      "code": "VK-token=xyz",
+      "description": "",
+      "fenceLang": "vks",
+      "heading": "Only",
+      "vars": [
+        {
+          "defaultValue": "xyz",
+          "name": "VK-token"
+        }
+      ]
+    }
+  ],
+  "code": "VK-token=xyz",
+  "fileName": "one-heading",
+  "filePath": "Variables/vars-edit/one-heading.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "description": "Exactly one heading, still a blocks-shaped file",
+    "language": "vks",
+    "tags": [
+      "edge"
+    ],
+    "title": "Lonely Heading"
+  },
+  "relativePath": "vars-edit/one-heading.md",
+  "vars": [
+    {
+      "defaultValue": "xyz",
+      "name": "VK-token"
+    }
+  ]
+}

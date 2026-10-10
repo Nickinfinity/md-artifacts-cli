@@ -1,0 +1,23 @@
+{
+  "blocks": [],
+  "code": "element.className = <VK-x>;",
+  "fileName": "snippet-quoted-default",
+  "filePath": "Snippets/artifact-form/snippet-quoted-default.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "description": "Tests verbatim default preservation with quoted strings.",
+    "language": "javascript",
+    "tags": [
+      "ui",
+      "state"
+    ],
+    "title": "Quoted Default Snippet"
+  },
+  "relativePath": "artifact-form/snippet-quoted-default.md",
+  "vars": [
+    {
+      "defaultValue": "\"active\"",
+      "name": "VK-x"
+    }
+  ]
+}

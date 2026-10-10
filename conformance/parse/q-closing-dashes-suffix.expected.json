@@ -1,0 +1,13 @@
+{
+  "blocks": [],
+  "code": "ls",
+  "fileName": "q-closing-dashes",
+  "filePath": "Commands/q-closing-dashes.md",
+  "frontmatter": {
+    "artifactType": "Command",
+    "language": "bash",
+    "title": "T"
+  },
+  "relativePath": "q-closing-dashes.md",
+  "vars": []
+}

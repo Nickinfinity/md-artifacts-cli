@@ -1,0 +1,19 @@
+{
+  "blocks": [],
+  "code": "export const Button = () => console.log('<VK-language>');",
+  "fileName": "Button",
+  "filePath": "Templates/multi-index/dir_2/subdir1/Button.md",
+  "frontmatter": {
+    "artifactType": "Template",
+    "extension": ".tsx",
+    "language": "tsx",
+    "title": "Button"
+  },
+  "relativePath": "multi-index/dir_2/subdir1/Button.md",
+  "vars": [
+    {
+      "defaultValue": "javascript",
+      "name": "VK-language"
+    }
+  ]
+}

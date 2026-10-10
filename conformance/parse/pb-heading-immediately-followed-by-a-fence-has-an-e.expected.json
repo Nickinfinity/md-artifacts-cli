@@ -1,0 +1,20 @@
+{
+  "blocks": [
+    {
+      "code": "true",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Silent",
+      "vars": []
+    }
+  ],
+  "code": "true",
+  "fileName": "pb-heading-immediately-followed-by-a-fence-has-an-e",
+  "filePath": "Snippets/pb-heading-immediately-followed-by-a-fence-has-an-e.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-heading-immediately-followed-by-a-fence-has-an-e.md",
+  "vars": []
+}

@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "# here the MD text",
+  "fileName": "fs-the-bracket-around-a-region-is-dropped",
+  "filePath": "AIPrompts/fs-the-bracket-around-a-region-is-dropped.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-the-bracket-around-a-region-is-dropped.md",
+  "vars": []
+}

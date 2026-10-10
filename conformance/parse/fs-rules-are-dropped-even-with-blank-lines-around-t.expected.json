@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "payload",
+  "fileName": "fs-rules-are-dropped-even-with-blank-lines-around-t",
+  "filePath": "AIPrompts/fs-rules-are-dropped-even-with-blank-lines-around-t.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-rules-are-dropped-even-with-blank-lines-around-t.md",
+  "vars": []
+}

@@ -1,0 +1,48 @@
+{
+  "blocks": [
+    {
+      "code": "echo <VK-a>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "One",
+      "vars": [
+        {
+          "defaultValue": "1",
+          "name": "VK-a"
+        }
+      ]
+    },
+    {
+      "code": "echo <VK-b>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Two",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-b"
+        }
+      ],
+      "varsError": {
+        "code": "vks.inline_comment",
+        "params": {
+          "line": "1"
+        }
+      }
+    }
+  ],
+  "code": "echo <VK-a>",
+  "fileName": "rs-err-block-fence",
+  "filePath": "Snippets/rs-err-block-fence.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "rs-err-block-fence.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-a"
+    }
+  ]
+}

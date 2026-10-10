@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "included",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "markdown"
+  },
+  "relativePath": "reviewer.md",
+  "vars": []
+}

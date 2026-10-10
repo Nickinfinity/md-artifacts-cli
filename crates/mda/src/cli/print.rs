@@ -23,6 +23,18 @@ pub fn english(code: &str) -> Option<&'static str> {
         FILE_NOT_REGULAR => "not a regular file",
         IO_FAILED => "I/O failure",
         OP_INTERNAL => "internal engine error",
+        VAULT_NOT_SELECTED => "no vault selected (pass --vault)",
+        ARTIFACT_BAD_PATH => "not an artifact path (expected <TypeDir>/….md)",
+        VKS_SYNTAX => "variables block: syntax error",
+        VKS_INDENT => "variables block: bad indentation",
+        VKS_BAD_KEY => "variables block: invalid key",
+        VKS_DUPLICATE_KEY => "variables block: duplicate key",
+        VKS_UNSUPPORTED => "variables block: unsupported YAML construct",
+        VKS_MIXED_LIST => "variables block: list mixes strings and records",
+        VKS_INLINE_COMMENT => "variables block: comment after a value",
+        VKS_CONTROL_CHAR => "variables block: control character",
+        VKS_LIMIT => "variables block: size limit exceeded",
+        VKS_MIXED_DIALECT => "variables block: KEY=value line in a YAML block",
         _ => return None,
     })
 }
@@ -38,8 +50,7 @@ pub fn error_line(e: &OpError) -> String {
 }
 
 /// Human text for a successful response of `op`; pretty JSON when no printer exists.
-/// Today's printers print only the engine's static tables; the pretty-JSON fallback escapes
-/// control characters. Future printers of vault-derived text must escape it (standing rule).
+/// Printers of vault-derived text pass it through `clean` (control characters escaped).
 pub fn success(op: &str, v: &Value) -> String {
     match op {
         "system.version" => format!(
@@ -62,6 +73,98 @@ pub fn success(op: &str, v: &Value) -> String {
                     .join("\n")
             })
             .unwrap_or_default(),
+        "artifact.read" => show(v),
+        "artifact.tree" => ls(v),
         _ => serde_json::to_string_pretty(v).unwrap_or_default(),
     }
+}
+
+/// Escape every control character (vault text is untrusted; a raw ESC would drive the terminal).
+/// `multiline` keeps `\n` and `\t` for code bodies.
+fn clean(s: &str, multiline: bool) -> String {
+    s.chars()
+        .map(|c| match c {
+            '\n' | '\t' if multiline => c.to_string(),
+            c if c.is_control() => c.escape_default().to_string(),
+            c => c.to_string(),
+        })
+        .collect()
+}
+
+fn s(v: &Value, k: &str) -> String {
+    clean(v[k].as_str().unwrap_or(""), false)
+}
+
+fn code(v: &Value) -> String {
+    clean(v["code"].as_str().unwrap_or(""), true)
+}
+
+fn vars(v: &Value) -> String {
+    v.as_array()
+        .into_iter()
+        .flatten()
+        .map(|x| format!("{}={}", s(x, "name"), s(x, "defaultValue")))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn show(v: &Value) -> String {
+    let fm = &v["frontmatter"];
+    let title = if fm["title"].is_string() {
+        s(fm, "title")
+    } else {
+        s(v, "fileName")
+    };
+    let mut out = vec![format!(
+        "{title}  [{}]  {}",
+        s(fm, "artifactType"),
+        s(v, "filePath")
+    )];
+    if let Some(d) = fm["description"].as_str() {
+        out.push(clean(d, false));
+    }
+    if let Some(t) = fm["tags"].as_array().filter(|t| !t.is_empty()) {
+        let t: Vec<String> = t
+            .iter()
+            .filter_map(Value::as_str)
+            .map(|x| clean(x, false))
+            .collect();
+        out.push(format!("tags: {}", t.join(", ")));
+    }
+    let vs = vars(&v["vars"]);
+    if !vs.is_empty() {
+        out.push(format!("vars: {vs}"));
+    }
+    if let Some(e) = v.get("varsError") {
+        out.push(format!(
+            "varsError: {} line {}",
+            s(e, "code"),
+            s(&e["params"], "line")
+        ));
+    }
+    out.push(String::new());
+    match v["blocks"].as_array().filter(|b| !b.is_empty()) {
+        None => out.push(code(v)),
+        Some(bs) => {
+            for b in bs {
+                out.push(format!("## {}", s(b, "heading")));
+                out.push(code(b));
+            }
+        }
+    }
+    out.join("\n")
+}
+
+fn ls(v: &Value) -> String {
+    let mut out: Vec<String> = Vec::new();
+    for d in v["dirs"].as_array().into_iter().flatten() {
+        out.push(format!("{}/", clean(d.as_str().unwrap_or(""), false)));
+    }
+    for f in v["files"].as_array().into_iter().flatten() {
+        out.push(match f.pointer("/error/code").and_then(Value::as_str) {
+            Some(c) => format!("{}  ! {}", s(f, "name"), clean(c, false)),
+            None => format!("{}  {}", s(f, "name"), s(f, "title")),
+        });
+    }
+    out.join("\n")
 }

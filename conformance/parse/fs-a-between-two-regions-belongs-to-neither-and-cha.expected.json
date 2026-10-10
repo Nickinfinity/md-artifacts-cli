@@ -1,0 +1,27 @@
+{
+  "blocks": [
+    {
+      "code": "one",
+      "description": "",
+      "fenceLang": "markdown",
+      "heading": "A",
+      "vars": []
+    },
+    {
+      "code": "two",
+      "description": "",
+      "fenceLang": "markdown",
+      "heading": "B",
+      "vars": []
+    }
+  ],
+  "code": "one",
+  "fileName": "fs-a-between-two-regions-belongs-to-neither-and-cha",
+  "filePath": "AIPrompts/fs-a-between-two-regions-belongs-to-neither-and-cha.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-a-between-two-regions-belongs-to-neither-and-cha.md",
+  "vars": []
+}

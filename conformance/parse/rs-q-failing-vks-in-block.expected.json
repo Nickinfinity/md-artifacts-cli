@@ -1,0 +1,39 @@
+{
+  "blocks": [
+    {
+      "code": "echo <VK-x>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "One",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-x"
+        }
+      ],
+      "varsError": {
+        "code": "vks.syntax",
+        "params": {
+          "line": "1",
+          "rule": "unclosed_quote"
+        }
+      }
+    }
+  ],
+  "code": "echo <VK-x>",
+  "fileName": "rs-q-failing-vks-in-block",
+  "filePath": "Snippets/rs-q-failing-vks-in-block.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "rs-q-failing-vks-in-block.md",
+  "vars": [],
+  "varsError": {
+    "code": "vks.syntax",
+    "params": {
+      "line": "1",
+      "rule": "unclosed_quote"
+    }
+  }
+}

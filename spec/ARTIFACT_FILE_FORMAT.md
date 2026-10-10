@@ -513,7 +513,7 @@ in `code font` are the fixed vocabulary, part of the protocol like the codes the
 | `vks.mixed_list` | — | one list holding both strings and records |
 | `vks.inline_comment` | — | ` #` after a value on the same line (`name: a # note`, `color: #fff`); never truncated |
 | `vks.control_char` | — | a C0 control character or DEL other than tab; a newline is legal only as a line break or `"\n"` |
-| `vks.limit` | `limit`: `body_bytes` · `depth` · `nodes` · `list_items` · `map_keys`; `max` | any §9.7 limit, checked before the work it bounds |
+| `vks.limit` | `limit`: `body_bytes` · `depth` · `nodes` · `list_items` · `map_keys` · `block_defaults`; `max` | any §9.7 limit, checked before the work it bounds |
 | `vks.mixed_dialect` | — | in a fence classified as YAML (§9.6): a non-comment line that is not a valid entry or item, contains `=`, and has no `:` before its first `=` |
 
 Emission has one more code, `vks.unrepresentable` (§9.5).
@@ -596,10 +596,17 @@ of records.
 | nesting depth (containers) | 6 |
 | nodes (strings + containers) per body | 10 000 |
 | items per list / keys per map (top-level vars included) | 1 000 / 255 |
+| flagged regions × file defaults, per file (`block_defaults`) | 100 000 |
 
 Counting: **depth** = containers inside one var's value (the top-level map is depth 0, so a var holding a
 record is depth 1); **nodes** = every value (strings, lists, records), not keys and not the top-level map.
 Each limit is checked before the push it bounds. Legacy bodies (§9.6) are bounded by the body size only.
+
+**`block_defaults`** bounds the parser, not the codec: every block of a flagged multi-block file (§7)
+receives every file default, so the output grows with regions × defaults. The product is checked
+before any per-block overlay; past it, the **file** carries `vks.limit{limit: block_defaults, max,
+line: 0}` and the flagged payload falls back exactly as for a rejected defaults fence (§7.3: detected
+tokens kept with `""`, no error on the blocks).
 
 ### 9.8 Round-trip (D-9)
 

@@ -1,0 +1,25 @@
+{
+  "blocks": [
+    {
+      "code": "const <VK-z> = 1;",
+      "description": "",
+      "fenceLang": "javascript",
+      "heading": "NoDefaults",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-z"
+        }
+      ]
+    }
+  ],
+  "code": "const <VK-z> = 1;",
+  "fileName": "pb-code-fence-with-no-trailing-vks-fence-still-yiel",
+  "filePath": "Snippets/pb-code-fence-with-no-trailing-vks-fence-still-yiel.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "javascript"
+  },
+  "relativePath": "pb-code-fence-with-no-trailing-vks-fence-still-yiel.md",
+  "vars": []
+}

@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "payload",
+  "fileName": "fs-crlf-files-parse-identically-to-lf-files",
+  "filePath": "AIPrompts/fs-crlf-files-parse-identically-to-lf-files.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-crlf-files-parse-identically-to-lf-files.md",
+  "vars": []
+}

@@ -1,0 +1,38 @@
+{
+  "blocks": [
+    {
+      "code": "const <VK-result> = <VK-array>.reduce(acc => acc, {});",
+      "description": "Bucket an array.",
+      "fenceLang": "javascript",
+      "heading": "Group",
+      "vars": [
+        {
+          "defaultValue": "grouped",
+          "name": "VK-result"
+        },
+        {
+          "defaultValue": "items",
+          "name": "VK-array"
+        }
+      ]
+    }
+  ],
+  "code": "const <VK-result> = <VK-array>.reduce(acc => acc, {});",
+  "fileName": "pb-arbitrary-marker-text-between-code-fence-and-vks",
+  "filePath": "Snippets/pb-arbitrary-marker-text-between-code-fence-and-vks.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "javascript"
+  },
+  "relativePath": "pb-arbitrary-marker-text-between-code-fence-and-vks.md",
+  "vars": [
+    {
+      "defaultValue": "grouped",
+      "name": "VK-result"
+    },
+    {
+      "defaultValue": "items",
+      "name": "VK-array"
+    }
+  ]
+}

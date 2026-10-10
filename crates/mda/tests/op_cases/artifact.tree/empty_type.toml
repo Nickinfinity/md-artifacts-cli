@@ -1,0 +1,4 @@
+# Commands/ is deliberately absent from the fixture vault: a missing type dir lists as empty.
+vault = "vault"
+params = { type = "Command" }
+expect = { dirs = [], files = [] }

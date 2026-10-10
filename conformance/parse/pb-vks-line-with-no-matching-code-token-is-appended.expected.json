@@ -1,0 +1,38 @@
+{
+  "blocks": [
+    {
+      "code": "const <VK-a> = 1;",
+      "description": "",
+      "fenceLang": "javascript",
+      "heading": "Extra",
+      "vars": [
+        {
+          "defaultValue": "10",
+          "name": "VK-a"
+        },
+        {
+          "defaultValue": "99",
+          "name": "VK-unused"
+        }
+      ]
+    }
+  ],
+  "code": "const <VK-a> = 1;",
+  "fileName": "pb-vks-line-with-no-matching-code-token-is-appended",
+  "filePath": "Snippets/pb-vks-line-with-no-matching-code-token-is-appended.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "javascript"
+  },
+  "relativePath": "pb-vks-line-with-no-matching-code-token-is-appended.md",
+  "vars": [
+    {
+      "defaultValue": "10",
+      "name": "VK-a"
+    },
+    {
+      "defaultValue": "99",
+      "name": "VK-unused"
+    }
+  ]
+}

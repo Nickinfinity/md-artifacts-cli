@@ -1,0 +1,20 @@
+{
+  "blocks": [
+    {
+      "code": "const x = 1;",
+      "description": "",
+      "fenceLang": "javascript",
+      "heading": "Module",
+      "vars": []
+    }
+  ],
+  "code": "const x = 1;",
+  "fileName": "pb-fence-language-tag-is-captured-in-fencelang",
+  "filePath": "Snippets/pb-fence-language-tag-is-captured-in-fencelang.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "javascript"
+  },
+  "relativePath": "pb-fence-language-tag-is-captured-in-fencelang.md",
+  "vars": []
+}

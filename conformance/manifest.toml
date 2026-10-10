@@ -7,4 +7,976 @@
 # input = "parse/x.md"             # path relative to conformance/
 # expected = "parse/x.expected.json"
 # values = "render/x.values.json"  # render only; path relative to conformance/
+# path = "<TypeDir>/<rel>.md"      # parse only: drives the type, filePath, fileName, relativePath
+# origin = "ts@b368c20"            # or "rust" (hand-derived from the spec, never run through TS)
 # deviates_from_ts = "reason"      # optional: a recorded, deliberate difference from the TS extension
+
+[[cases]]
+id = "ap-leaves-the-keys-undefined-when-the-file-omits-th"
+kind = "parse"
+input = "parse/ap-leaves-the-keys-undefined-when-the-file-omits-th.md"
+expected = "parse/ap-leaves-the-keys-undefined-when-the-file-omits-th.expected.json"
+path = "AIAgentsConf/bare.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ap-reads-provider-model-version-off-an-agent-file"
+kind = "parse"
+input = "parse/ap-reads-provider-model-version-off-an-agent-file.md"
+expected = "parse/ap-reads-provider-model-version-off-an-agent-file.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "dev-bom"
+kind = "parse"
+input = "parse/dev-bom.md"
+expected = "parse/dev-bom.expected.json"
+path = "Snippets/dev-bom.md"
+origin = "ts@b368c20"
+deviates_from_ts = "Q-B: one leading BOM stripped"
+
+[[cases]]
+id = "dev-c0-legacy"
+kind = "parse"
+input = "parse/dev-c0-legacy.md"
+expected = "parse/dev-c0-legacy.expected.json"
+path = "Snippets/dev-c0-legacy.md"
+origin = "rust"
+deviates_from_ts = "spec §9.6: C0 rejected"
+
+[[cases]]
+id = "fp-a-bare-markdown-agent-note-with-no-flags-and-no"
+kind = "parse"
+input = "parse/fp-a-bare-markdown-agent-note-with-no-flags-and-no.md"
+expected = "parse/fp-a-bare-markdown-agent-note-with-no-flags-and-no.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-a-classic-fenced-single-block-file-parses-exactl"
+kind = "parse"
+input = "parse/fp-a-classic-fenced-single-block-file-parses-exactl.md"
+expected = "parse/fp-a-classic-fenced-single-block-file-parses-exactl.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-a-classic-heading-multi-block-file-still-splits"
+kind = "parse"
+input = "parse/fp-a-classic-heading-multi-block-file-still-splits.md"
+expected = "parse/fp-a-classic-heading-multi-block-file-still-splits.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-a-flag-less-note-keeps-its-the-rule-is-only-igno"
+kind = "parse"
+input = "parse/fp-a-flag-less-note-keeps-its-the-rule-is-only-igno.md"
+expected = "parse/fp-a-flag-less-note-keeps-its-the-rule-is-only-igno.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-a-snippet-with-no-fence-does-not-take-the-bare-b"
+kind = "parse"
+input = "parse/fp-a-snippet-with-no-fence-does-not-take-the-bare-b.md"
+expected = "parse/fp-a-snippet-with-no-fence-does-not-take-the-bare-b.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-a-template-with-no-fence-takes-the-whole-body-to"
+kind = "parse"
+input = "parse/fp-a-template-with-no-fence-takes-the-whole-body-to.md"
+expected = "parse/fp-a-template-with-no-fence-takes-the-whole-body-to.expected.json"
+path = "Templates/readme.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-a-vks-fence-outside-the-flags-supplies-the-defau"
+kind = "parse"
+input = "parse/fp-a-vks-fence-outside-the-flags-supplies-the-defau.md"
+expected = "parse/fp-a-vks-fence-outside-the-flags-supplies-the-defau.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-an-existing-code-fence-still-wins-over-the-bare"
+kind = "parse"
+input = "parse/fp-an-existing-code-fence-still-wins-over-the-bare.md"
+expected = "parse/fp-an-existing-code-fence-still-wins-over-the-bare.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-an-explicit-frontmatter-language-still-wins"
+kind = "parse"
+input = "parse/fp-an-explicit-frontmatter-language-still-wins.md"
+expected = "parse/fp-an-explicit-frontmatter-language-still-wins.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-each-region-becomes-a-block-keyed-by-its-flag-na"
+kind = "parse"
+input = "parse/fp-each-region-becomes-a-block-keyed-by-its-flag-na.md"
+expected = "parse/fp-each-region-becomes-a-block-keyed-by-its-flag-na.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-flags-still-win-when-present"
+kind = "parse"
+input = "parse/fp-flags-still-win-when-present.md"
+expected = "parse/fp-flags-still-win-when-present.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-headings-inside-a-flagged-region-stay-payload-no"
+kind = "parse"
+input = "parse/fp-headings-inside-a-flagged-region-stay-payload-no.md"
+expected = "parse/fp-headings-inside-a-flagged-region-stay-payload-no.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-the-legacy-unfenced-vars-section-still-parses-in"
+kind = "parse"
+input = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in.md"
+expected = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-the-legacy-unfenced-vars-section-still-parses-in-2"
+kind = "parse"
+input = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in-2.md"
+expected = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in-2.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-the-legacy-unfenced-vars-section-still-parses-in-3"
+kind = "parse"
+input = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in-3.md"
+expected = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in-3.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-the-payload-is-the-region-not-the-first-code-fen"
+kind = "parse"
+input = "parse/fp-the-payload-is-the-region-not-the-first-code-fen.md"
+expected = "parse/fp-the-payload-is-the-region-not-the-first-code-fen.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-the-vars-section-is-not-written-into-the-payload"
+kind = "parse"
+input = "parse/fp-the-vars-section-is-not-written-into-the-payload.md"
+expected = "parse/fp-the-vars-section-is-not-written-into-the-payload.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-a-between-two-regions-belongs-to-neither-and-cha"
+kind = "parse"
+input = "parse/fs-a-between-two-regions-belongs-to-neither-and-cha.md"
+expected = "parse/fs-a-between-two-regions-belongs-to-neither-and-cha.expected.json"
+path = "AIPrompts/fs-a-between-two-regions-belongs-to-neither-and-cha.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-a-file-with-no-flags-yields-no-regions-classic-f"
+kind = "parse"
+input = "parse/fs-a-file-with-no-flags-yields-no-regions-classic-f.md"
+expected = "parse/fs-a-file-with-no-flags-yields-no-regions-classic-f.expected.json"
+path = "AIPrompts/fs-a-file-with-no-flags-yields-no-regions-classic-f.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-a-inside-a-fenced-block-is-untouched-content"
+kind = "parse"
+input = "parse/fs-a-inside-a-fenced-block-is-untouched-content.md"
+expected = "parse/fs-a-inside-a-fenced-block-is-untouched-content.expected.json"
+path = "AIPrompts/fs-a-inside-a-fenced-block-is-untouched-content.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-a-is-dropped-wherever-it-appears-not-only-at-the"
+kind = "parse"
+input = "parse/fs-a-is-dropped-wherever-it-appears-not-only-at-the.md"
+expected = "parse/fs-a-is-dropped-wherever-it-appears-not-only-at-the.expected.json"
+path = "AIPrompts/fs-a-is-dropped-wherever-it-appears-not-only-at-the.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-a-named-start-flag-carries-its-name-becomes-the"
+kind = "parse"
+input = "parse/fs-a-named-start-flag-carries-its-name-becomes-the.md"
+expected = "parse/fs-a-named-start-flag-carries-its-name-becomes-the.expected.json"
+path = "AIPrompts/fs-a-named-start-flag-carries-its-name-becomes-the.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-a-rule-only-region-collapses-to-empty-rather-tha"
+kind = "parse"
+input = "parse/fs-a-rule-only-region-collapses-to-empty-rather-tha.md"
+expected = "parse/fs-a-rule-only-region-collapses-to-empty-rather-tha.expected.json"
+path = "AIPrompts/fs-a-rule-only-region-collapses-to-empty-rather-tha.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-a-second-start-flag-while-a-region-is-open-is-co"
+kind = "parse"
+input = "parse/fs-a-second-start-flag-while-a-region-is-open-is-co.md"
+expected = "parse/fs-a-second-start-flag-while-a-region-is-open-is-co.expected.json"
+path = "AIPrompts/fs-a-second-start-flag-while-a-region-is-open-is-co.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-a-tilde-fence-is-not-closed-by-a-backtick-fence"
+kind = "parse"
+input = "parse/fs-a-tilde-fence-is-not-closed-by-a-backtick-fence.md"
+expected = "parse/fs-a-tilde-fence-is-not-closed-by-a-backtick-fence.expected.json"
+path = "AIPrompts/fs-a-tilde-fence-is-not-closed-by-a-backtick-fence.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-an-end-flag-inside-a-fenced-block-does-not-close"
+kind = "parse"
+input = "parse/fs-an-end-flag-inside-a-fenced-block-does-not-close.md"
+expected = "parse/fs-an-end-flag-inside-a-fenced-block-does-not-close.expected.json"
+path = "AIPrompts/fs-an-end-flag-inside-a-fenced-block-does-not-close.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-an-unnamed-region-returns-its-content-with-the-f"
+kind = "parse"
+input = "parse/fs-an-unnamed-region-returns-its-content-with-the-f.md"
+expected = "parse/fs-an-unnamed-region-returns-its-content-with-the-f.expected.json"
+path = "AIPrompts/fs-an-unnamed-region-returns-its-content-with-the-f.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-an-unterminated-region-runs-to-end-of-file-a-hal"
+kind = "parse"
+input = "parse/fs-an-unterminated-region-runs-to-end-of-file-a-hal.md"
+expected = "parse/fs-an-unterminated-region-runs-to-end-of-file-a-hal.expected.json"
+path = "AIPrompts/fs-an-unterminated-region-runs-to-end-of-file-a-hal.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-blank-lines-are-trimmed-from-the-ends-but-never"
+kind = "parse"
+input = "parse/fs-blank-lines-are-trimmed-from-the-ends-but-never.md"
+expected = "parse/fs-blank-lines-are-trimmed-from-the-ends-but-never.expected.json"
+path = "AIPrompts/fs-blank-lines-are-trimmed-from-the-ends-but-never.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-bold-italic-text-is-not-a-rule"
+kind = "parse"
+input = "parse/fs-bold-italic-text-is-not-a-rule.md"
+expected = "parse/fs-bold-italic-text-is-not-a-rule.expected.json"
+path = "AIPrompts/fs-bold-italic-text-is-not-a-rule.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-crlf-files-parse-identically-to-lf-files"
+kind = "parse"
+input = "parse/fs-crlf-files-parse-identically-to-lf-files.md"
+expected = "parse/fs-crlf-files-parse-identically-to-lf-files.expected.json"
+path = "AIPrompts/fs-crlf-files-parse-identically-to-lf-files.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-is-ordinary-content-now-only-is-the-marker-rule"
+kind = "parse"
+input = "parse/fs-is-ordinary-content-now-only-is-the-marker-rule.md"
+expected = "parse/fs-is-ordinary-content-now-only-is-the-marker-rule.expected.json"
+path = "AIPrompts/fs-is-ordinary-content-now-only-is-the-marker-rule.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-longer-asterisk-runs-count-as-a-rule-two-do-not"
+kind = "parse"
+input = "parse/fs-longer-asterisk-runs-count-as-a-rule-two-do-not.md"
+expected = "parse/fs-longer-asterisk-runs-count-as-a-rule-two-do-not.expected.json"
+path = "AIPrompts/fs-longer-asterisk-runs-count-as-a-rule-two-do-not.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-longer-asterisk-runs-count-as-a-rule-two-do-not-2"
+kind = "parse"
+input = "parse/fs-longer-asterisk-runs-count-as-a-rule-two-do-not-2.md"
+expected = "parse/fs-longer-asterisk-runs-count-as-a-rule-two-do-not-2.expected.json"
+path = "AIPrompts/fs-longer-asterisk-runs-count-as-a-rule-two-do-not.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-markdown-inside-the-region-is-kept-verbatim-code"
+kind = "parse"
+input = "parse/fs-markdown-inside-the-region-is-kept-verbatim-code.md"
+expected = "parse/fs-markdown-inside-the-region-is-kept-verbatim-code.expected.json"
+path = "AIPrompts/fs-markdown-inside-the-region-is-kept-verbatim-code.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-rules-are-dropped-even-with-blank-lines-around-t"
+kind = "parse"
+input = "parse/fs-rules-are-dropped-even-with-blank-lines-around-t.md"
+expected = "parse/fs-rules-are-dropped-even-with-blank-lines-around-t.expected.json"
+path = "AIPrompts/fs-rules-are-dropped-even-with-blank-lines-around-t.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-several-named-regions-are-returned-in-document-o"
+kind = "parse"
+input = "parse/fs-several-named-regions-are-returned-in-document-o.md"
+expected = "parse/fs-several-named-regions-are-returned-in-document-o.expected.json"
+path = "AIPrompts/fs-several-named-regions-are-returned-in-document-o.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-surrounding-whitespace-inside-the-marker-is-tole"
+kind = "parse"
+input = "parse/fs-surrounding-whitespace-inside-the-marker-is-tole.md"
+expected = "parse/fs-surrounding-whitespace-inside-the-marker-is-tole.expected.json"
+path = "AIPrompts/fs-surrounding-whitespace-inside-the-marker-is-tole.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-text-outside-the-flags-is-dropped-that-is-what-t"
+kind = "parse"
+input = "parse/fs-text-outside-the-flags-is-dropped-that-is-what-t.md"
+expected = "parse/fs-text-outside-the-flags-is-dropped-that-is-what-t.expected.json"
+path = "AIPrompts/fs-text-outside-the-flags-is-dropped-that-is-what-t.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-the-bracket-around-a-region-is-dropped"
+kind = "parse"
+input = "parse/fs-the-bracket-around-a-region-is-dropped.md"
+expected = "parse/fs-the-bracket-around-a-region-is-dropped.expected.json"
+path = "AIPrompts/fs-the-bracket-around-a-region-is-dropped.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-command-with-defaults"
+kind = "parse"
+input = "parse/fx-command-with-defaults.md"
+expected = "parse/fx-command-with-defaults.expected.json"
+path = "Commands/artifact-form/command-with-defaults.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-mi-dir-1-barrel"
+kind = "parse"
+input = "parse/fx-mi-dir-1-barrel.md"
+expected = "parse/fx-mi-dir-1-barrel.expected.json"
+path = "Templates/multi-index/dir_1/barrel.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-mi-dir-2-subdir1-button"
+kind = "parse"
+input = "parse/fx-mi-dir-2-subdir1-button.md"
+expected = "parse/fx-mi-dir-2-subdir1-button.expected.json"
+path = "Templates/multi-index/dir_2/subdir1/Button.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-mi-dir-2-subdir1-button-test"
+kind = "parse"
+input = "parse/fx-mi-dir-2-subdir1-button-test.md"
+expected = "parse/fx-mi-dir-2-subdir1-button-test.expected.json"
+path = "Templates/multi-index/dir_2/subdir1/Button.test.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-mi-hostile-index"
+kind = "parse"
+input = "parse/fx-mi-hostile-index.md"
+expected = "parse/fx-mi-hostile-index.expected.json"
+path = "Templates/multi-index/hostile-index.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-mi-index"
+kind = "parse"
+input = "parse/fx-mi-index.md"
+expected = "parse/fx-mi-index.expected.json"
+path = "Templates/multi-index/index.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-snippet-minimal"
+kind = "parse"
+input = "parse/fx-snippet-minimal.md"
+expected = "parse/fx-snippet-minimal.expected.json"
+path = "Snippets/artifact-form/snippet-minimal.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-snippet-multi-block"
+kind = "parse"
+input = "parse/fx-snippet-multi-block.md"
+expected = "parse/fx-snippet-multi-block.expected.json"
+path = "Snippets/artifact-form/snippet-multi-block.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-snippet-orphan-default"
+kind = "parse"
+input = "parse/fx-snippet-orphan-default.md"
+expected = "parse/fx-snippet-orphan-default.expected.json"
+path = "Snippets/artifact-form/snippet-orphan-default.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-snippet-plain-text"
+kind = "parse"
+input = "parse/fx-snippet-plain-text.md"
+expected = "parse/fx-snippet-plain-text.expected.json"
+path = "Snippets/artifact-form/snippet-plain-text.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-snippet-quoted-default"
+kind = "parse"
+input = "parse/fx-snippet-quoted-default.md"
+expected = "parse/fx-snippet-quoted-default.expected.json"
+path = "Snippets/artifact-form/snippet-quoted-default.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-ve-one-heading"
+kind = "parse"
+input = "parse/fx-ve-one-heading.md"
+expected = "parse/fx-ve-one-heading.expected.json"
+path = "Variables/vars-edit/one-heading.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-ve-single-subset"
+kind = "parse"
+input = "parse/fx-ve-single-subset.md"
+expected = "parse/fx-ve-single-subset.expected.json"
+path = "Variables/vars-edit/single-subset.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-ve-with-descriptions"
+kind = "parse"
+input = "parse/fx-ve-with-descriptions.md"
+expected = "parse/fx-ve-with-descriptions.expected.json"
+path = "Variables/vars-edit/with-descriptions.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-ve-with-env"
+kind = "parse"
+input = "parse/fx-ve-with-env.md"
+expected = "parse/fx-ve-with-env.expected.json"
+path = "Variables/vars-edit/with-env.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-arbitrary-marker-text-between-code-fence-and-vks"
+kind = "parse"
+input = "parse/pb-arbitrary-marker-text-between-code-fence-and-vks.md"
+expected = "parse/pb-arbitrary-marker-text-between-code-fence-and-vks.expected.json"
+path = "Snippets/pb-arbitrary-marker-text-between-code-fence-and-vks.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-block-with-no-vk-tokens-has-vars"
+kind = "parse"
+input = "parse/pb-block-with-no-vk-tokens-has-vars.md"
+expected = "parse/pb-block-with-no-vk-tokens-has-vars.expected.json"
+path = "Snippets/pb-block-with-no-vk-tokens-has-vars.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-code-fence-with-no-trailing-vks-fence-still-yiel"
+kind = "parse"
+input = "parse/pb-code-fence-with-no-trailing-vks-fence-still-yiel.md"
+expected = "parse/pb-code-fence-with-no-trailing-vks-fence-still-yiel.expected.json"
+path = "Snippets/pb-code-fence-with-no-trailing-vks-fence-still-yiel.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-code-vars-fence-pairs-are-scoped-per-block"
+kind = "parse"
+input = "parse/pb-code-vars-fence-pairs-are-scoped-per-block.md"
+expected = "parse/pb-code-vars-fence-pairs-are-scoped-per-block.expected.json"
+path = "Snippets/pb-code-vars-fence-pairs-are-scoped-per-block.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-content-with-no-headings-returns-empty-array-sin"
+kind = "parse"
+input = "parse/pb-content-with-no-headings-returns-empty-array-sin.md"
+expected = "parse/pb-content-with-no-headings-returns-empty-array-sin.expected.json"
+path = "Snippets/pb-content-with-no-headings-returns-empty-array-sin.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-description-is-the-text-between-the-heading-line"
+kind = "parse"
+input = "parse/pb-description-is-the-text-between-the-heading-line.md"
+expected = "parse/pb-description-is-the-text-between-the-heading-line.expected.json"
+path = "Snippets/pb-description-is-the-text-between-the-heading-line.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-detected-var-with-no-matching-vks-line-keeps-def"
+kind = "parse"
+input = "parse/pb-detected-var-with-no-matching-vks-line-keeps-def.md"
+expected = "parse/pb-detected-var-with-no-matching-vks-line-keeps-def.expected.json"
+path = "Snippets/pb-detected-var-with-no-matching-vks-line-keeps-def.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-empty-string-returns-empty-array"
+kind = "parse"
+input = "parse/pb-empty-string-returns-empty-array.md"
+expected = "parse/pb-empty-string-returns-empty-array.expected.json"
+path = "Snippets/pb-empty-string-returns-empty-array.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-fence-language-tag-is-captured-in-fencelang"
+kind = "parse"
+input = "parse/pb-fence-language-tag-is-captured-in-fencelang.md"
+expected = "parse/pb-fence-language-tag-is-captured-in-fencelang.expected.json"
+path = "Snippets/pb-fence-language-tag-is-captured-in-fencelang.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-fence-with-no-language-tag-leaves-fencelang-unde"
+kind = "parse"
+input = "parse/pb-fence-with-no-language-tag-leaves-fencelang-unde.md"
+expected = "parse/pb-fence-with-no-language-tag-leaves-fencelang-unde.expected.json"
+path = "Snippets/pb-fence-with-no-language-tag-leaves-fencelang-unde.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc"
+kind = "parse"
+input = "parse/pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc.md"
+expected = "parse/pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc.expected.json"
+path = "Snippets/pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-heading-immediately-followed-by-a-fence-has-an-e"
+kind = "parse"
+input = "parse/pb-heading-immediately-followed-by-a-fence-has-an-e.md"
+expected = "parse/pb-heading-immediately-followed-by-a-fence-has-an-e.expected.json"
+path = "Snippets/pb-heading-immediately-followed-by-a-fence-has-an-e.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-marker-text-vks-scoped-per-block-across-two-sect"
+kind = "parse"
+input = "parse/pb-marker-text-vks-scoped-per-block-across-two-sect.md"
+expected = "parse/pb-marker-text-vks-scoped-per-block-across-two-sect.expected.json"
+path = "Snippets/pb-marker-text-vks-scoped-per-block-across-two-sect.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-multi-block-variable-file-each-vks-fence-yields"
+kind = "parse"
+input = "parse/pb-multi-block-variable-file-each-vks-fence-yields.md"
+expected = "parse/pb-multi-block-variable-file-each-vks-fence-yields.expected.json"
+path = "Variables/pb-multi-block-variable-file-each-vks-fence-yields.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-multi-line-code-block-is-captured-in-full-with-i"
+kind = "parse"
+input = "parse/pb-multi-line-code-block-is-captured-in-full-with-i.md"
+expected = "parse/pb-multi-line-code-block-is-captured-in-full-with-i.expected.json"
+path = "Snippets/pb-multi-line-code-block-is-captured-in-full-with-i.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-multiple-headings-are-returned-in-document-order"
+kind = "parse"
+input = "parse/pb-multiple-headings-are-returned-in-document-order.md"
+expected = "parse/pb-multiple-headings-are-returned-in-document-order.expected.json"
+path = "Snippets/pb-multiple-headings-are-returned-in-document-order.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-repeated-vk-token-within-one-block-is-deduplicat"
+kind = "parse"
+input = "parse/pb-repeated-vk-token-within-one-block-is-deduplicat.md"
+expected = "parse/pb-repeated-vk-token-within-one-block-is-deduplicat.expected.json"
+path = "Snippets/pb-repeated-vk-token-within-one-block-is-deduplicat.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-same-var-name-in-two-blocks-is-listed-independen"
+kind = "parse"
+input = "parse/pb-same-var-name-in-two-blocks-is-listed-independen.md"
+expected = "parse/pb-same-var-name-in-two-blocks-is-listed-independen.expected.json"
+path = "Snippets/pb-same-var-name-in-two-blocks-is-listed-independen.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-single-heading-and-fence-returns-a-one-element-a"
+kind = "parse"
+input = "parse/pb-single-heading-and-fence-returns-a-one-element-a.md"
+expected = "parse/pb-single-heading-and-fence-returns-a-one-element-a.expected.json"
+path = "Snippets/pb-single-heading-and-fence-returns-a-one-element-a.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-vars-are-scoped-to-their-block-adjacent-blocks-d"
+kind = "parse"
+input = "parse/pb-vars-are-scoped-to-their-block-adjacent-blocks-d.md"
+expected = "parse/pb-vars-are-scoped-to-their-block-adjacent-blocks-d.expected.json"
+path = "Snippets/pb-vars-are-scoped-to-their-block-adjacent-blocks-d.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-vk-tokens-in-block-code-are-extracted-as-vars-in"
+kind = "parse"
+input = "parse/pb-vk-tokens-in-block-code-are-extracted-as-vars-in.md"
+expected = "parse/pb-vk-tokens-in-block-code-are-extracted-as-vars-in.expected.json"
+path = "Snippets/pb-vk-tokens-in-block-code-are-extracted-as-vars-in.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-vks-fence-after-a-code-fence-applies-defaults-to"
+kind = "parse"
+input = "parse/pb-vks-fence-after-a-code-fence-applies-defaults-to.md"
+expected = "parse/pb-vks-fence-after-a-code-fence-applies-defaults-to.expected.json"
+path = "Snippets/pb-vks-fence-after-a-code-fence-applies-defaults-to.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-vks-fence-parses-key-value-pairs-into-block-vars"
+kind = "parse"
+input = "parse/pb-vks-fence-parses-key-value-pairs-into-block-vars.md"
+expected = "parse/pb-vks-fence-parses-key-value-pairs-into-block-vars.expected.json"
+path = "Variables/pb-vks-fence-parses-key-value-pairs-into-block-vars.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-vks-fence-with-empty-value-yields-defaultvalue"
+kind = "parse"
+input = "parse/pb-vks-fence-with-empty-value-yields-defaultvalue.md"
+expected = "parse/pb-vks-fence-with-empty-value-yields-defaultvalue.expected.json"
+path = "Variables/pb-vks-fence-with-empty-value-yields-defaultvalue.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-vks-line-with-no-matching-code-token-is-appended"
+kind = "parse"
+input = "parse/pb-vks-line-with-no-matching-code-token-is-appended.md"
+expected = "parse/pb-vks-line-with-no-matching-code-token-is-appended.expected.json"
+path = "Snippets/pb-vks-line-with-no-matching-code-token-is-appended.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-closing-dashes-suffix"
+kind = "parse"
+input = "parse/q-closing-dashes-suffix.md"
+expected = "parse/q-closing-dashes-suffix.expected.json"
+path = "Commands/q-closing-dashes.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-cpp-info-skipped"
+kind = "parse"
+input = "parse/q-cpp-info-skipped.md"
+expected = "parse/q-cpp-info-skipped.expected.json"
+path = "Snippets/q-cpp-info.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-crlf-code-keeps-cr"
+kind = "parse"
+input = "parse/q-crlf-code-keeps-cr.md"
+expected = "parse/q-crlf-code-keeps-cr.expected.json"
+path = "Snippets/q-crlf.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-empty-frontmatter-is-not"
+kind = "parse"
+input = "parse/q-empty-frontmatter-is-not.md"
+expected = "parse/q-empty-frontmatter-is-not.expected.json"
+path = "Snippets/q-empty-frontmatter.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-empty-heading-dropped"
+kind = "parse"
+input = "parse/q-empty-heading-dropped.md"
+expected = "parse/q-empty-heading-dropped.expected.json"
+path = "Snippets/q-empty-heading.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-fence-closes-mid-line"
+kind = "parse"
+input = "parse/q-fence-closes-mid-line.md"
+expected = "parse/q-fence-closes-mid-line.expected.json"
+path = "Snippets/q-fence-mid-line.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-first-vks-in-block-is-file-level"
+kind = "parse"
+input = "parse/q-first-vks-in-block-is-file-level.md"
+expected = "parse/q-first-vks-in-block-is-file-level.expected.json"
+path = "Snippets/q-first-vks-in-block.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-legacy-dup-appended-twice"
+kind = "parse"
+input = "parse/q-legacy-dup-appended-twice.md"
+expected = "parse/q-legacy-dup-appended-twice.expected.json"
+path = "Snippets/q-legacy-dup.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-single-block-top-vars"
+kind = "parse"
+input = "parse/q-single-block-top-vars.md"
+expected = "parse/q-single-block-top-vars.expected.json"
+path = "Snippets/q-single-block-top-vars.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-type-key-ignored"
+kind = "parse"
+input = "parse/q-type-key-ignored.md"
+expected = "parse/q-type-key-ignored.expected.json"
+path = "Commands/q-type-key.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-variables-code-is-vks-body"
+kind = "parse"
+input = "parse/q-variables-code-is-vks-body.md"
+expected = "parse/q-variables-code-is-vks-body.expected.json"
+path = "Variables/q-variables-code.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "rs-dialect-per-fence"
+kind = "parse"
+input = "parse/rs-dialect-per-fence.md"
+expected = "parse/rs-dialect-per-fence.expected.json"
+path = "Snippets/rs-dialect-per-fence.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-directive-detect"
+kind = "parse"
+input = "parse/rs-directive-detect.md"
+expected = "parse/rs-directive-detect.expected.json"
+path = "Templates/rs-directive-detect.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-err-block-fence"
+kind = "parse"
+input = "parse/rs-err-block-fence.md"
+expected = "parse/rs-err-block-fence.expected.json"
+path = "Snippets/rs-err-block-fence.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-err-subset"
+kind = "parse"
+input = "parse/rs-err-subset.md"
+expected = "parse/rs-err-subset.expected.json"
+path = "Variables/rs-err-subset.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-q-failing-vks-in-block"
+kind = "parse"
+input = "parse/rs-q-failing-vks-in-block.md"
+expected = "parse/rs-q-failing-vks-in-block.expected.json"
+path = "Snippets/rs-q-failing-vks-in-block.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-bad-key"
+kind = "parse"
+input = "parse/rs-vks-err-bad-key.md"
+expected = "parse/rs-vks-err-bad-key.expected.json"
+path = "Variables/rs-vks-err-bad-key.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-control-char"
+kind = "parse"
+input = "parse/rs-vks-err-control-char.md"
+expected = "parse/rs-vks-err-control-char.expected.json"
+path = "Variables/rs-vks-err-control-char.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-duplicate-key"
+kind = "parse"
+input = "parse/rs-vks-err-duplicate-key.md"
+expected = "parse/rs-vks-err-duplicate-key.expected.json"
+path = "Variables/rs-vks-err-duplicate-key.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-indent"
+kind = "parse"
+input = "parse/rs-vks-err-indent.md"
+expected = "parse/rs-vks-err-indent.expected.json"
+path = "Variables/rs-vks-err-indent.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-inline-comment"
+kind = "parse"
+input = "parse/rs-vks-err-inline-comment.md"
+expected = "parse/rs-vks-err-inline-comment.expected.json"
+path = "Variables/rs-vks-err-inline-comment.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-limit"
+kind = "parse"
+input = "parse/rs-vks-err-limit.md"
+expected = "parse/rs-vks-err-limit.expected.json"
+path = "Variables/rs-vks-err-limit.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-mixed-dialect"
+kind = "parse"
+input = "parse/rs-vks-err-mixed-dialect.md"
+expected = "parse/rs-vks-err-mixed-dialect.expected.json"
+path = "Variables/rs-vks-err-mixed-dialect.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-mixed-list"
+kind = "parse"
+input = "parse/rs-vks-err-mixed-list.md"
+expected = "parse/rs-vks-err-mixed-list.expected.json"
+path = "Variables/rs-vks-err-mixed-list.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-syntax"
+kind = "parse"
+input = "parse/rs-vks-err-syntax.md"
+expected = "parse/rs-vks-err-syntax.expected.json"
+path = "Variables/rs-vks-err-syntax.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-unsupported"
+kind = "parse"
+input = "parse/rs-vks-err-unsupported.md"
+expected = "parse/rs-vks-err-unsupported.expected.json"
+path = "Variables/rs-vks-err-unsupported.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-block-scalars"
+kind = "parse"
+input = "parse/rs-yaml-block-scalars.md"
+expected = "parse/rs-yaml-block-scalars.expected.json"
+path = "Variables/rs-yaml-block-scalars.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-comments"
+kind = "parse"
+input = "parse/rs-yaml-comments.md"
+expected = "parse/rs-yaml-comments.expected.json"
+path = "Variables/rs-yaml-comments.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-empty-list"
+kind = "parse"
+input = "parse/rs-yaml-empty-list.md"
+expected = "parse/rs-yaml-empty-list.expected.json"
+path = "Variables/rs-yaml-empty-list.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-flat"
+kind = "parse"
+input = "parse/rs-yaml-flat.md"
+expected = "parse/rs-yaml-flat.expected.json"
+path = "Variables/rs-yaml-flat.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-quoted"
+kind = "parse"
+input = "parse/rs-yaml-quoted.md"
+expected = "parse/rs-yaml-quoted.expected.json"
+path = "Variables/rs-yaml-quoted.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-spec-example"
+kind = "parse"
+input = "parse/rs-yaml-spec-example.md"
+expected = "parse/rs-yaml-spec-example.expected.json"
+path = "Variables/rs-yaml-spec-example.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-strings-list"
+kind = "parse"
+input = "parse/rs-yaml-strings-list.md"
+expected = "parse/rs-yaml-strings-list.expected.json"
+path = "Variables/rs-yaml-strings-list.md"
+origin = "rust"
+
+[[cases]]
+id = "tfd-a-commands-file-with-no-frontmatter-parses-as-ar"
+kind = "parse"
+input = "parse/tfd-a-commands-file-with-no-frontmatter-parses-as-ar.md"
+expected = "parse/tfd-a-commands-file-with-no-frontmatter-parses-as-ar.expected.json"
+path = "Commands/GIT/Remote.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "tfd-a-snippets-file-with-no-frontmatter-still-parses"
+kind = "parse"
+input = "parse/tfd-a-snippets-file-with-no-frontmatter-still-parses.md"
+expected = "parse/tfd-a-snippets-file-with-no-frontmatter-still-parses.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "tfd-an-unrecognised-directory-falls-back-to-snippet"
+kind = "parse"
+input = "parse/tfd-an-unrecognised-directory-falls-back-to-snippet.md"
+expected = "parse/tfd-an-unrecognised-directory-falls-back-to-snippet.expected.json"
+path = "Whatever/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "tfd-explicit-frontmatter-always-wins-over-the-direct"
+kind = "parse"
+input = "parse/tfd-explicit-frontmatter-always-wins-over-the-direct.md"
+expected = "parse/tfd-explicit-frontmatter-always-wins-over-the-direct.expected.json"
+path = "Commands/x.md"
+origin = "ts@b368c20"

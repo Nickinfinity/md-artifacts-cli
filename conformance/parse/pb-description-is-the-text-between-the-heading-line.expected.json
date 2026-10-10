@@ -1,0 +1,20 @@
+{
+  "blocks": [
+    {
+      "code": "npm run deploy",
+      "description": "Deploys the current build to the target environment.",
+      "fenceLang": "bash",
+      "heading": "Deploy",
+      "vars": []
+    }
+  ],
+  "code": "npm run deploy",
+  "fileName": "pb-description-is-the-text-between-the-heading-line",
+  "filePath": "Snippets/pb-description-is-the-text-between-the-heading-line.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-description-is-the-text-between-the-heading-line.md",
+  "vars": []
+}

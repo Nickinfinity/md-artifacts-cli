@@ -1,0 +1,27 @@
+{
+  "blocks": [
+    {
+      "code": "dev",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Dev",
+      "vars": []
+    },
+    {
+      "code": "prod",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Prod",
+      "vars": []
+    }
+  ],
+  "code": "dev",
+  "fileName": "x",
+  "filePath": "Snippets/x.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "x.md",
+  "vars": []
+}

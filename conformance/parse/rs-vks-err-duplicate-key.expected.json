@@ -1,0 +1,19 @@
+{
+  "blocks": [],
+  "code": "VK-a: 1\nVK-b: 2\nVK-a: 3",
+  "fileName": "rs-vks-err-duplicate-key",
+  "filePath": "Variables/rs-vks-err-duplicate-key.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-vks-err-duplicate-key.md",
+  "vars": [],
+  "varsError": {
+    "code": "vks.duplicate_key",
+    "params": {
+      "key": "VK-a",
+      "line": "3"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "blocks": [],
+  "code": "VK-a: {b: c}",
+  "fileName": "rs-vks-err-unsupported",
+  "filePath": "Variables/rs-vks-err-unsupported.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-vks-err-unsupported.md",
+  "vars": [],
+  "varsError": {
+    "code": "vks.unsupported",
+    "params": {
+      "construct": "flow_map",
+      "line": "1"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+vault = "vault"
+params = { type = "Snippet" }
+[expect]
+dirs = ["sub"]
+[[expect.files]]
+path = "Snippets/bad-vars.md"
+name = "bad-vars"
+title = "Bad vars"
+[[expect.files]]
+path = "Snippets/hello.md"
+name = "hello"
+title = "Hello"
+description = "Fixture snippet"
+tags = ["fixture"]

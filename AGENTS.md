@@ -3,11 +3,13 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-09): W0 landed.** The workspace exists: `mda-core` (empty), `mda-vault` (containment +
-> bounded reads), `mda-ops` (registry, `system.version`, `system.ops`), `mda` (CLI incl. `mda call`, `serve`,
-> debug mode), the conformance harness (0 cases) and the op-case harness. Sections marked *(W0)* describe
-> the tree; everything else (parse, write, render, vault config, variables, migration) is the **target**,
-> built by the engine-port plan's W1–W7 (`docs/plans/engine-port/`).
+> **Status (2026-10-09): W1 landed.** The workspace exists: `mda-core` (model, type registry, parse incl.
+> flags and `<VK-…>` detection, the vks codec reading legacy and YAML bodies), `mda-vault` (containment, bounded
+> reads, directory listing), `mda-ops` (`system.version`, `system.ops`, `artifact.read`, `artifact.tree`), `mda`
+> (CLI incl. `mda call` and `mda artifact show|ls`, `serve` with `initialize.types`, debug mode), the conformance
+> harness (121 `parse` cases) and the op-case harness with a fixture vault. Sections marked *(W0)* describe the
+> tree; everything else (write, render, vault config, variables, migration) is the **target**, built by the
+> engine-port plan's W2–W7 (`docs/plans/engine-port/`).
 
 ---
 
@@ -79,6 +81,8 @@ md-artifacts-cli/
 │   │       ├── registry.rs    # THE artifact-type table (dir, contexts, writes_file, multi_block …)
 │   │       ├── language.rs    # language alias / fence / extension tables
 │   │       ├── parse/         # frontmatter · code fence · ## blocks · vars · tokens · flags
+│   │       │   └── text.rs    # JS string semantics (trim, line split) + decode
+│   │       ├── vks/           # {mod, classify, legacy, yaml, value}.rs — the vks codec (both dialects)
 │   │       ├── serialize.rs   # THE .md emitter
 │   │       ├── patch.rs       # surgical in-place edits
 │   │       ├── render.rs      # token resolution (plain tokens; vks template engine later)
@@ -87,7 +91,7 @@ md-artifacts-cli/
 │   │       ├── varset.rs      # scoring, sub-sets, apply, build
 │   │       ├── variables.rs   # Variables-file mutations + validators
 │   │       ├── migrate/       # frontmatter rewrite (vks rewrite later)
-│   │       └── error.rs       # CoreError → stable codes
+│   │       └── error.rs       # vks.* code constants + VarsError
 │   ├── mda-vault/             # ALL filesystem access
 │   │   └── src/
 │   │       ├── lib.rs
@@ -192,7 +196,10 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Language tables | `mda-core/src/language.rs` |
 | `.md` parsing | `mda-core/src/parse/` |
 | `.md` emission | `mda-core/src/serialize.rs` |
-| `<VK-…>` token grammar | `mda-core/src/parse/` (one regex constant) |
+| `<VK-…>` token grammar | `mda-core/src/parse/tokens.rs` (`TOKEN_PATTERN`) |
+| The vks codec | `mda-core/src/vks/` |
+| `vks.*` codes | `mda-core/src/error.rs` (listed in `mda-ops` `ALL_CODES`) |
+| JS trim / line split / decoding | `mda-core/src/parse/text.rs` |
 | Slugs and file names | `mda-core/src/naming.rs` |
 | Vault-authored relative paths (index links, `paths:`) | `mda-core/src/multi_index.rs` — `safe_rel_path` |
 | Path containment | `mda-vault/src/contain.rs` |
@@ -220,6 +227,9 @@ its current services, its goldens and the real vault. `tests/conformance.rs` wal
 - A disagreement is a **recorded decision**: fix Rust, or mark the case
   `deviates_from_ts = "<reason>"`.
 - Features the extension never had (vks YAML, structured values, loops) get Rust-only cases.
+- **No vault file is ever committed** (the repo is public). Parity on the real vault is a local-only,
+  `#[ignore]`d test: `MDA_TEST_VAULT=<vault> cargo test -p mda --test vault_local -- --ignored`, against
+  TS expectations generated into gitignored `docs/`.
 
 ---
 

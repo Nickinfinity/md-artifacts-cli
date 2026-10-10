@@ -1,0 +1,32 @@
+{
+  "blocks": [
+    {
+      "code": "echo <VK-name>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "WithVar",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-name"
+        }
+      ]
+    },
+    {
+      "code": "echo static",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "NoVar",
+      "vars": []
+    }
+  ],
+  "code": "echo <VK-name>",
+  "fileName": "pb-vars-are-scoped-to-their-block-adjacent-blocks-d",
+  "filePath": "Snippets/pb-vars-are-scoped-to-their-block-adjacent-blocks-d.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-vars-are-scoped-to-their-block-adjacent-blocks-d.md",
+  "vars": []
+}

@@ -1,0 +1,21 @@
+{
+  "blocks": [],
+  "code": "VK-tags:\n  - a\n  - b",
+  "fileName": "rs-yaml-strings-list",
+  "filePath": "Variables/rs-yaml-strings-list.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-yaml-strings-list.md",
+  "vars": [
+    {
+      "defaultValue": "a",
+      "name": "VK-tags",
+      "value": [
+        "a",
+        "b"
+      ]
+    }
+  ]
+}

@@ -1,4 +1,12 @@
 [[expect.ops]]
+name = "artifact.read"
+summary = "Parse one artifact file"
+
+[[expect.ops]]
+name = "artifact.tree"
+summary = "List one level of a type directory"
+
+[[expect.ops]]
 name = "system.ops"
 summary = "List every registered operation"
 

@@ -1,0 +1,26 @@
+{
+  "blocks": [],
+  "code": "<VK-each:users:\", \">x <VK-users.name><VK-end:users> <VK-join:tags:\" | \"> <VK-each>",
+  "fileName": "rs-directive-detect",
+  "filePath": "Templates/rs-directive-detect.md",
+  "frontmatter": {
+    "artifactType": "Template",
+    "extension": "ts",
+    "language": "markdown"
+  },
+  "relativePath": "rs-directive-detect.md",
+  "vars": [
+    {
+      "defaultValue": "",
+      "name": "VK-users"
+    },
+    {
+      "defaultValue": "",
+      "name": "VK-tags"
+    },
+    {
+      "defaultValue": "",
+      "name": "VK-each"
+    }
+  ]
+}

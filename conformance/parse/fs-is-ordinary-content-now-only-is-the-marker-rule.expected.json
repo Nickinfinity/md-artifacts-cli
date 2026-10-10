@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "intro\n\n---\n\noutro",
+  "fileName": "fs-is-ordinary-content-now-only-is-the-marker-rule",
+  "filePath": "AIPrompts/fs-is-ordinary-content-now-only-is-the-marker-rule.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-is-ordinary-content-now-only-is-the-marker-rule.md",
+  "vars": []
+}

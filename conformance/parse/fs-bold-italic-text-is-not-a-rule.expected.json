@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "***emphasis***",
+  "fileName": "fs-bold-italic-text-is-not-a-rule",
+  "filePath": "AIPrompts/fs-bold-italic-text-is-not-a-rule.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-bold-italic-text-is-not-a-rule.md",
+  "vars": []
+}

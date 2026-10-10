@@ -1,0 +1,44 @@
+{
+  "blocks": [
+    {
+      "code": "VK-a: 1",
+      "description": "",
+      "fenceLang": "vks",
+      "heading": "Good",
+      "vars": [
+        {
+          "defaultValue": "1",
+          "name": "VK-a"
+        }
+      ]
+    },
+    {
+      "code": "VK-b: [x, y]",
+      "description": "",
+      "fenceLang": "vks",
+      "heading": "Bad",
+      "vars": [],
+      "varsError": {
+        "code": "vks.unsupported",
+        "params": {
+          "construct": "flow_list",
+          "line": "1"
+        }
+      }
+    }
+  ],
+  "code": "VK-a: 1",
+  "fileName": "rs-err-subset",
+  "filePath": "Variables/rs-err-subset.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-err-subset.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-a"
+    }
+  ]
+}

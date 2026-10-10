@@ -1,0 +1,21 @@
+{
+  "blocks": [],
+  "code": "# lead\nVK-a: 1\n# mid\nVK-b: 2",
+  "fileName": "rs-yaml-comments",
+  "filePath": "Variables/rs-yaml-comments.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-yaml-comments.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-a"
+    },
+    {
+      "defaultValue": "2",
+      "name": "VK-b"
+    }
+  ]
+}

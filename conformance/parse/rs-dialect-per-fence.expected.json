@@ -1,0 +1,42 @@
+{
+  "blocks": [
+    {
+      "code": "echo <VK-a>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "One",
+      "vars": [
+        {
+          "defaultValue": "1",
+          "name": "VK-a"
+        }
+      ]
+    },
+    {
+      "code": "echo <VK-b>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Two",
+      "vars": [
+        {
+          "defaultValue": "2",
+          "name": "VK-b"
+        }
+      ]
+    }
+  ],
+  "code": "echo <VK-a>",
+  "fileName": "rs-dialect-per-fence",
+  "filePath": "Snippets/rs-dialect-per-fence.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "rs-dialect-per-fence.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-a"
+    }
+  ]
+}

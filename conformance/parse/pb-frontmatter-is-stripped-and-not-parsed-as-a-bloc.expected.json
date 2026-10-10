@@ -1,0 +1,21 @@
+{
+  "blocks": [
+    {
+      "code": "echo hi",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "First Block",
+      "vars": []
+    }
+  ],
+  "code": "echo hi",
+  "fileName": "pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc",
+  "filePath": "Snippets/pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash",
+    "title": "Only One Block"
+  },
+  "relativePath": "pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc.md",
+  "vars": []
+}

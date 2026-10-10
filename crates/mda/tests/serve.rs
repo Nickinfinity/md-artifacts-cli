@@ -55,6 +55,8 @@ fn initialize_answers_protocol_and_engine() {
         .unwrap()
         .engine;
     assert_eq!(out[0]["result"]["engine"], engine);
+    assert_eq!(out[0]["result"]["types"][0]["dir"], "Snippets");
+    assert_eq!(out[0]["result"]["types"].as_array().unwrap().len(), 6);
 }
 
 #[test]

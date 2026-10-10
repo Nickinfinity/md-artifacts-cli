@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "one\n%%oa:start B%%\ntwo",
+  "fileName": "fs-a-second-start-flag-while-a-region-is-open-is-co",
+  "filePath": "AIPrompts/fs-a-second-start-flag-while-a-region-is-open-is-co.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "relativePath": "fs-a-second-start-flag-while-a-region-is-open-is-co.md",
+  "vars": []
+}

@@ -1,0 +1,13 @@
+{
+  "blocks": [],
+  "code": "Some plain text content.\nNo language highlight.",
+  "fileName": "snippet-plain-text",
+  "filePath": "Snippets/artifact-form/snippet-plain-text.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "description": "Plain text with no language field and a bare code fence.",
+    "title": "Plain Text Snippet"
+  },
+  "relativePath": "artifact-form/snippet-plain-text.md",
+  "vars": []
+}

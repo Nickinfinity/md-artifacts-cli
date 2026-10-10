@@ -1,0 +1,18 @@
+{
+  "blocks": [],
+  "code": "VK-a: []",
+  "fileName": "rs-yaml-empty-list",
+  "filePath": "Variables/rs-yaml-empty-list.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks"
+  },
+  "relativePath": "rs-yaml-empty-list.md",
+  "vars": [
+    {
+      "defaultValue": "",
+      "name": "VK-a",
+      "value": []
+    }
+  ]
+}

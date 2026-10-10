@@ -1,0 +1,20 @@
+{
+  "blocks": [
+    {
+      "code": "echo done",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Static",
+      "vars": []
+    }
+  ],
+  "code": "echo done",
+  "fileName": "pb-block-with-no-vk-tokens-has-vars",
+  "filePath": "Snippets/pb-block-with-no-vk-tokens-has-vars.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-block-with-no-vk-tokens-has-vars.md",
+  "vars": []
+}

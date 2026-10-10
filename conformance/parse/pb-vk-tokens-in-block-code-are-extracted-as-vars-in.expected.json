@@ -1,0 +1,29 @@
+{
+  "blocks": [
+    {
+      "code": "curl <VK-host>/<VK-path>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Endpoint",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-host"
+        },
+        {
+          "defaultValue": "",
+          "name": "VK-path"
+        }
+      ]
+    }
+  ],
+  "code": "curl <VK-host>/<VK-path>",
+  "fileName": "pb-vk-tokens-in-block-code-are-extracted-as-vars-in",
+  "filePath": "Snippets/pb-vk-tokens-in-block-code-are-extracted-as-vars-in.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-vk-tokens-in-block-code-are-extracted-as-vars-in.md",
+  "vars": []
+}

@@ -1,0 +1,38 @@
+{
+  "blocks": [
+    {
+      "code": "Review the dev branch of <VK-repo>.",
+      "description": "",
+      "fenceLang": "markdown",
+      "heading": "Dev",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-repo"
+        }
+      ]
+    },
+    {
+      "code": "Review a production release.",
+      "description": "",
+      "fenceLang": "markdown",
+      "heading": "Prod",
+      "vars": []
+    }
+  ],
+  "code": "Review the dev branch of <VK-repo>.",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "markdown",
+    "title": "Reviewer"
+  },
+  "relativePath": "reviewer.md",
+  "vars": [
+    {
+      "defaultValue": "",
+      "name": "VK-repo"
+    }
+  ]
+}

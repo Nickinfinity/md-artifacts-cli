@@ -1,0 +1,18 @@
+{
+  "blocks": [],
+  "code": "VK-a=1",
+  "fileName": "q-variables-code",
+  "filePath": "Variables/q-variables-code.md",
+  "frontmatter": {
+    "artifactType": "Variables",
+    "language": "vks",
+    "title": "V"
+  },
+  "relativePath": "q-variables-code.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-a"
+    }
+  ]
+}
