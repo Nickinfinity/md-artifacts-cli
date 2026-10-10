@@ -11,8 +11,8 @@ client (CLI, VS Code extension, TUI, MCP) sees vault content only through the en
 > **Provenance.** Ported 2026-10-09 from the VS Code extension's `ARTIFACT_FILE_FORMAT.md`
 > (`md-artifacts-snippets_and_tools-vscode` @ `b368c20`). §1–§8 describe the same format the extension
 > reads and writes today; only the implementation references changed. **§9 and §10 are new** (YAML
-> variable bodies, structured values, directives) and are **proposed** until the engine-port plan's
-> W1 refinement closes the open decisions they cite (D-2…D-11). Until the extension cuts over to the
+> variable bodies, structured values, directives); the decisions they cite (D-2…D-11) were **ruled at
+> the engine-port plan's W1 Role A pass 1 (2026-10-09)**. §11.2 stays proposed until W6. Until the extension cuts over to the
 > engine, parity with the extension's behaviour is measured by `conformance/`, not by reading code.
 
 > Examples use `~~~` as the outer fence so inner ```` ``` ```` fences render literally. In a real file
@@ -32,7 +32,8 @@ client (CLI, VS Code extension, TUI, MCP) sees vault content only through the en
 | Index links and vault-authored relative paths | `mda-core/src/multi_index.rs` (`safe_rel_path`) |
 
 Parse and validation failures are reported as **error codes with parameters** (e.g.
-`vks.duplicate_key { key, line }`), never as prose. The code list lives in `mda-ops/src/error.rs`.
+`vks.duplicate_key { key, line }`), never as prose. Every code is listed in `mda-ops/src/error.rs` (`ALL_CODES`); the `vks.*` constants
+are defined in `mda-core/src/error.rs`, which cannot depend on the ops crate.
 
 ---
 
@@ -465,7 +466,7 @@ is in-memory and per run; nothing is written to the vault.
 
 ---
 
-## 9. The `vks` body *(proposed — closes at engine-port W1 refinement)*
+## 9. The `vks` body *(ruled — engine-port W1 Role A pass 1, 2026-10-09)*
 
 The body of a ```` ```vks ```` fence. Decision references (D-n) point to the design record in the
 engine-port plan; the info string stays `vks` (a ```` ```yaml ```` fence would be mistaken for the code
@@ -496,13 +497,26 @@ comment    := a whole line whose first non-space character is '#'
 Indentation is **exactly two spaces per level**; a sequence item's nested lines sit two spaces past
 its dash. CRLF is read as LF.
 
-**Rejected** (each with its own error code; the whole fence yields no vars and the file carries a
-`vars_error`): tabs; any other indentation; `- ` at column 0; a sequence directly inside a sequence;
-a list mixing strings and records; flow maps `{…}` and non-empty flow lists `[a, b]`; `{}`; anchors
-`&`, aliases `*`, tags `!`, merge keys `<<`; folded `>`; `|+` and indentation indicators; block
-scalars inside sequences; `---` / `...`; `%` directives; `?` keys; duplicate keys at any level; a key
-with both an inline value and children; control characters other than tab (and newline inside block
-scalars or `"\n"`); any limit in §9.7 exceeded.
+**Rejected.** The whole fence yields no defaults; tokens detected in the code are still reported, with
+`""`. The error is `varsError: { code, params }`, on the **file** for its top fence and on the **block**
+for a trailing fence or sub-set. Every code carries `params.line` (1-based within the fence body; `0`
+for `vks.limit` on the body size). The first violation in line order is the one reported. Param values
+in `code font` are the fixed vocabulary, part of the protocol like the codes themselves.
+
+| Code | Extra params | Rejected |
+|---|---|---|
+| `vks.syntax` | `rule`: `dash_at_column_0` · `value_and_children` · `unclosed_quote` · `bad_escape` · `bad_plain` · `expected_entry` | `- ` at column 0; a key with both an inline value and children; an unterminated `'…'`/`"…"`; a `"…"` escape other than `\\ \" \n \t`; a plain scalar that starts with a reserved indicator not listed under `vks.unsupported`, contains `: `, or ends with `:`; text after a closing quote (other than ` #…`, which is `vks.inline_comment`); a bare `-`; any other line that is not an entry, item or comment |
+| `vks.indent` | — | a tab in indentation; indentation not a multiple of two; an entry or item not at the indent its parent requires |
+| `vks.bad_key` | `key` | a key outside the §9.1 key grammar (top level vs nested); includes `__proto__` |
+| `vks.duplicate_key` | `key` | the same key twice in one map, at any level |
+| `vks.unsupported` | `construct`: `flow_map` · `flow_list` · `anchor` · `alias` · `tag` · `merge_key` · `folded` · `block_indicator` · `block_in_list` · `nested_list` · `document_marker` · `directive` · `complex_key` | `{…}` and `{}`; non-empty `[a, b]`; `&`; `*`; `!`; `<<`; `>`; `\|+` or an indentation indicator (`\|2`); a block scalar as a list item; a sequence directly inside a sequence; `---` / `...`; a `%` line; a `?` key |
+| `vks.mixed_list` | — | one list holding both strings and records |
+| `vks.inline_comment` | — | ` #` after a value on the same line (`name: a # note`, `color: #fff`); never truncated |
+| `vks.control_char` | — | a C0 control character or DEL other than tab; a newline is legal only as a line break or `"\n"` |
+| `vks.limit` | `limit`: `body_bytes` · `depth` · `nodes` · `list_items` · `map_keys`; `max` | any §9.7 limit, checked before the work it bounds |
+| `vks.mixed_dialect` | — | in a fence classified as YAML (§9.6): a non-comment line that is not a valid entry or item, contains `=`, and has no `:` before its first `=` |
+
+Emission has one more code, `vks.unrepresentable` (§9.5).
 
 ### 9.2 Typing (D-2)
 
@@ -513,8 +527,8 @@ scalars or `"\n"`); any limit in §9.7 exceeded.
 ### 9.3 Values (D-3)
 
 A var's value is a **string**, a **list** (of strings, or of records — never mixed), or a **record**
-(string keys → values), nested to the depth limit. The model keeps a derived scalar default for
-every var: a string is itself; a list of strings → its first item (or `""` if empty); a list of
+(string keys → values), nested to the depth limit. The model stores the value only; the scalar
+default is **derived** from it whenever it is emitted (so the two can never disagree): a string is itself; a list of strings → its first item (or `""` if empty); a list of
 records or a record → `""`.
 
 ~~~md
@@ -540,8 +554,10 @@ VK-db:
 ### 9.4 Multi-line values, comments, keys (D-5)
 
 - **Multi-line strings:** `|` (keeps exactly one trailing newline) and `|-` (none), on map values only.
-  Inside a list, a newline is expressible only as `"\n"` in a double-quoted item.
-- **Comments:** whole lines only. `name: a # note` and `color: #fff` are **errors**, never truncated.
+  Inside a list, a newline is expressible only as `"\n"` in a double-quoted item. Inside a block scalar
+  at indent n, **every** line indented ≥ n+2, or blank, is content (a `#` line included); the block's
+  indent (n+2) is removed. Trailing blank lines are stripped, then `|` adds one `\n`. An empty block is `""`.
+- **Comments:** whole lines only, outside block scalars. `name: a # note` and `color: #fff` are **errors**, never truncated.
 - **Keys:** see §9.1. A top-level key with `-` after `VK-` is legal but cannot be referenced by a token.
   **Duplicate keys** at any level reject the body.
 
@@ -553,8 +569,9 @@ is not a YAML-special word (`true false yes no on off null ~`, numerals, leading
 plain; otherwise single-quoted with `'` doubled. Structures: `key: []` for an empty list; `- item` lines;
 records in **compact form** (`- first: v`, then the rest two spaces in); maps indented; two spaces per
 level; key and field order preserved. The emitter **refuses** (`vks.unrepresentable`): any string
-containing three backticks (it would close the fence), a string with two or more trailing newlines, and
-a var whose derived default disagrees with its value.
+containing three backticks (it would close the fence) and a string with two or more trailing newlines.
+An empty list is one value: `[]` reads as an empty list of strings and compares equal to an empty list
+of records.
 
 ### 9.6 Legacy `KEY=value` bodies and the classifier (D-6)
 
@@ -564,7 +581,8 @@ a var whose derived default disagrees with its value.
 - **Legacy rules:** each line splits on its **first `=`**; lines without `=` or starting with `#` are
   skipped; name and value are trimmed; empty names are dropped; duplicates are kept in order (the last
   wins on overlay). **Values are literal:** `VK-value="active"` is the string `"active"`, quotes
-  included. Control characters are rejected as in §9.1.
+  included. Control characters are rejected as in §9.1 (`vks.control_char`) — a deliberate deviation
+  from the extension, which accepted them.
 - Examples: `KEY=value: x` → legacy (`KEY` = `value: x`); `VK-url: http://a=b` → YAML;
   `VK-a:b=c` → legacy (`VK-a:b` = `c`); a YAML fence with a later `K=v` line → YAML error.
 - **Writing any file converts its bodies to YAML**, value-preserving: `VK-value="active"` becomes
@@ -577,7 +595,11 @@ a var whose derived default disagrees with its value.
 | fence body | 64 KiB |
 | nesting depth (containers) | 6 |
 | nodes (strings + containers) per body | 10 000 |
-| items per list / keys per map | 1 000 / 200 |
+| items per list / keys per map (top-level vars included) | 1 000 / 255 |
+
+Counting: **depth** = containers inside one var's value (the top-level map is depth 0, so a var holding a
+record is depth 1); **nodes** = every value (strings, lists, records), not keys and not the top-level map.
+Each limit is checked before the push it bounds. Legacy bodies (§9.6) are bounded by the body size only.
 
 ### 9.8 Round-trip (D-9)
 
@@ -589,7 +611,7 @@ refused at emission.
 
 ---
 
-## 10. Structured values in code — paths, loops, implode *(proposed — closes at W1 refinement)*
+## 10. Structured values in code — paths, loops, implode *(ruled — W1; detection in W1, rendering in W3)*
 
 Tokens beyond §4.1, all starting `<VK-`. The hint grammar can never contain `.` or `:`, so none of
 these collides with a plain token, and **no variable name is reserved** (`<VK-each>` is still a plain

@@ -203,7 +203,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | NDJSON framing | `mda/src/serve/` (shared with `mda-mcp` later) |
 
 The on-disk format is specified by **`spec/ARTIFACT_FILE_FORMAT.md`** (ported from the extension;
-§9–§10, the YAML variables and directives, are *proposed* until the engine-port W1 refinement). **If the spec and the
+§9–§10, the YAML variables and directives, were ruled at the engine-port W1 Role A pass 1). **If the spec and the
 parser disagree, that is a bug to reconcile, never a judgement call.**
 
 ---
