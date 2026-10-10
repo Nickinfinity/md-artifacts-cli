@@ -266,18 +266,27 @@ fn patch_output_over_the_cap_is_refused_and_file_unchanged() {
 }
 
 #[test]
-fn bom_survives_a_patch() {
+fn bom_is_dropped_by_a_patch_like_update() {
+    // Every engine write is UTF-8 without a BOM, as Obsidian writes (decision #36).
     let v = vault("bom");
     let raw = format!("\u{feff}{BODY}");
     v.put("Templates/a.md", &raw);
     let w = pat(&v, "Templates/a.md", hash(&raw)).unwrap();
     let got = fs::read(v.dir.join("Templates/a.md")).unwrap();
-    assert!(got.starts_with(&[0xEF, 0xBB, 0xBF]));
     assert_eq!(
         String::from_utf8(got.clone()).unwrap(),
-        format!("\u{feff}{}", BODY.replace("title: T", "title: X"))
+        BODY.replace("title: T", "title: X")
     );
     assert_eq!(w.hash, mda_vault::content_hash(&got));
+}
+
+#[test]
+fn bom_is_dropped_by_an_update() {
+    let v = vault("bomupd");
+    let raw = format!("\u{feff}{BODY}");
+    v.put("Templates/a.md", &raw);
+    upd(&v, "Templates/a.md", hash(&raw), "new").unwrap();
+    assert!(!v.get("Templates/a.md").starts_with('\u{feff}'));
 }
 
 #[test]

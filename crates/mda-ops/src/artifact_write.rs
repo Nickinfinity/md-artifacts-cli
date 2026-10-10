@@ -330,11 +330,8 @@ pub fn patch(ctx: &Ctx, req: PatchRequest) -> Result<WriteResponse, OpError> {
         (PatchEdit::Code { .. }, None) => return Err(bad("code target")),
     }
     .map_err(map_patch)?;
-    let out = if bytes.starts_with(&[0xEF, 0xBB, 0xBF]) {
-        format!("\u{feff}{patched}")
-    } else {
-        patched
-    };
+    // Written without a BOM, as `update` and Obsidian write (decision #36).
+    let out = patched;
     too_large(&req.path, out.len())?;
     replace(
         root,
