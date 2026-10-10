@@ -10,8 +10,10 @@ disagree, and fix this file in the same change.
 > `artifact.read` (+ `hash`), `artifact.tree`, `artifact.create|update|patch|delete`), `mda` (CLI incl. `mda call`
 > and `mda artifact show|ls|new|update|patch|rm`, `serve` with `initialize.types`, debug mode), the conformance
 > harness (121 `parse` + 26 `serialize` cases) and the op-case harness (per-leg fixture copies, `expect_files`).
-> Sections marked *(W0)* describe the tree; everything else (render, vault config, variables, migration) is the
-> **target**, built by the engine-port plan's W3–W7 (`docs/plans/engine-port/`).
+> Sections marked *(W0)* describe the tree; everything else (render, naming, template indexes, vault config,
+> variables, migration) is the **target**, built by the engine-port plan's W3, W3b and W4–W7
+> (`docs/plans/engine-port/`). W3 = render engine (`render/`), `language.rs`, `naming.rs`,
+> `artifact.render|write_file|prefill`; W3b = `multi_index.rs` + `index.plan|run|create`.
 ---
 
 ## What this project is
@@ -86,7 +88,7 @@ md-artifacts-cli/
 │   │       ├── vks/           # {mod, classify, legacy, yaml, value, emit}.rs — the vks codec (read both dialects, emit YAML)
 │   │       ├── serialize.rs   # THE .md emitter
 │   │       ├── patch.rs       # surgical in-place edits
-│   │       ├── render.rs      # token resolution (plain tokens; vks template engine later)
+│   │       ├── render/        # token substitution + the directive engine (paths, each/end, join, limits)
 │   │       ├── naming.rs      # slugify, file names, whole-file output names
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
 │   │       ├── varset.rs      # scoring, sub-sets, apply, build
@@ -198,6 +200,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | `.md` parsing | `mda-core/src/parse/` |
 | `.md` emission, frontmatter key order, the single-line rule | `mda-core/src/serialize.rs` |
 | `<VK-…>` token grammar | `mda-core/src/parse/tokens.rs` (`TOKEN_PATTERN`) |
+| Token substitution, directives, expansion limits | `mda-core/src/render/` (tokenizes only through `TOKEN_PATTERN`) |
 | The vks codec | `mda-core/src/vks/` |
 | `vks.*` codes | `mda-core/src/error.rs` (listed in `mda-ops` `ALL_CODES`) |
 | JS trim / line split / decoding | `mda-core/src/parse/text.rs` |
@@ -219,7 +222,7 @@ parser disagree, that is a bug to reconcile, never a judgement call.**
 ## Conformance — parity with the TypeScript extension
 
 `conformance/` (tracked) holds language-neutral cases: `parse/` (input `.md` → expected JSON),
-`serialize/` (model JSON → expected bytes), `render/` (file + values → expected text) and
+`serialize/` (model JSON → expected bytes), `render/` (file + values → expected `{output, warnings, containsEscape}`) and
 `manifest.toml`. TS-derived cases are generated **once** by an exporter in the extension repo from
 its current services, its goldens and the real vault. `tests/conformance.rs` walks the manifest.
 
@@ -266,17 +269,21 @@ through MCP), CLI arguments, TUI text inputs. Held by construction, because clip
 analysis:
 
 - **Reject, never sanitise.** Limits (file size, nesting depth, node counts, expansion size) are
-  checked **before** the work they bound.
+  checked **before** the work they bound. Render bounds output bytes, iterations, steps (nodes
+  visited) and loop nesting (spec §10), so empty loops and repeated `join` walks are bounded too.
 - **One containment rule** (`contain.rs`): canonicalize (symlinks resolved) and compare path
   **components**. Checked immediately before the I/O it protects. Vault writes are contained to the
   vault root; workspace writes (whole-file artifacts, scaffolds) to an allowed root the client
-  passes, never one derived from vault content.
+  passes, never one derived from vault content, and through the **same** `write.rs` path as vault
+  writes (atomic, UTF-8, no BOM). Every output-name input (typed name, `extension:`, `target:`, the
+  title fallback) is a path-injection surface (`naming.rs`).
 - **Atomic writes** only; a crash leaves the old file or the new one.
 - **No panics on input:** `#![forbid(unsafe_code)]`; `unwrap`/`expect`/`panic!` denied outside tests.
 - **stdout discipline** in `serve`/`mcp` (above): a stray byte breaks every client.
 - **Terminal safety for rendered output:** clients that send rendered text to a terminal refuse
-  content containing `ESC` (`\x1b`); the engine reports it in the render response, so every client
-  can apply the same rule.
+  content containing `ESC` (`\x1b`); the engine reports it in the render response (`containsEscape`),
+  so every client can apply the same rule. The CLI's human `render` refuses it
+  (`render.contains_escape`); `--json` returns the response unchanged.
 - **MCP write tools are off unless `--allow-write`** (when MCP exists).
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the

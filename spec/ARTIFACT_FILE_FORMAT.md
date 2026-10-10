@@ -24,7 +24,7 @@ client (CLI, VS Code extension, TUI, MCP) sees vault content only through the en
 |---|---|
 | Frontmatter, code fence, `##` blocks, flags, tokens | `mda-core/src/parse/` |
 | The `vks` body (both dialects) | `mda-core/src/vks/` (codec) |
-| Directive resolution (§10) | `mda-core/src/vks/` (template) + `mda-core/src/render.rs` |
+| Token substitution and directive resolution (§4.1, §10) | `mda-core/src/render/` |
 | Emission | `mda-core/src/serialize.rs` |
 | Artifact types, directories, per-type properties | `mda-core/src/registry.rs` |
 | Language names, fence aliases, file extensions | `mda-core/src/language.rs` |
@@ -211,12 +211,20 @@ VK-db_url: mongodb://localhost:27017
   matching use the full name, case-sensitive.
 - **Closing form `</VK-host>` is the same variable.** Both spellings detect, deduplicate and substitute
   identically.
-- **Substitution is two passes:** an **adjacent** pair `<VK-x></VK-x>` collapses to the value **once**,
-  then every remaining opening or closing token resolves individually. `<VK-a></VK-b>` is two tokens;
-  `<VK-x> text </VK-x>` is two tokens.
-- **Unknown variables stay literal**, so partial substitution is safe.
+- **Substitution is one left-to-right pass:** an **adjacent** pair `<VK-x></VK-x>` is one unit and
+  resolves to the value **once**; every other opening or closing token resolves individually.
+  `<VK-a></VK-b>` is two tokens; `<VK-x> text </VK-x>` is two tokens. **Inserted values are never
+  re-scanned**: a value containing `<VK-y>` is output as those characters. *(Engine-port W3 R-11; the
+  extension's two-pass `resolveVars` re-scans values placed by an adjacent pair — recorded deviation.)*
+- **What is a variable when rendering:** every default (§1.3 / §9) **plus every token detected in the
+  code being rendered**, in every layout (fenced, flagged, bare body). *(W3 R-25(1); the extension's
+  fenced reader knows declared defaults only, so a fenced token without a default could never be
+  filled — recorded deviation. `artifact.read` still reports a fenced file's defaults only.)*
+- **Unknown variables stay literal**, so partial substitution is safe. Supplied values whose name matches
+  no variable are ignored.
 - **Value resolution, in order:** the value the client supplies → the default from §1.3 / §9 → otherwise
-  the token stays literal.
+  the token stays literal. **An empty string counts as not supplied**: an empty client value falls back
+  to the default, and an empty default leaves the token literal (W3 R-12, extension parity).
 - Collision-free by design: `<VK-` does not occur in JS/TS generics, JSX, HTML, CSS, Vue, Python, shell,
   Jinja or Handlebars syntax. Never use `{{name}}`.
 
@@ -260,9 +268,17 @@ supplies.
 
 - **Single block only.** A 2+ block template is a validation error at write time; nothing is written.
 - **Output file name — precedence:** the name the user typed (if it carries an extension it wins whole)
-  → frontmatter `extension:` (leading dot optional) → the fence language's extension (`language.rs`).
-- **`extension:` and a typed name are path-injection surfaces:** a value containing `/`, `\`, `..` or
-  NUL is **rejected, never sanitised**.
+  → frontmatter `extension:` (leading dot optional) → the extension of **frontmatter `language`**
+  (`language.rs`). A typed name without an extension gets the extension appended. The stem, when not
+  typed, is the **raw title**, else the vault file's name (without `.md`), else `template` — trailing
+  dots stripped, never slugified (W3 R-25(2), extension parity).
+- **Every input is a path-injection surface** — the typed name, `extension:` and the title fallback: a
+  value containing `/`, `\`, `..` or NUL is **rejected, never sanitised** (`naming.path_injection`).
+  The final name is also validated, first failure wins: more than 255 bytes; empty; a leading or trailing
+  space; a **trailing** dot (or all dots — a leading dot is allowed: `.env`, `.cursorrules`); any of
+  `\ / : * ? " < > |`; a C0 or DEL character; a Windows reserved name, also as the stem before the first
+  dot (`CON.txt`), case-insensitive (W3 R-6, R-7, R-16, R-25(3, 21); the reserved-stem and leading-dot
+  rules differ from the extension's input box).
 
 ### 5.2 `AIAgentsConfig`
 
@@ -280,8 +296,10 @@ target: CLAUDE.md
 - `provider` / `model` / `version`: optional, free text, single line, metadata only (they change no
   behaviour). Empty values are omitted. They round-trip.
 - **Output file name:** `target:` **verbatim** (e.g. `CLAUDE.md`, `.cursorrules`), never
-  extension-appended; absent → derived from the title. `target:` is a path-injection surface (same
-  rejection rule as §5.1).
+  extension-appended; absent → the **raw title**, else the vault file's name (trailing dots stripped,
+  not slugified) + `.md` unless it already carries an extension, else `agent.md`. A typed name is used
+  verbatim. The typed name, `target:` and the fallback are path-injection surfaces (same rejection and
+  validation rules as §5.1).
 - Writing requires a single block/region, even though authoring may use several.
 - Usually authored with flags (§7); a fence or a bare body also works (§7.5).
 
@@ -426,14 +444,17 @@ A link resolves **relative to the index file's own directory only**; there is no
 Every vault-authored string that becomes a path (link targets and `paths:` entries) goes through
 **`safe_rel_path`**, which **rejects and never sanitises**:
 
-| Rejected | Error code |
-|---|---|
-| `../escape`, `a/../../b` | `path.parent_segment` |
-| `/etc/passwd` | `path.absolute` |
-| `C:\tmp`, `file:///etc` | `path.drive_or_scheme` |
-| `dir\sub\file` | `path.backslash` |
-| any C0, DEL or C1 control character | `path.control_char` |
-| `''`, `/`, `.` | `path.empty` |
+Checks run **in this order**; the first that matches decides the code (W3 R-20, extension parity):
+
+| # | Rejected | Error code |
+|---|---|---|
+| 1 | `''` | `path.empty` |
+| 2 | any C0, DEL or C1 control character | `path.control_char` |
+| 3 | `C:\tmp`, `file:///etc` (any `:`) | `path.drive_or_scheme` |
+| 4 | `dir\sub\file` | `path.backslash` |
+| 5 | `/etc/passwd`, `/` | `path.absolute` |
+| 6 | `../escape`, `a/../../b` | `path.parent_segment` |
+| 7 | `.`, `./`, empty after dropping `.` and empty segments | `path.empty` |
 
 Accepted paths are normalised to POSIX (doubled separators and `.` segments collapse); segment
 content is **never decoded**, so `%2e%2e%2f` stays one inert segment. After `safe_rel_path`, the
@@ -460,9 +481,11 @@ Values supplied for one step pre-fill the **same-named** var (full `VK-…` name
 of the same run. A carried value replaces that file's default; the user can still change it. Carry-over
 is in-memory and per run; nothing is written to the vault.
 
-### 8.7 Read-side only
+### 8.7 Emission
 
-`index` and `paths` are parsed and never emitted. Indexes are hand-authored.
+`paths` is parsed and never emitted. `index: true` is emitted **only** by `index.create` (W3 R-23,
+extension parity: the extension's index creator writes it); a model without the flag never emits the key,
+and `index: false` is never written.
 
 ---
 
@@ -652,13 +675,13 @@ The closing form `</VK-…>` and the adjacent pair exist **only** for plain toke
 
 | Construct | Meaning |
 |---|---|
-| **Choice** — a plain token on a list of strings, outside any loop | resolves to the value the client supplies, defaulting to the first item. Empty list → the token stays literal |
+| **Choice** — a plain token on a list of strings, outside any loop | resolves to the value the client supplies (any string, not only a listed item — W3 R-8), defaulting to the first item. Empty list → the token stays literal |
 | `<VK-db.host>` (path through records only) | that string |
 | `<VK-each:P>` … `<VK-end:P>` | repeats the body once per item of list `P`. Inside, a path **starting with `P`** resolves against the **current item**: `<VK-users.name>` in `each:users` is this user's name; `<VK-tags>` in `each:tags` is this tag |
 | `<VK-each:P:", ">` | the separator goes **between** iterations, never after the last |
 | nested `<VK-each:users.tags>` inside `each:users` | iterates **this user's** tags |
 | `<VK-join:P>` / `<VK-join:P:" \| ">` | every string reached by `P`, **flattening every list on the way**, joined with `", "` (default) or the separator. Inside a loop, the loop prefix is the current item |
-| **Block mode** | an `each`/`end` marker alone on its line (whitespace only) removes that line, including its newline, and iterations are joined by separator + `\n`. Otherwise inline: joined by the separator only |
+| **Block mode** | when **both** markers of a pair are alone on their lines (whitespace only), both lines are removed with their line terminators; the body is the text between them minus its final terminator (`\r\n` or `\n`); iterations are joined by separator + that terminator, followed by one terminator if there was at least one iteration (zero iterations remove the lines entirely). Otherwise inline: markers removed, iterations joined by the separator only. Default separator: `""` for `each`, `", "` for `join` |
 
 ~~~md
 ```js
@@ -684,10 +707,26 @@ const users = [
   `each`; an `end` with no matching or a different `each` (markers must nest); a loop over a path it is
   already inside; a path or plain token reaching a list or record outside a loop (except Choice);
   `join` reaching a record; `join` with an empty result.
+- **Failure scope:** a failed marker stays literal and the text between it and its partner renders
+  once in the enclosing scope. Choice is a plain token resolved globally, also inside an unrelated loop.
+  A loop over a path it is already inside means exact path equality with an open loop.
+- **Warning params:** `name` = the full `VK-x` for plain tokens, `path` = the full `VK-a.b` for paths and
+  directives (no `each:` prefix), `line` = 1-based line of the token (string). One warning per (code,
+  name|path); warnings sorted by (line, code, name|path) (W3 R-25(7–10)).
 - **Values are inserted raw** — no per-language quoting or escaping; the author writes the quotes.
-- **Expansion limits** (checked during expansion, before each append): rendered output ≤ 1 MiB, loop
-  iterations per render ≤ 100 000. Exceeding either **refuses** the whole render (`render.limit`),
-  never truncates.
+- **Expansion limits** (checked during expansion, each before the work it bounds — W3 R-10):
+
+  | Limit (`limit` param) | Max | Checked |
+  |---|---|---|
+  | `output_bytes` | 1 MiB | before every append, plain tokens included |
+  | `iterations` | 100 000 loop iterations per render | before each iteration |
+  | `steps` | 1 000 000 template nodes + value nodes visited | before each visit (bounds empty loops and repeated `join` walks that emit nothing) |
+  | `depth` | 64 nested loops | while matching markers, before any recursion |
+
+  Exceeding any **refuses** the whole render (`render.limit{limit, max}`), never truncates.
+- **Warning codes** (each with `line` and `name` or `path`; one per code and token): `render.unknown_var`,
+  `render.each_not_list`, `render.unterminated`, `render.unmatched_end`, `render.self_nested`,
+  `render.not_scalar`, `render.join_record`, `render.join_empty`.
 - The render result also reports whether the output contains an `ESC` character, so terminal clients
   can refuse it uniformly.
 
