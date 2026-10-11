@@ -1,0 +1,5 @@
+# An unknown request field reaches deny_unknown_fields; nothing is written.
+vault = "vault"
+params = { path = "Templates/index.md", workspaceRoot = "$WORKSPACE", steps = [], nope = 1 }
+expect_error = "op.bad_request"
+expect_workspace_files = { "Edit me.ts" = false }

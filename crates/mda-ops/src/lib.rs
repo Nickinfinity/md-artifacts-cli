@@ -4,6 +4,8 @@
 pub mod artifact;
 pub mod artifact_write;
 pub mod error;
+pub mod index;
+pub mod index_create;
 mod ops_list;
 pub mod prefill;
 pub mod registry;

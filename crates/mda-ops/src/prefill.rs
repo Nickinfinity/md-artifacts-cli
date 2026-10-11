@@ -4,7 +4,7 @@
 
 use mda_core::language::map_language_id;
 use mda_core::model::{ArtifactModel, ModelBlock};
-use mda_core::naming::{NameField, check_injection, validate_name};
+use mda_core::naming::{NameField, check_injection, node_ext, validate_name};
 use mda_core::registry::{ArtifactType, LanguageMode, OutputNameKey};
 
 use crate::{Ctx, OpError, error};
@@ -82,6 +82,7 @@ pub fn prefill(ctx: &Ctx, req: PrefillRequest) -> Result<ArtifactModel, OpError>
         version: String::new(),
         env: String::new(),
         target: String::new(),
+        index: false,
         blocks: vec![],
     };
     let mapped = map_language_id(req.language_id.as_deref().unwrap_or(""));
@@ -114,14 +115,6 @@ pub fn prefill(ctx: &Ctx, req: PrefillRequest) -> Result<ArtifactModel, OpError>
     Ok(model)
 }
 
-/// Node `path.extname(name).slice(1)`: the text after the last dot, unless that dot starts the name.
-fn node_ext(name: &str) -> &str {
-    match name.rfind('.') {
-        Some(i) if i > 0 => name.get(i + 1..).unwrap_or(""),
-        _ => "",
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -143,18 +136,5 @@ mod tests {
         assert!(prefill(&Ctx::new(None), req(MAX_PREFILL_BYTES)).is_ok());
         let e = prefill(&Ctx::new(None), req(MAX_PREFILL_BYTES + 1)).unwrap_err();
         assert_eq!(e.code, error::FILE_TOO_LARGE);
-    }
-
-    #[test]
-    fn node_extname_table() {
-        for (n, want) in [
-            ("a.tar.gz", "gz"),
-            ("a.", ""),
-            (".x", ""),
-            ("a", ""),
-            ("Button.tsx", "tsx"),
-        ] {
-            assert_eq!(node_ext(n), want, "{n}");
-        }
     }
 }

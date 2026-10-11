@@ -35,6 +35,18 @@ name = "artifact.write_file"
 summary = "Render a whole-file artifact into a workspace file"
 
 [[expect.ops]]
+name = "index.create"
+summary = "Scaffold sibling artifacts and an index linking them"
+
+[[expect.ops]]
+name = "index.plan"
+summary = "Resolve a template index into steps"
+
+[[expect.ops]]
+name = "index.run"
+summary = "Write every step of a template index into a workspace"
+
+[[expect.ops]]
 name = "system.ops"
 summary = "List every registered operation"
 

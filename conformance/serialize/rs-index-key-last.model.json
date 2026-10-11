@@ -1,0 +1,14 @@
+{
+  "artifactType": "AIAgentsConfig",
+  "title": "Index",
+  "tags": [
+    "a"
+  ],
+  "target": "CLAUDE.md",
+  "index": true,
+  "blocks": [
+    {
+      "code": "1. [[a]]"
+    }
+  ]
+}

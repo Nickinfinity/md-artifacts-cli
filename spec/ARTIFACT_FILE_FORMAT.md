@@ -104,7 +104,7 @@ defaults section is kept, after the detected ones.
 
 - **Frontmatter key order:** `artifactType`, `title`, `description`, `language`, `extension`,
   `provider`, `model`, `version`, `tags`, `env`, `target`. Empty values are omitted (`artifactType`
-  is always emitted). `index` / `paths` are never emitted.
+  is always emitted). `paths` is never emitted; `index: true` is emitted last when the model sets it (§8.7).
 - **Single-line values.** `title`, `description`, `env`, `target`, `extension`, `provider`, `model`,
   `version`: every `\r\n` / `\r` / `\n` becomes one space, runs of spaces collapse. A newline would
   otherwise inject a sibling key on re-parse. `tags` entries must not contain `,`, `]`, `\n` or `\r`
@@ -114,6 +114,11 @@ defaults section is kept, after the detected ones.
 - **Plain text** (`language` empty): a bare ```` ``` ```` fence and **no** `language` key at all.
 - **Defaults:** a `vars:` label then a ```` ```vks ```` fence, emitted **only if** at least one var has
   a non-empty value or a structured value (§9.3). Body per §9.5.
+- **Empty whole-file body:** a `Template` / `AIAgentsConfig` model with empty code and no defaults to
+  emit is written as **frontmatter only** (no fence), which reads back with empty code and **no** language
+  (§7.5: an empty bare body falls through to the fenced reading).
+  *(W3b R-28(1); the extension writes an empty fence, which its own parser then reads back as the fence
+  text — recorded deviation.)*
 
 ---
 
@@ -396,6 +401,8 @@ Payload precedence, strictly ordered:
 2. **Code fence** — a ```` ```vks ```` fence does not count (it is the defaults section).
 3. **Bare body** — **only for whole-file types** (`Template`, `AIAgentsConfig`): the whole body minus
    its `vars:` label and ```` ```vks ```` fence, with `language: markdown`.
+   An **empty** bare body (after trimming) does not take this rule: the payload is the empty fenced
+   reading — empty code, no language (W3b R-29; §1.4 relies on it).
 
 `Snippet`, `Command`, `Variables` and `AIPrompt` never take rule 3.
 
@@ -430,13 +437,21 @@ An index is **never written verbatim**: running it writes the linked files, not 
 
 ### 8.2 Links
 
-- Both Obsidian forms, matched in **one pass** so document order is run order: wikilinks
-  `[[target]]` (alias `|text` and anchor `#Heading` stripped) and markdown links `[text](target)`.
+- Both Obsidian forms, matched in **one pass** over the index's body (the parsed payload) so document
+  order is run order: wikilinks `[[target]]` (alias `|text` stripped first, then anchor `#Heading`) and
+  markdown links `[text](target)`. Exact grammar (W3b, extension parity): wikilink target
+  `[^\[\]\n]+`, link text `[^\[\]\n]*`, markdown target `[^()\n]+`; targets are trimmed.
 - **Duplicates are preserved** (a link written twice is two steps).
-- **Images and embeds are not links**: `![alt](url)` and `![[Note]]` are ignored.
+- **Images and embeds are not links**: `![alt](url)` and `![[Note]]` are ignored (a match preceded by
+  `!` is skipped and scanning resumes one character later, so `!![[n]]` and `![![…` floods stay linear).
 - **A link is single-line, and its target contains no `[` or `(`** — a hostile body of unclosed
   `[[[[…` must cost linear time. Such a target is unlinkable, never truncated into a different path.
-- `.md` is appended when absent. Any other text is ignored.
+- `.md` is appended when absent (checked case-insensitively: `Note.MD` stays as written). Any other
+  text is ignored.
+- **Limits:** at most **1 000 links** per index (`index.plan`), **1 000 steps** per `index.run` and
+  **1 000 paths** per `index.create`, and at most **64 `paths:` entries** per index (normalised once, before
+  planning — candidates are per link, so the response grows with links × entries), checked before any read
+  → `index.limit{limit: links|steps|paths, max}` (W3b, #26).
 
 ### 8.3 Resolution and the rejection list
 
@@ -483,9 +498,11 @@ is in-memory and per run; nothing is written to the vault.
 
 ### 8.7 Emission
 
-`paths` is parsed and never emitted. `index: true` is emitted **only** by `index.create` (W3 R-23,
-extension parity: the extension's index creator writes it); a model without the flag never emits the key,
-and `index: false` is never written.
+`paths` is parsed and never emitted. `index` is an ordinary frontmatter property of the model (W3b
+Q4): a model with `index: true` emits `index: true` (unquoted) as the **last** frontmatter key — where
+the extension's index creator appends it — and `index: false` is never written. `index.create` and
+`artifact.create` both use it; rewriting an existing index file with `artifact.update` stays refused
+(W-7).
 
 ---
 

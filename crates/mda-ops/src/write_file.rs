@@ -91,17 +91,9 @@ pub fn write_file(ctx: &Ctx, req: WriteFileRequest) -> Result<WriteFileResponse,
     )
 }
 
-/// The reusable core: type checks, output name, render, then an atomic write inside `ws`. Also the
-/// per-step writer of `index.run`, so the `destDir` rule lives here and cannot be bypassed.
-pub(crate) fn emit_whole_file(
-    ws: &Root,
-    dest_dir: &str,
-    p: &ParsedArtifact,
-    block: Option<usize>,
-    file_name: Option<&str>,
-    values: &Values,
-    expected: Option<&str>,
-) -> Result<WriteFileResponse, OpError> {
+/// The whole-file checks, in the one skip order (`emit_whole_file`, `index.plan`): the parsed type writes
+/// a file → not an index → at most one block.
+pub(crate) fn check_whole_file(p: &ParsedArtifact) -> Result<(), OpError> {
     // The parsed type decides, not the directory (TS `writesWholeFile(frontmatter.artifactType)`).
     if !p.frontmatter.artifact_type.info().writes_file {
         return Err(OpError::new(error::ARTIFACT_NOT_WHOLE_FILE)
@@ -115,6 +107,21 @@ pub(crate) fn emit_whole_file(
             OpError::new(error::ARTIFACT_MULTI_BLOCK).with("count", p.blocks.len().to_string())
         );
     }
+    Ok(())
+}
+
+/// The reusable core: type checks, output name, render, then an atomic write inside `ws`. Also the
+/// per-step writer of `index.run`, so the `destDir` rule lives here and cannot be bypassed.
+pub(crate) fn emit_whole_file(
+    ws: &Root,
+    dest_dir: &str,
+    p: &ParsedArtifact,
+    block: Option<usize>,
+    file_name: Option<&str>,
+    values: &Values,
+    expected: Option<&str>,
+) -> Result<WriteFileResponse, OpError> {
+    check_whole_file(p)?;
     let name = output_name(p, file_name)?;
     let rel = dest_rel(dest_dir, &name)?;
     let out = render_artifact(p, block, None, values).map_err(render_error)?;

@@ -1,0 +1,19 @@
+# Four siblings (dedupe on the emitted link set) then the index, relPath "" for the index.
+vault = "vault"
+params = { type = "Template", dir = "Templates/gen", paths = ["a.ts", "sub/b.ts", "dir/a.ts", "dir/a.tsx"] }
+[expect]
+written = 5
+skipped = 0
+results = [
+  { relPath = "a.ts", status = "written", path = "Templates/gen/a.md", hash = "ad057991c9a9843a78982851bb6703ad8b7d72c023eb125dc55b3b6f81021bc9", warnings = [], containsEscape = false },
+  { relPath = "sub/b.ts", status = "written", path = "Templates/gen/sub/b.md", hash = "bfca9597e21762772674033e9640d06fbb249c1de7fa8ea2519871bf772c136c", warnings = [], containsEscape = false },
+  { relPath = "dir/a.ts", status = "written", path = "Templates/gen/dir/a.md", hash = "ad057991c9a9843a78982851bb6703ad8b7d72c023eb125dc55b3b6f81021bc9", warnings = [], containsEscape = false },
+  { relPath = "dir/a.tsx", status = "written", path = "Templates/gen/dir/a-2.md", hash = "2a4e1e9544fc965fd9bc195f30d57e04715c6ce31cf385eb89aecf6f08fb2d71", warnings = [], containsEscape = false },
+  { relPath = "", status = "written", path = "Templates/gen/index.md", hash = "154e5d9c65de2802e1acac68b6366d8ae53407a05b429d61d8dafabfc27bf295", warnings = [], containsEscape = false },
+]
+[expect_files]
+ "Templates/gen/a.md" = "---\nartifactType: Template\ntitle: a\nextension: ts\n---\n"
+"Templates/gen/sub/b.md" = "---\nartifactType: Template\ntitle: b\nextension: ts\n---\n"
+"Templates/gen/dir/a.md" = "---\nartifactType: Template\ntitle: a\nextension: ts\n---\n"
+"Templates/gen/dir/a-2.md" = "---\nartifactType: Template\ntitle: a-2\nextension: tsx\n---\n"
+"Templates/gen/index.md" = "---\nartifactType: Template\ntitle: Index\nindex: true\n---\n\n```\n1. [[a]]\n2. [[sub/b]]\n3. [[dir/a]]\n4. [[dir/a-2]]\n```\n"

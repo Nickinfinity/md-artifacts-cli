@@ -152,6 +152,15 @@ fn emit(m: &ArtifactModel) -> Result<String, Unrepresentable> {
     let empty = ModelBlock::default();
     let b = m.blocks.first().unwrap_or(&empty);
     let lang = lang_for(t, &b.language);
+    // A whole-file artifact with nothing to write is frontmatter only: an empty fence would
+    // re-parse as bare-body text (spec §1.4).
+    if t.info().writes_file
+        && m.blocks.len() <= 1
+        && js_trim_end(&b.code).is_empty()
+        && vars_part(&b.vars)?.is_empty()
+    {
+        return Ok(frontmatter(m, &lang));
+    }
     let code = format!("\n```{lang}\n{}\n```\n", js_trim_end(&b.code));
     Ok(frontmatter(m, &lang) + &code + &vars_part(&b.vars)?)
 }
@@ -177,6 +186,10 @@ fn frontmatter(m: &ArtifactModel, lang: &str) -> String {
         if !value.is_empty() {
             out.push_str(&format!("{key}: {value}\n"));
         }
+    }
+    // After the loop, not in `FRONTMATTER_KEY_ORDER`: that const ranks the patcher's insertions.
+    if m.index {
+        out.push_str("index: true\n");
     }
     out + "---\n"
 }
@@ -314,6 +327,7 @@ fn flatten(m: &ArtifactModel) -> Vec<(String, String)> {
         kv("version", m.version.clone()),
         kv("env", m.env.clone()),
         kv("target", m.target.clone()),
+        kv("index", m.index.to_string()),
         kv("tags", format!("{:?}", m.tags)),
         kv("blocks", m.blocks.len().to_string()),
     ];
@@ -331,7 +345,7 @@ fn flatten(m: &ArtifactModel) -> Vec<(String, String)> {
 }
 
 /// The model a parsed file corresponds to (TS `parsedToModel`, carrying all ten frontmatter
-/// strings); `index`/`paths` are not carried (§8.7).
+/// strings and `index`); `paths` is not carried (§8.7).
 ///
 /// # Examples
 ///
@@ -392,6 +406,7 @@ pub fn from_parsed(p: &ParsedArtifact) -> ArtifactModel {
         version: s(&fm.version),
         env: s(&fm.env),
         target: s(&fm.target),
+        index: fm.index == Some(true),
         blocks,
     }
 }

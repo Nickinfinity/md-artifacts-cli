@@ -216,3 +216,41 @@ fn debug_render_does_not_log_values() {
             .contains("marker-3b9e")
     );
 }
+
+// L-9: `--debug index run` never logs variable values.
+#[test]
+fn debug_index_run_does_not_log_values() {
+    let ws = tmp("idx-run");
+    let vals = ws.join("v.json");
+    std::fs::write(&vals, r#"{"VK-name":"marker-9c4d"}"#).unwrap();
+    let steps = ws.join("s.json");
+    std::fs::write(&steps, r#"[{"relPath":"edit.md","destDir":""}]"#).unwrap();
+    let out = run(
+        &[
+            "--vault",
+            concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/vault"),
+            "--debug",
+            "index",
+            "run",
+            "Templates/index.md",
+            "--workspace",
+            ws.to_str().unwrap(),
+            "--steps",
+            steps.to_str().unwrap(),
+            "--values",
+            vals.to_str().unwrap(),
+        ],
+        b"",
+    );
+    assert_eq!(out.status.code(), Some(0));
+    let err = String::from_utf8(out.stderr).unwrap();
+    assert!(!err.contains("marker-9c4d"), "{err}");
+    assert!(err.contains("index.run"), "{err}");
+    assert!(String::from_utf8(out.stdout).unwrap().contains("1 written"));
+    assert!(
+        std::fs::read_to_string(ws.join("Edit me.ts"))
+            .unwrap()
+            .contains("marker-9c4d")
+    );
+    std::fs::remove_dir_all(ws).unwrap();
+}

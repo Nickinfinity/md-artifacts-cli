@@ -150,11 +150,11 @@ fn too_large(path: &str, size: usize) -> Result<(), OpError> {
     Ok(())
 }
 
-fn max_bytes() -> usize {
+pub(crate) fn max_bytes() -> usize {
     usize::try_from(MAX_ARTIFACT_BYTES).unwrap_or(usize::MAX)
 }
 
-fn map_serialize(e: SerializeError, path: &str) -> OpError {
+pub(crate) fn map_serialize(e: SerializeError, path: &str) -> OpError {
     match e {
         SerializeError::Vars(v) => OpError {
             code: v.code,

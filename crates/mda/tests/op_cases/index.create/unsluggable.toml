@@ -1,0 +1,4 @@
+vault = "vault"
+params = { type = "Template", dir = "Templates/gen", paths = ["!!!/b.ts"] }
+expect_error = "index.unsluggable"
+expect_files = { "Templates/gen/index.md" = false }

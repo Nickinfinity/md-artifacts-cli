@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Snippets/hello.md" }
+expect_error = "index.not_index"

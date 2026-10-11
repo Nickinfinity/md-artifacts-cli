@@ -1,0 +1,22 @@
+# Every step skips, none aborts; the sinks (workspace) stay as they were.
+vault = "vault"
+workspace = "workspace"
+params = { path = "Templates/index.md", workspaceRoot = "$WORKSPACE", steps = [
+  { relPath = "../AIAgentsConf/reviewer.md", destDir = "" },
+  { relPath = "sub/snip.md", destDir = "" },
+  { relPath = "sub/nested-index.md", destDir = "" },
+  { relPath = "missing.md", destDir = "" },
+  { relPath = "component.md", destDir = "out" },
+  { relPath = "edit.md", destDir = "../out" },
+  { relPath = "edit.md", destDir = "", fileName = "CON.txt" },
+] }
+expect = { results = [
+  { relPath = "../AIAgentsConf/reviewer.md", status = "skipped", code = "path.parent_segment", params = { path = "../AIAgentsConf/reviewer.md" } },
+  { relPath = "sub/snip.md", status = "skipped", code = "artifact.not_whole_file", params = { type = "Snippet" } },
+  { relPath = "sub/nested-index.md", status = "skipped", code = "artifact.is_index", params = {} },
+  { relPath = "missing.md", status = "skipped", code = "path.not_found", params = { path = "Templates/missing.md" } },
+  { relPath = "component.md", status = "skipped", code = "file.exists", params = { path = "out/Button.tsx", actual = "01d09d19c2139a46aebfb577780d123d7396e97201bc7ead210a2ebff8239dee" } },
+  { relPath = "edit.md", status = "skipped", code = "path.outside_root", params = { path = "../out" } },
+  { relPath = "edit.md", status = "skipped", code = "naming.reserved", params = {} },
+], written = 0, skipped = 7 }
+expect_workspace_files = { "out/Button.tsx" = "old\n", "CON.txt" = false, "Edit me.ts" = false, "CLAUDE.md" = false }

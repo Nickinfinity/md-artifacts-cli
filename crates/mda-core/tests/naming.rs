@@ -230,3 +230,51 @@ fn fuzz_ok_names_are_safe() {
         }
     }
 }
+
+#[test]
+fn slugify_cases() {
+    use mda_core::naming::slugify;
+    for (i, o) in [
+        ("Hello World", "hello-world"),
+        ("Hello World!!", "hello-world"),
+        ("foo   bar___baz", "foo-bar-baz"),
+        ("---hello---", "hello"),
+        ("   ", ""),
+        ("Phase 0.5", "phase-0-5"),
+        ("café", "caf"),
+        ("My Snippet Title", "my-snippet-title"),
+        ("Hello, World!", "hello-world"),
+        ("  Trim  Me  ", "trim-me"),
+        ("\u{212a}elvin", "kelvin"),
+        ("İ", "i"),
+        ("!!!", ""),
+        ("a__b", "a-b"),
+    ] {
+        assert_eq!(slugify(i), o, "{i:?}");
+    }
+    for x in common::fuzz_strings(0x1DE7, 2_000, 20) {
+        let s = slugify(&x);
+        assert!(
+            s.is_empty()
+                || s.split('-').all(|p| !p.is_empty()
+                    && p.bytes()
+                        .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())),
+            "{x:?} {s:?}"
+        );
+    }
+}
+
+#[test]
+fn node_stem_cases() {
+    use mda_core::naming::node_stem;
+    for (i, o) in [
+        ("Button.tsx", "Button"),
+        ("a.tar.gz", "a.tar"),
+        (".cursorrules", ".cursorrules"),
+        ("a.", "a"),
+        ("CLAUDE.md", "CLAUDE"),
+        ("x", "x"),
+    ] {
+        assert_eq!(node_stem(i), o);
+    }
+}

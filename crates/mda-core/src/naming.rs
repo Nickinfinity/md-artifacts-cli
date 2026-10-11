@@ -239,3 +239,55 @@ pub fn check_injection(value: &str, field: NameField) -> Result<(), NameError> {
     }
     Ok(())
 }
+
+/// A file-system-safe slug: lowercased (Unicode-aware), every run of characters outside ASCII
+/// `[a-z0-9]` collapsed to one `-`, edge dashes trimmed (TS `slugify`). Empty when nothing is left.
+///
+/// # Examples
+///
+/// ```
+/// let _ = mda_core::naming::slugify("Button Group");
+/// ```
+pub fn slugify(s: &str) -> String {
+    let mut out = String::new();
+    for c in s.to_lowercase().chars() {
+        if c.is_ascii_lowercase() || c.is_ascii_digit() {
+            out.push(c);
+        } else if !out.is_empty() && !out.ends_with('-') {
+            out.push('-');
+        }
+    }
+    out.truncate(out.trim_end_matches('-').len());
+    out
+}
+
+/// Node `path.parse(name).name`: the text before the last dot, unless that dot starts the name.
+///
+/// # Examples
+///
+/// ```
+/// let _ = mda_core::naming::node_stem("Button.tsx");
+/// ```
+pub fn node_stem(name: &str) -> &str {
+    match name.rfind('.') {
+        Some(i) if i > 0 => name.get(..i).unwrap_or(name),
+        _ => name,
+    }
+}
+
+/// Node `path.extname(name).slice(1)`: the text after the last dot, unless that dot starts the name.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::naming::node_ext;
+/// assert_eq!(node_ext("a.tar.gz"), "gz");
+/// assert_eq!(node_ext(".cursorrules"), "");
+/// assert_eq!(node_ext("a."), "");
+/// ```
+pub fn node_ext(name: &str) -> &str {
+    match name.rfind('.') {
+        Some(i) if i > 0 => name.get(i + 1..).unwrap_or(""),
+        _ => "",
+    }
+}

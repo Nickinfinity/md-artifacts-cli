@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/blank.md", model = { artifactType = "Template", title = "Blank", extension = "ts" } }
+expect = { path = "Templates/blank.md", hash = "e20592f8a76cf07b0933d3820989ac0ae1001e63bddbd935be67ac2b03ffbc2f" }
+expect_files = { "Templates/blank.md" = "---\nartifactType: Template\ntitle: Blank\nextension: ts\n---\n" }

@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Templates/index.md", workspaceRoot = "rel", steps = [] }
+expect_error = "op.bad_request"

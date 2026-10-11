@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/index.md", workspaceRoot = "$WORKSPACE", steps = [], values = { VK-x = "\u001b" } }
+expect_error = "vks.control_char"
+expect_workspace_files = { "Edit me.ts" = false }

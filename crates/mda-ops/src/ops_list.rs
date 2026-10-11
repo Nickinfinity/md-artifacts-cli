@@ -1,7 +1,7 @@
 //! THE registration list: one line per op, sorted by name. Orchestrator-owned.
 
 use crate::registry::{OpSpec, typed};
-use crate::{artifact, artifact_write, prefill, render, system, write_file};
+use crate::{artifact, artifact_write, index, index_create, prefill, render, system, write_file};
 
 pub(crate) static OPS: &[OpSpec] = &[
     OpSpec {
@@ -48,6 +48,21 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "artifact.write_file",
         summary: "Render a whole-file artifact into a workspace file",
         handler: |c, v| typed(c, v, write_file::write_file),
+    },
+    OpSpec {
+        name: "index.create",
+        summary: "Scaffold sibling artifacts and an index linking them",
+        handler: |c, v| typed(c, v, index_create::create),
+    },
+    OpSpec {
+        name: "index.plan",
+        summary: "Resolve a template index into steps",
+        handler: |c, v| typed(c, v, index::plan),
+    },
+    OpSpec {
+        name: "index.run",
+        summary: "Write every step of a template index into a workspace",
+        handler: |c, v| typed(c, v, index::run),
     },
     OpSpec {
         name: "system.ops",

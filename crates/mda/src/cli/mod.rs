@@ -11,6 +11,7 @@ use serde_json::{Value, json};
 
 use crate::{debug, serve};
 
+mod index;
 mod input;
 pub mod print;
 
@@ -45,6 +46,9 @@ pub enum Command {
     /// Read, list and write artifacts.
     #[command(subcommand)]
     Artifact(ArtifactCmd),
+    /// Plan, run and create template indexes.
+    #[command(subcommand)]
+    Index(index::IndexCmd),
     /// Engine information.
     #[command(subcommand)]
     System(SystemCmd),
@@ -245,6 +249,7 @@ fn request(cmd: Command) -> Option<(String, Result<Value, OpError>)> {
     let (op, params) = match cmd {
         Command::Serve => return None,
         Command::Artifact(cmd) => return Some(artifact_request(cmd)),
+        Command::Index(cmd) => return Some(index::index_request(cmd)),
         Command::System(SystemCmd::Version) => ("system.version".to_owned(), Ok(json!({}))),
         Command::System(SystemCmd::Ops) => ("system.ops".to_owned(), Ok(json!({}))),
         Command::Call { op, params } => {

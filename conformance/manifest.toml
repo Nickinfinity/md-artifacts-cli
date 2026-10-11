@@ -1512,3 +1512,18 @@ input = "render/rs-render-join-empty.md"
 expected = "render/rs-render-join-empty.expected.json"
 path = "Templates/rs-render-join-empty.md"
 origin = "rust"
+
+[[cases]]
+id = "rs-index-key-last"
+kind = "serialize"
+input = "serialize/rs-index-key-last.model.json"
+expected = "serialize/rs-index-key-last.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-empty-whole-file"
+kind = "serialize"
+input = "serialize/rs-empty-whole-file.model.json"
+expected = "serialize/rs-empty-whole-file.md"
+origin = "rust"
+deviates_from_ts = "W3b B-RISK 1: an empty whole-file body is written as frontmatter only (TS writes an empty fence its own parser reads back as the body)"

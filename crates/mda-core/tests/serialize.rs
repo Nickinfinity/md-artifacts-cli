@@ -440,22 +440,3 @@ fn variables_block_language_is_normalised_away() {
     );
     assert!(out.is_ok(), "{out:?}");
 }
-
-#[test]
-fn empty_code_template_is_refused_recorded_ceiling() {
-    // ponytail ceiling: TS parser parity; an empty-fence whole-file type re-parses as body text.
-    let r = serialize(
-        &model(json!({"artifactType":"Template","title":"New"})),
-        MAX,
-    );
-    assert!(
-        matches!(
-            r,
-            Err(SerializeError::Field {
-                reason: FieldReason::RoundTrip,
-                ..
-            })
-        ),
-        "{r:?}"
-    );
-}

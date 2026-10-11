@@ -166,9 +166,10 @@ pub struct ParsedArtifact {
 /// let m: ArtifactModel = serde_json::from_str(r#"{"artifactType":"Snippet","title":"T"}"#).unwrap();
 /// assert_eq!(m.title, "T");
 /// assert!(serde_json::from_str::<ArtifactModel>(r#"{"artifactType":"Snippet","x":1}"#).is_err());
+/// assert!(!m.index);
 /// ```
-// Serialize (the `artifact.prefill` response): every field written, none skipped, so
-// `create(prefill(x))` round-trips. `ParsedVar` keeps its read-shape Serialize; prefill always emits
+// Serialize (the `artifact.prefill` response): every field written except `index`, which is written
+// only when true (so prefill responses never carry it), and `create(prefill(x))` round-trips. `ParsedVar` keeps its read-shape Serialize; prefill always emits
 // `vars: []`, so the asymmetry never reaches a client.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -192,8 +193,15 @@ pub struct ArtifactModel {
     pub env: String,
     #[serde(default)]
     pub target: String,
+    /// `index: true` (spec §8.7): an ordinary property, emitted last and only when true.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub index: bool,
     #[serde(default)]
     pub blocks: Vec<ModelBlock>,
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
 }
 
 /// One block of an [`ArtifactModel`]: a `##` section, a Variables sub-set, or the single body.

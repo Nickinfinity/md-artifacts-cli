@@ -87,10 +87,10 @@ pub(crate) fn render_params(
 /// `artifact.write_file` params from `mda artifact write-file`; the workspace becomes absolute here
 /// (client side), so the op sees the path the user meant.
 pub(crate) fn write_file_params(w: WriteFileArgs) -> Result<Value, OpError> {
-    let ws = std::path::absolute(&w.workspace).map_err(|_| bad_request("workspace"))?;
+    let ws = absolute(&w.workspace)?;
     let mut p = Map::new();
     p.insert("path".into(), json!(w.path));
-    p.insert("workspaceRoot".into(), json!(ws.display().to_string()));
+    p.insert("workspaceRoot".into(), json!(ws));
     p.insert("destDir".into(), json!(w.dest));
     if let Some(n) = w.name {
         p.insert("fileName".into(), json!(n));
@@ -138,4 +138,22 @@ pub(crate) struct WriteFileArgs {
     pub block: Option<usize>,
     pub values: Option<String>,
     pub hash: Option<String>,
+}
+
+/// A command-line path made absolute client side (the op requires an absolute workspace root).
+pub(crate) fn absolute(p: &std::path::Path) -> Result<String, OpError> {
+    std::path::absolute(p)
+        .map(|a| a.display().to_string())
+        .map_err(|_| bad_request("workspace"))
+}
+
+/// A JSON array read from a CLI input (`--steps`): file or `-` for stdin.
+pub(crate) fn read_array(p: &str) -> Result<Value, OpError> {
+    let v: Value =
+        serde_json::from_str(&read_input(p)?).map_err(|e| bad_request(&e.to_string()))?;
+    if v.is_array() {
+        Ok(v)
+    } else {
+        Err(bad_request("steps must be a JSON array"))
+    }
 }

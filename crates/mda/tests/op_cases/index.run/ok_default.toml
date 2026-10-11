@@ -1,0 +1,7 @@
+vault = "vault"
+params = { path = "Templates/index.md", workspaceRoot = "$WORKSPACE", steps = [{ relPath = "edit.md", destDir = "" }, { relPath = "sub/widget.md", destDir = "sub" }], values = { VK-name = "x" } }
+expect = { results = [
+  { relPath = "edit.md", status = "written", path = "Edit me.ts", hash = "2bf28849cade87113ec4170ef2bf9ffb1179fc9a276afa675c9de2424349560b", warnings = [], containsEscape = false },
+  { relPath = "sub/widget.md", status = "written", path = "sub/Widget.ts", hash = "14b989859af36f87bb9d1061d4a637df7aca5a35ad8fca5cd38c45d00e66ccef", warnings = [], containsEscape = false },
+], written = 2, skipped = 0 }
+expect_workspace_files = { "Edit me.ts" = "export const x = 1;", "sub/Widget.ts" = "export const w = 2;" }

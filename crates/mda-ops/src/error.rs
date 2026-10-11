@@ -6,11 +6,13 @@ use mda_vault::{Root, VaultError};
 
 pub use mda_core::error::{
     NAMING_CONTROL_CHAR, NAMING_EDGE_DOT, NAMING_EDGE_SPACE, NAMING_EMPTY, NAMING_ILLEGAL_CHAR,
-    NAMING_PATH_INJECTION, NAMING_RESERVED, NAMING_TOO_LONG, RENDER_EACH_NOT_LIST,
-    RENDER_JOIN_EMPTY, RENDER_JOIN_RECORD, RENDER_NOT_SCALAR, RENDER_SELF_NESTED,
-    RENDER_UNKNOWN_VAR, RENDER_UNMATCHED_END, RENDER_UNTERMINATED, RENDER_WARNING_CODES,
-    VKS_BAD_KEY, VKS_CONTROL_CHAR, VKS_DUPLICATE_KEY, VKS_INDENT, VKS_INLINE_COMMENT, VKS_LIMIT,
-    VKS_MIXED_DIALECT, VKS_MIXED_LIST, VKS_SYNTAX, VKS_UNREPRESENTABLE, VKS_UNSUPPORTED,
+    NAMING_PATH_INJECTION, NAMING_RESERVED, NAMING_TOO_LONG, PATH_ABSOLUTE, PATH_BACKSLASH,
+    PATH_CODES, PATH_CONTROL_CHAR, PATH_DRIVE_OR_SCHEME, PATH_EMPTY, PATH_PARENT_SEGMENT,
+    RENDER_EACH_NOT_LIST, RENDER_JOIN_EMPTY, RENDER_JOIN_RECORD, RENDER_NOT_SCALAR,
+    RENDER_SELF_NESTED, RENDER_UNKNOWN_VAR, RENDER_UNMATCHED_END, RENDER_UNTERMINATED,
+    RENDER_WARNING_CODES, VKS_BAD_KEY, VKS_CONTROL_CHAR, VKS_DUPLICATE_KEY, VKS_INDENT,
+    VKS_INLINE_COMMENT, VKS_LIMIT, VKS_MIXED_DIALECT, VKS_MIXED_LIST, VKS_SYNTAX,
+    VKS_UNREPRESENTABLE, VKS_UNSUPPORTED,
 };
 
 /// The only error shape clients see: a stable code plus string parameters, never prose.
@@ -93,6 +95,13 @@ pub const ARTIFACT_MULTI_BLOCK: &str = "artifact.multi_block";
 /// `artifact.write_file` on a template index (an index is run, never written). No params.
 pub const ARTIFACT_IS_INDEX: &str = "artifact.is_index";
 
+/// `index.plan`/`index.run` on a file that is not a template index. Param `path`.
+pub const INDEX_NOT_INDEX: &str = "index.not_index";
+/// `index.create`: a path segment with no letters or digits to slug. Param `segment`.
+pub const INDEX_UNSLUGGABLE: &str = "index.unsluggable";
+/// An index size limit (spec §8.2). Params `limit` (`links` | `steps`), `max`.
+pub const INDEX_LIMIT: &str = "index.limit";
+
 /// Every code, for exhaustive checks (English table, exit codes, op cases).
 pub const ALL_CODES: &[&str] = &[
     OP_UNKNOWN,
@@ -136,6 +145,15 @@ pub const ALL_CODES: &[&str] = &[
     ARTIFACT_NOT_WHOLE_FILE,
     ARTIFACT_MULTI_BLOCK,
     ARTIFACT_IS_INDEX,
+    PATH_EMPTY,
+    PATH_CONTROL_CHAR,
+    PATH_DRIVE_OR_SCHEME,
+    PATH_BACKSLASH,
+    PATH_ABSOLUTE,
+    PATH_PARENT_SEGMENT,
+    INDEX_NOT_INDEX,
+    INDEX_UNSLUGGABLE,
+    INDEX_LIMIT,
 ];
 
 /// Map a vault error from an op that holds `root`: every `path` param becomes vault-relative POSIX,
@@ -230,171 +248,4 @@ impl From<mda_core::naming::NameError> for OpError {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn vault_error_relativizes_paths() {
-        let root = Root::new(&std::env::temp_dir()).unwrap();
-        let abs = root.path().join("Snippets/x.md");
-        let e = vault_error(VaultError::NotFound { path: abs }, &root);
-        assert_eq!(e.params["path"], "Snippets/x.md");
-    }
-
-    #[test]
-    fn vault_error_echoes_outside_candidate() {
-        let root = Root::new(&std::env::temp_dir()).unwrap();
-        let e = vault_error(
-            VaultError::OutsideRoot {
-                path: "../etc/passwd".into(),
-            },
-            &root,
-        );
-        assert_eq!(e.code, PATH_OUTSIDE_ROOT);
-        assert_eq!(e.params["path"], "../etc/passwd");
-    }
-
-    #[test]
-    fn conflict_maps_relative_with_hashes() {
-        let root = Root::new(&std::env::temp_dir()).unwrap();
-        let e = vault_error(
-            VaultError::Conflict {
-                path: root.path().join("Templates/a.md"),
-                expected: "a".into(),
-                actual: "b".into(),
-            },
-            &root,
-        );
-        assert_eq!(
-            serde_json::to_value(&e).unwrap(),
-            serde_json::json!({"code": "file.conflict",
-                "params": {"path": "Templates/a.md", "expected": "a", "actual": "b"}})
-        );
-    }
-
-    #[test]
-    fn exists_maps_relative() {
-        let root = Root::new(&std::env::temp_dir()).unwrap();
-        let e = vault_error(
-            VaultError::Exists {
-                path: root.path().join("Templates/a.md"),
-            },
-            &root,
-        );
-        assert_eq!(
-            serde_json::to_value(&e).unwrap(),
-            serde_json::json!({"code": "file.exists", "params": {"path": "Templates/a.md"}})
-        );
-    }
-
-    #[test]
-    fn write_codes_exact_json() {
-        let cases = [
-            (ARTIFACT_VARS_INVALID, "path", "artifact.vars_invalid"),
-            (
-                ARTIFACT_BLOCK_NOT_FOUND,
-                "block",
-                "artifact.block_not_found",
-            ),
-            (
-                ARTIFACT_NOT_SERIALIZABLE,
-                "reason",
-                "artifact.not_serializable",
-            ),
-            (
-                ARTIFACT_UNREPRESENTABLE,
-                "field",
-                "artifact.unrepresentable",
-            ),
-            (VKS_UNREPRESENTABLE, "var", "vks.unrepresentable"),
-        ];
-        for (code, key, want) in cases {
-            let e = OpError::new(code).with(key, "x");
-            assert_eq!(
-                serde_json::to_value(&e).unwrap(),
-                serde_json::json!({"code": want, "params": {key: "x"}})
-            );
-        }
-    }
-
-    #[test]
-    fn naming_codes_listed() {
-        for c in mda_core::error::NAMING_CODES {
-            assert!(ALL_CODES.contains(c), "{c}");
-        }
-    }
-
-    #[test]
-    fn warning_codes_are_not_error_codes() {
-        for c in RENDER_WARNING_CODES {
-            assert!(!ALL_CODES.contains(c), "{c}");
-        }
-    }
-
-    #[test]
-    fn w3_codes_exact_json() {
-        let bare = [
-            (RENDER_CONTAINS_ESCAPE, "render.contains_escape"),
-            (NAMING_EMPTY, "naming.empty"),
-            (NAMING_EDGE_SPACE, "naming.edge_space"),
-            (NAMING_EDGE_DOT, "naming.edge_dot"),
-            (NAMING_ILLEGAL_CHAR, "naming.illegal_char"),
-            (NAMING_CONTROL_CHAR, "naming.control_char"),
-            (NAMING_RESERVED, "naming.reserved"),
-            (ARTIFACT_IS_INDEX, "artifact.is_index"),
-        ];
-        for (code, want) in bare {
-            assert_eq!(
-                serde_json::to_value(OpError::new(code)).unwrap(),
-                serde_json::json!({"code": want, "params": {}})
-            );
-        }
-        let with = [
-            (NAMING_PATH_INJECTION, "field", "naming.path_injection"),
-            (NAMING_TOO_LONG, "max", "naming.too_long"),
-            (ARTIFACT_NOT_WHOLE_FILE, "type", "artifact.not_whole_file"),
-            (ARTIFACT_MULTI_BLOCK, "count", "artifact.multi_block"),
-        ];
-        for (code, key, want) in with {
-            assert_eq!(
-                serde_json::to_value(OpError::new(code).with(key, "x")).unwrap(),
-                serde_json::json!({"code": want, "params": {key: "x"}})
-            );
-        }
-        let limit = OpError::new(RENDER_LIMIT)
-            .with("limit", "steps")
-            .with("max", "1000000");
-        assert_eq!(
-            serde_json::to_value(limit).unwrap(),
-            serde_json::json!({"code": "render.limit", "params": {"limit": "steps", "max": "1000000"}})
-        );
-    }
-
-    #[test]
-    fn name_error_maps_field() {
-        use mda_core::naming::{NameError, NameField};
-        let e = OpError::from(NameError::PathInjection(NameField::Title));
-        assert_eq!(
-            serde_json::to_value(e).unwrap(),
-            serde_json::json!({"code": "naming.path_injection", "params": {"field": "title"}})
-        );
-        let e = OpError::from(NameError::TooLong);
-        assert_eq!(e.params["max"], "255");
-        assert!(OpError::from(NameError::Reserved).params.is_empty());
-    }
-
-    #[test]
-    fn vars_error_maps_unchanged() {
-        let v = mda_core::error::VarsError::new(VKS_CONTROL_CHAR, 0).with("var", "VK-a");
-        let e = OpError::from(v);
-        assert_eq!(e.code, "vks.control_char");
-        assert_eq!(e.params["var"], "VK-a");
-    }
-
-    #[test]
-    fn vks_codes_listed() {
-        for c in mda_core::error::VKS_CODES {
-            assert!(ALL_CODES.contains(c), "{c}");
-        }
-    }
-}
+mod tests;

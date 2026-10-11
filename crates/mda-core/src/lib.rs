@@ -6,6 +6,7 @@
 pub mod error;
 pub mod language;
 pub mod model;
+pub mod multi_index;
 pub mod naming;
 pub mod parse;
 pub mod patch;

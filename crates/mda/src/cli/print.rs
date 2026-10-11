@@ -67,6 +67,15 @@ pub fn english(code: &str) -> Option<&'static str> {
         RENDER_NOT_SCALAR => "the token reaches a list or record outside a loop",
         RENDER_JOIN_RECORD => "join reaches a record",
         RENDER_JOIN_EMPTY => "join found no values",
+        PATH_EMPTY => "the path is empty",
+        PATH_CONTROL_CHAR => "the path contains a control character",
+        PATH_DRIVE_OR_SCHEME => "the path contains a drive letter or URI scheme (\":\")",
+        PATH_BACKSLASH => "the path contains a backslash",
+        PATH_ABSOLUTE => "the path is absolute",
+        PATH_PARENT_SEGMENT => "the path contains a \"..\" segment",
+        INDEX_NOT_INDEX => "not a template index (index: true on a Template or AIAgentsConfig)",
+        INDEX_UNSLUGGABLE => "a path segment has no letters or digits to name a file",
+        INDEX_LIMIT => "the index exceeds a size limit",
         _ => return None,
     })
 }
@@ -109,21 +118,40 @@ pub fn refuse(op: &str, v: &Value) -> Option<OpError> {
 /// let _ = mda::cli::print::warnings(&serde_json::json!({}));
 /// ```
 pub fn warnings(v: &Value) -> Vec<String> {
-    v["warnings"]
+    let top = v["warnings"]
         .as_array()
         .into_iter()
         .flatten()
-        .map(|w| {
-            let params: std::collections::BTreeMap<String, String> = w["params"]
-                .as_object()
-                .into_iter()
-                .flatten()
-                .map(|(k, x)| (k.clone(), x.as_str().unwrap_or("").to_owned()))
-                .collect();
-            let line = coded_line(w["code"].as_str().unwrap_or("?"), params.iter());
-            format!("warning: {line}")
+        .map(|w| (None, w));
+    // Batch responses (index run/create) carry warnings per result, tagged with the result's relPath.
+    let per_result = v["results"].as_array().into_iter().flatten().flat_map(|r| {
+        let rel = r["relPath"].as_str();
+        r["warnings"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(move |w| (rel, w))
+    });
+    top.chain(per_result)
+        .map(|(rel, w)| {
+            let line = coded_value(w["code"].as_str().unwrap_or("?"), &w["params"]);
+            match rel {
+                Some(r) => format!("warning: {r:?}: {line}"),
+                None => format!("warning: {line}"),
+            }
         })
         .collect()
+}
+
+/// `coded_line` over a JSON `params` object.
+fn coded_value(code: &str, params: &Value) -> String {
+    let params: std::collections::BTreeMap<String, String> = params
+        .as_object()
+        .into_iter()
+        .flatten()
+        .map(|(k, x)| (k.clone(), x.as_str().unwrap_or("").to_owned()))
+        .collect();
+    coded_line(code, params.iter())
 }
 
 /// Human text for a successful response of `op`; pretty JSON when no printer exists.
@@ -157,6 +185,8 @@ pub fn success(op: &str, v: &Value) -> String {
             format!("wrote {}  {}", s(v, "path"), s(v, "hash"))
         }
         "artifact.delete" => format!("deleted {}", s(v, "path")),
+        "index.plan" => plan(v),
+        "index.run" | "index.create" => batch(v),
         _ => serde_json::to_string_pretty(v).unwrap_or_default(),
     }
 }
@@ -234,6 +264,49 @@ fn show(v: &Value) -> String {
             }
         }
     }
+    out.join("\n")
+}
+
+// Link text and relPaths are vault-authored: always `{:?}` (escapes ESC).
+fn plan(v: &Value) -> String {
+    let mut out: Vec<String> = Vec::new();
+    for st in v["steps"].as_array().into_iter().flatten() {
+        let rel = st["relPath"].as_str().unwrap_or("");
+        let dest = st
+            .pointer("/candidates/0")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        let mut line = format!("{rel:?}  -> {dest:?}");
+        if let Some(c) = st.pointer("/skip/code").and_then(Value::as_str) {
+            line.push_str(&format!("  skip {}", clean(c, false)));
+        }
+        out.push(line);
+    }
+    for r in v["rejected"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "rejected {:?}  {}",
+            r["raw"].as_str().unwrap_or(""),
+            s(r, "code")
+        ));
+    }
+    out.join("\n")
+}
+
+fn batch(v: &Value) -> String {
+    let mut out: Vec<String> = Vec::new();
+    for r in v["results"].as_array().into_iter().flatten() {
+        out.push(if r["status"] == "written" {
+            format!("wrote {}  {}", s(r, "path"), s(r, "hash"))
+        } else {
+            let line = coded_value(r["code"].as_str().unwrap_or("?"), &r["params"]);
+            format!("skipped {:?}  {line}", r["relPath"].as_str().unwrap_or(""))
+        });
+    }
+    out.push(format!(
+        "{} written, {} skipped",
+        v["written"].as_u64().unwrap_or(0),
+        v["skipped"].as_u64().unwrap_or(0)
+    ));
     out.join("\n")
 }
 
