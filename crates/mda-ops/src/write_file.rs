@@ -69,7 +69,7 @@ pub struct WriteFileResponse {
 /// assert_eq!(write_file::write_file(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn write_file(ctx: &Ctx, req: WriteFileRequest) -> Result<WriteFileResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     artifact_path(&req.path)?;
     if !Path::new(&req.workspace_root).is_absolute() {
         return Err(

@@ -48,7 +48,7 @@ pub struct CreateIndexRequest {
 /// assert_eq!(index_create::create(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     let t = req.artifact_type;
     let info = t.info();
     if !info.writes_file {

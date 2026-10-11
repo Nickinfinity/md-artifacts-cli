@@ -11,12 +11,14 @@ pub mod prefill;
 pub mod registry;
 pub mod render;
 pub mod system;
+pub mod types;
+pub mod vault;
 pub mod write_file;
 
 pub use error::OpError;
 pub use mda_core::registry::{ArtifactType, TYPES};
 pub use mda_vault::Root;
-pub use registry::{Ctx, OpSpec, check_names, dispatch, dispatch_in, ops, typed};
+pub use registry::{Ctx, OpSpec, Source, check_names, dispatch, dispatch_in, ops, typed};
 
 /// The protocol version this engine speaks. Single owner for `system.version` and `initialize`.
 ///

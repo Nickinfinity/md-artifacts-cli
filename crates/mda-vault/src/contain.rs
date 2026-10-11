@@ -18,13 +18,19 @@ pub const MAX_PATH_BYTES: usize = 4096;
 /// let root = Root::new(&std::env::temp_dir()).unwrap();
 /// assert!(!root.path().as_os_str().is_empty());
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Root(PathBuf);
 
 impl Root {
-    /// Canonicalize `path` into a root; a missing directory is `NotFound`.
+    /// Canonicalize `path` into a root; a missing directory is `NotFound`, a non-directory `NotDir`.
     pub fn new(path: &Path) -> Result<Self, VaultError> {
-        path.canonicalize().map(Self).map_err(|e| io_err(path, &e))
+        let canon = path.canonicalize().map_err(|e| io_err(path, &e))?;
+        if !std::fs::metadata(&canon).is_ok_and(|m| m.is_dir()) {
+            return Err(VaultError::NotDir {
+                path: path.to_path_buf(),
+            });
+        }
+        Ok(Self(canon))
     }
 
     /// The canonical root path.

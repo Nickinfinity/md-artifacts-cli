@@ -200,3 +200,51 @@ fn vks_codes_listed() {
         assert!(ALL_CODES.contains(c), "{c}");
     }
 }
+
+#[test]
+fn w4_codes_exact_json() {
+    let cases = [
+        (VAULT_NOT_OBSIDIAN, "vault.not_obsidian"),
+        (PATH_NOT_DIR, "path.not_dir"),
+        (VAULT_UNKNOWN, "vault.unknown"),
+        (VAULT_UNAVAILABLE, "vault.unavailable"),
+        (CONFIG_INVALID, "config.invalid"),
+    ];
+    for (code, want) in cases {
+        assert!(ALL_CODES.contains(&code), "{code}");
+        assert_eq!(
+            serde_json::to_value(OpError::new(code).with("path", "/v")).unwrap(),
+            serde_json::json!({"code": want, "params": {"path": "/v"}})
+        );
+    }
+}
+
+#[test]
+fn vault_error_maps_w4() {
+    let root = Root::new(&std::env::temp_dir()).unwrap();
+    let e = vault_error(
+        VaultError::NotDir {
+            path: root.path().join("Snippets"),
+        },
+        &root,
+    );
+    assert_eq!(
+        (e.code, e.params["path"].as_str()),
+        (PATH_NOT_DIR, "Snippets")
+    );
+    let e = vault_error(
+        VaultError::ConfigInvalid {
+            path: root.path().join(".mda/config.toml"),
+        },
+        &root,
+    );
+    assert_eq!(
+        (e.code, e.params["path"].as_str()),
+        (CONFIG_INVALID, ".mda/config.toml")
+    );
+    let e = OpError::from(VaultError::NotObsidian { path: "/v".into() });
+    assert_eq!(
+        (e.code, e.params["path"].as_str()),
+        (VAULT_NOT_OBSIDIAN, "/v")
+    );
+}

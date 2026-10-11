@@ -3,18 +3,22 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-11): W3b landed (MAC-6).** The workspace exists: `mda-core` (model, type registry, parse incl.
+> **Status (2026-10-11): W4 landed (MAC-7).** The workspace exists: `mda-core` (model, type registry, parse incl.
 > flags and `<VK-…>` detection, the vks codec reading legacy and YAML bodies and emitting YAML, the `.md`
 > serializer with its re-parse guard (`index: true` emitted last; empty whole-file bodies frontmatter-only), the
 > byte-surgical patcher, the render engine `render/` with the directive engine and its four expansion limits,
 > `language.rs`, `naming.rs` (incl. `slugify`), `multi_index.rs` (`safe_rel_path`, index links)), `mda-vault`
-> (containment, bounded reads, directory listing, atomic writes with the SHA-256 content hash), `mda-ops`
+> (containment, bounded reads, directory listing, atomic writes with the SHA-256 content hash, vault validation +
+> create-only type dirs `vault.rs`, the two config files `config.rs`), `mda-ops`
 > (`system.version`, `system.ops`, `artifact.read` (+ `hash`), `artifact.tree`, `artifact.create|update|patch|delete`,
-> `artifact.render|write_file|prefill`, `index.plan|run|create`), `mda` (CLI incl. `mda call`,
-> `mda artifact show|ls|new|update|patch|rm|render|write-file|prefill` and `mda index plan|run|create`, `serve` with
+> `artifact.render|write_file|prefill`, `index.plan|run|create`, `vault.inspect|select|list|use`, `config.get`,
+> `types.list|set_enabled`, the session resolver), `mda` (CLI incl. `mda call`,
+> `mda artifact show|ls|new|update|patch|rm|render|write-file|prefill`, `mda index plan|run|create`, `mda vault
+> inspect|select|list|use`, `mda config get`, `mda types list|set-enabled`, `serve` with
 > `initialize.types`, debug mode), the conformance harness (121 `parse` + 28 `serialize` + 40 `render` cases) and the
-> op-case harness (per-leg fixture copies, `expect_files`, per-leg workspace + `expect_workspace_files`).
-> Sections marked *(W0)* describe the tree; everything else (vault config, variables, migration) is the **target**,
+> op-case harness (per-leg fixture copies, `expect_files`, per-leg workspace + `expect_workspace_files`, per-leg
+> machine config dir + `machine_config`/`expect_config_files`/`vault_flag`).
+> Sections marked *(W0)* describe the tree; everything else (variables, migration) is the **target**,
 > built by the engine-port plan's W4–W7 (`docs/plans/engine-port/`).
 ---
 
@@ -121,7 +125,7 @@ md-artifacts-cli/
 │   │   └── src/
 │   │       ├── main.rs        # 3 lines: `mda::cli::run()`
 │   │       ├── lib.rs         # pub mod cli · serve · debug
-│   │       ├── cli/           # clap derive, one enum per ops group, `mda call`; human printer + --json; exit codes
+│   │       ├── cli/           # clap derive, one enum per ops group (`artifact.rs`, `index.rs`, `vault.rs`), `mda call`; human printer + --json; exit codes
 │   │       ├── serve/         # NDJSON JSON-RPC server: framing, handshake, dispatch via the op registry
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
@@ -176,14 +180,30 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - Every write request carries the **content hash** the client last read; a mismatch returns
   `conflict` (optimistic concurrency), never an overwrite.
 
-### Configuration *(E-8…E-10)*
+### Configuration *(E-8…E-10; W4, spec §12)*
 
-Two engine-owned scopes, written only through ops: the **machine file** in the OS config dir
-(known vaults and the default) and **`<vault>/.mda/config.toml`** (enabled types; travels with the
-vault). Clients pick folders (the engine has no GUI); the engine validates (`.obsidian/` present)
-and persists. `--vault <path>` overrides for one process without persisting. Artifact directory
-names are fixed (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`, `AIPrompts/`,
-`Variables/`).
+Two engine-owned scopes, written only through ops: the **machine file** `<config dir>/config.toml`
+(known vaults ≤ 64 and the default) and **`<vault>/.mda/config.toml`** (`[types.<Type>] enabled`;
+travels with the vault). `<config dir>` = absolute `MDA_CONFIG_DIR`, else the OS dir (macOS
+`~/Library/Application Support/mda`, Windows `%APPDATA%\mda`, else `$XDG_CONFIG_HOME/mda` or
+`~/.config/mda`); a relative override never falls back. Clients pick folders (the engine has no GUI);
+the engine validates (`validate_vault`: exists, a directory, `.obsidian/` a directory) and persists.
+
+- **One resolver** (`mda_ops::vault::resolve`), used by the CLI and `serve`: `--vault` (one process,
+  never persisted, fatal if invalid) > a valid stored default > none. A stale or corrupt default
+  **never aborts startup**: vault-needing ops return `vault.unavailable` / `config.invalid`.
+  `vault.select` / `vault.use` switch the session's vault (`Ctx.root` is a `RefCell`).
+- **Directories are create-only** (`create_type_dir`): enabling a type or selecting a vault creates
+  missing type dirs; nothing ever deletes one (a deliberate deviation from the extension's toggle).
+  Whether a type is enabled changes no op — it is client UI state.
+- **Config files are untrusted:** 64 KiB cap before parsing, unknown keys preserved on write,
+  corrupt files refused and never overwritten, writes hash-checked (`file.conflict` on a race).
+  A machine `config.toml` symlinked out of its dir is refused (a symlinked dir is fine).
+- **Tests never touch the real user config:** `common::bin()` sets an uncreated per-spawn
+  `MDA_CONFIG_DIR`; in-process tests use `Ctx::with_config_dir`; `std::env::set_var` is forbidden.
+
+Artifact directory names are fixed (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`,
+`AIPrompts/`, `Variables/`).
 
 ### Listing *(E-11)*
 
@@ -213,6 +233,8 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Path containment | `mda-vault/src/contain.rs` |
 | Atomic writes + content hash (`content_hash`, SHA-256) | `mda-vault/src/write.rs` |
 | Configuration files | `mda-vault/src/config.rs` |
+| Vault validation, type-dir creation | `mda-vault/src/vault.rs` (`validate_vault`, `create_type_dir`) |
+| Session vault resolution | `mda-ops/src/vault.rs` (`resolve`) |
 | The operation list | `mda-ops/src/ops_list.rs` (registered through `registry.rs`) |
 | Error codes | `mda-ops/src/error.rs` |
 | NDJSON framing | `mda/src/serve/` (shared with `mda-mcp` later) |
@@ -245,14 +267,18 @@ its current services, its goldens and the real vault. `tests/conformance.rs` wal
 
 Every op is tested **once as data, three ways**. A case is a file,
 `crates/mda/tests/op_cases/<op>/<case>.toml`: the request, the fixture vault, and either the expected
-response JSON (`expect`) or the expected error code (`expect_error`). One harness (`tests/op_cases.rs`)
+response JSON (`expect`) or the expected error code (`expect_error`). One harness (`tests/op_cases.rs` + `tests/op_harness/`)
 runs every case through `mda_ops::dispatch`, through `mda call <op> '<json>' --json` (exit code included), and
 through a `serve` NDJSON session (asserting every stdout line is JSON).
 
 - **Coverage guard:** every registered op needs at least one `expect` case and one `expect_error`
   case, or the suite fails. A new op without cases cannot land.
 - **Human CLI output** (the non-`--json` form) is asserted per command in `tests/cli_human.rs`.
-- **Fixture vault:** `crates/mda/tests/fixtures/vault/` (with `.obsidian/`), tracked, extended per wave.
+- **Fixture vault:** `crates/mda/tests/fixtures/vault/` (with `.obsidian/`), tracked, extended per wave;
+  W4 adds `vault_bare/`, `vault_cfg/`, `vault_badcfg/`, `not_vault/`.
+- **Machine config per leg:** every leg gets a fresh canonical config dir (`MDA_CONFIG_DIR`);
+  `machine_config` seeds it, `expect_config_files` asserts it, `vault_flag = false` copies the fixture
+  without passing `--vault`; `$VAULT` / `$CONFIG` / `$WORKSPACE` are substituted. `expect` is full-body equality.
 - **Shared test helpers:** `crates/mda/tests/common/mod.rs` (spawn the binary, NDJSON session, the
   every-stdout-line-is-JSON check), orchestrator-owned; test files import it with `mod common;`.
 - The case files double as the protocol's examples in `spec/PROTOCOL.md`.
@@ -288,7 +314,8 @@ analysis:
   content containing `ESC` (`\x1b`); the engine reports it in the render response (`containsEscape`),
   so every client can apply the same rule. The CLI's human `render` refuses it
   (`render.contains_escape`); `--json` returns the response unchanged.
-- **MCP write tools are off unless `--allow-write`** (when MCP exists).
+- **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete`,
+  `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled`.
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the
 **sink** (the file outside the vault is unchanged; stdout carried only protocol lines; nothing was

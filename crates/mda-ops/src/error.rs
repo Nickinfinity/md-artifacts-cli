@@ -64,7 +64,7 @@ pub const FILE_NOT_REGULAR: &str = "file.not_regular";
 pub const IO_FAILED: &str = "io.failed";
 /// An engine defect: an op produced a response that could not be serialized. No params.
 pub const OP_INTERNAL: &str = "op.internal";
-/// The op needs a vault and none was given (`--vault`). No params.
+/// The op needs a vault and none is selected (no `--vault`, no default). No params.
 pub const VAULT_NOT_SELECTED: &str = "vault.not_selected";
 /// Not an artifact path: not `.md`, or not under a type directory. Param `path`.
 pub const ARTIFACT_BAD_PATH: &str = "artifact.bad_path";
@@ -101,6 +101,17 @@ pub const INDEX_NOT_INDEX: &str = "index.not_index";
 pub const INDEX_UNSLUGGABLE: &str = "index.unsluggable";
 /// An index size limit (spec §8.2). Params `limit` (`links` | `steps`), `max`.
 pub const INDEX_LIMIT: &str = "index.limit";
+
+/// Not an Obsidian vault: no `.obsidian/` directory (spec §12.1). Param `path`.
+pub const VAULT_NOT_OBSIDIAN: &str = "vault.not_obsidian";
+/// The path exists but is not a directory (vault, workspace root, type dir, `.mda`). Param `path`.
+pub const PATH_NOT_DIR: &str = "path.not_dir";
+/// `vault.use` on a vault not in the machine file's known list. Param `path`.
+pub const VAULT_UNKNOWN: &str = "vault.unknown";
+/// The stored default vault no longer validates; the op needed a vault. Param `path` (the default).
+pub const VAULT_UNAVAILABLE: &str = "vault.unavailable";
+/// A configuration file is corrupt or breaks a spec §12 rule, or no config dir exists. Param `path`.
+pub const CONFIG_INVALID: &str = "config.invalid";
 
 /// Every code, for exhaustive checks (English table, exit codes, op cases).
 pub const ALL_CODES: &[&str] = &[
@@ -154,6 +165,11 @@ pub const ALL_CODES: &[&str] = &[
     INDEX_NOT_INDEX,
     INDEX_UNSLUGGABLE,
     INDEX_LIMIT,
+    VAULT_NOT_OBSIDIAN,
+    PATH_NOT_DIR,
+    VAULT_UNKNOWN,
+    VAULT_UNAVAILABLE,
+    CONFIG_INVALID,
 ];
 
 /// Map a vault error from an op that holds `root`: every `path` param becomes vault-relative POSIX,
@@ -176,6 +192,9 @@ pub fn vault_error(mut e: VaultError, root: &Root) -> OpError {
     | VaultError::NotRegular { path }
     | VaultError::Conflict { path, .. }
     | VaultError::Exists { path }
+    | VaultError::NotDir { path }
+    | VaultError::NotObsidian { path }
+    | VaultError::ConfigInvalid { path }
     | VaultError::Io { path, .. }) = &mut e;
     if let Ok(rel) = path.strip_prefix(root.path()) {
         let posix: Vec<_> = rel
@@ -216,6 +235,15 @@ impl From<VaultError> for OpError {
                 .with("actual", actual),
             VaultError::Exists { path } => {
                 Self::new(FILE_EXISTS).with("path", path.display().to_string())
+            }
+            VaultError::NotDir { path } => {
+                Self::new(PATH_NOT_DIR).with("path", path.display().to_string())
+            }
+            VaultError::NotObsidian { path } => {
+                Self::new(VAULT_NOT_OBSIDIAN).with("path", path.display().to_string())
+            }
+            VaultError::ConfigInvalid { path } => {
+                Self::new(CONFIG_INVALID).with("path", path.display().to_string())
             }
             VaultError::Io { path, kind } => Self::new(IO_FAILED)
                 .with("path", path.display().to_string())

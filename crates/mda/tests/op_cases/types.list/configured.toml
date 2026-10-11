@@ -1,0 +1,10 @@
+vault = "vault_cfg"
+params = {}
+expect = [
+  { type = "Snippet", dir = "Snippets", enabled = false, dirExists = true },
+  { type = "AIAgentsConfig", dir = "AIAgentsConf", enabled = false, dirExists = false },
+  { type = "Command", dir = "Commands", enabled = true, dirExists = false },
+  { type = "Template", dir = "Templates", enabled = false, dirExists = false },
+  { type = "Variables", dir = "Variables", enabled = false, dirExists = false },
+  { type = "AIPrompt", dir = "AIPrompts", enabled = false, dirExists = false },
+]

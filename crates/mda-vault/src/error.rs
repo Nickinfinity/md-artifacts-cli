@@ -36,6 +36,15 @@ pub enum VaultError {
     /// A create found a file already at the target; it is never overwritten.
     #[error("file exists: {path:?}")]
     Exists { path: PathBuf },
+    /// The path exists but is not a directory (a vault, a workspace root, a type dir, `.mda`).
+    #[error("not a directory: {path:?}")]
+    NotDir { path: PathBuf },
+    /// The directory has no `.obsidian/` directory: not an Obsidian vault.
+    #[error("not an Obsidian vault: {path:?}")]
+    NotObsidian { path: PathBuf },
+    /// A configuration file is corrupt, too large, not UTF-8, or breaks a spec §12 rule.
+    #[error("invalid config: {path:?}")]
+    ConfigInvalid { path: PathBuf },
     /// Any other I/O failure.
     #[error("io failed on {path:?}: {kind}")]
     Io {

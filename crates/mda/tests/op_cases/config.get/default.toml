@@ -1,0 +1,7 @@
+vault = "vault"
+vault_flag = false
+machine_config = '''
+default = "$VAULT"
+vaults = ["$VAULT"]
+'''
+expect = { vault = "$VAULT", source = "default", configDir = "$CONFIG" }

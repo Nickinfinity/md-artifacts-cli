@@ -23,7 +23,12 @@ pub fn english(code: &str) -> Option<&'static str> {
         FILE_NOT_REGULAR => "not a regular file",
         IO_FAILED => "I/O failure",
         OP_INTERNAL => "internal engine error",
-        VAULT_NOT_SELECTED => "no vault selected (pass --vault)",
+        VAULT_NOT_SELECTED => "no vault selected (run \"mda vault select <path>\" or pass --vault)",
+        VAULT_NOT_OBSIDIAN => "not an Obsidian vault (no .obsidian folder)",
+        PATH_NOT_DIR => "path is not a directory",
+        VAULT_UNKNOWN => "not a known vault (add it with \"mda vault select\")",
+        VAULT_UNAVAILABLE => "the default vault is no longer available",
+        CONFIG_INVALID => "the configuration file is invalid; fix or remove it",
         ARTIFACT_BAD_PATH => "not an artifact path (expected <TypeDir>/….md)",
         VKS_SYNTAX => "variables block: syntax error",
         VKS_INDENT => "variables block: bad indentation",
@@ -144,7 +149,7 @@ pub fn warnings(v: &Value) -> Vec<String> {
 }
 
 /// `coded_line` over a JSON `params` object.
-fn coded_value(code: &str, params: &Value) -> String {
+pub(super) fn coded_value(code: &str, params: &Value) -> String {
     let params: std::collections::BTreeMap<String, String> = params
         .as_object()
         .into_iter()
@@ -187,13 +192,16 @@ pub fn success(op: &str, v: &Value) -> String {
         "artifact.delete" => format!("deleted {}", s(v, "path")),
         "index.plan" => plan(v),
         "index.run" | "index.create" => batch(v),
+        op if op.starts_with("vault.") || op.starts_with("types.") || op == "config.get" => {
+            super::vault::success(op, v).unwrap_or_default()
+        }
         _ => serde_json::to_string_pretty(v).unwrap_or_default(),
     }
 }
 
 /// Escape every control character (vault text is untrusted; a raw ESC would drive the terminal).
 /// `multiline` keeps `\n` and `\t` for code bodies.
-fn clean(s: &str, multiline: bool) -> String {
+pub(super) fn clean(s: &str, multiline: bool) -> String {
     s.chars()
         .map(|c| match c {
             '\n' | '\t' if multiline => c.to_string(),
@@ -203,7 +211,7 @@ fn clean(s: &str, multiline: bool) -> String {
         .collect()
 }
 
-fn s(v: &Value, k: &str) -> String {
+pub(super) fn s(v: &Value, k: &str) -> String {
     clean(v[k].as_str().unwrap_or(""), false)
 }
 

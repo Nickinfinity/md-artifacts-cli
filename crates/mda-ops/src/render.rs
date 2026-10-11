@@ -61,7 +61,7 @@ pub fn render_error(e: RenderError) -> OpError {
 /// assert_eq!(render::render(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn render(ctx: &Ctx, req: RenderRequest) -> Result<Rendered, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     artifact_path(&req.path)?;
     // Before any I/O: `render` collects every token match before its step budget applies, so an
     // oversize `code` must be refused here, and bad values must not cost a 1 MiB read.

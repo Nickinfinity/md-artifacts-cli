@@ -765,3 +765,40 @@ the vault.
 and its closing fence** into YAML (§9.5), preserving values (§9.6). YAML fences are skipped
 (idempotent); unfenced legacy `vars:` sections are **reported, not rewritten**; a legacy body containing
 a control character is reported, not rewritten. Never automatic.
+
+## 12. Engine configuration files *(ruled — engine-port W4 Role A pass 1, 2026-10-11)*
+
+Two TOML files, read and written only by the engine (owner: `mda-vault/src/config.rs`). Both are untrusted input: each is capped at
+**64 KiB** before parsing; a file that is not valid UTF-8 TOML, or breaks a rule below, is **`config.invalid{path}`** and is never
+overwritten. Unknown keys are ignored on read and **preserved** on write; comments are not preserved.
+
+### 12.1 Machine file — `<config dir>/config.toml`
+
+`<config dir>` = `MDA_CONFIG_DIR` (absolute) if set, else macOS `$HOME/Library/Application Support/mda`, Windows `%APPDATA%\mda`,
+otherwise `$XDG_CONFIG_HOME/mda` (absolute) or `$HOME/.config/mda`.
+
+```toml
+default = "/abs/path/to/vault"          # optional; must be one of `vaults`
+vaults  = ["/abs/path/to/vault", "…"]   # known vaults: absolute, deduplicated by canonical path, at most 64
+```
+
+If no config dir can be determined (no `HOME`, or a relative `MDA_CONFIG_DIR`, which never falls back to the OS dir), operations that need the machine file return `config.invalid{path:""}`. The engine writes keys in alphabetical order; comments are not kept.
+
+**Precedence:** `--vault <path>` (one process, never persisted; the machine file is then not read at startup) > a valid `default` > none. Stored paths are canonical. A `default` that no longer validates
+does not stop the engine: operations that need a vault return `vault.unavailable{path}`.
+
+**Vault validation** (`--vault`, `vault.select`, `vault.use`, the stored default): absolute → exists (`path.not_found`) → a directory
+(`path.not_dir`) → contains a **directory** `.obsidian` (a symlink to one is accepted) else `vault.not_obsidian{path}`.
+
+### 12.2 Vault file — `<vault>/.mda/config.toml`
+
+Travels with the vault. Created on first write (`.mda/` included); contained to the vault root.
+
+```toml
+[types.Snippet]
+enabled = false
+```
+
+Table names are `artifactType` values (§5). A type is **enabled** when its entry says so; with no entry, when its directory
+(§5) exists. Enabling creates the directory; disabling never deletes it (directories are create-only). Whether a type is enabled
+changes no engine operation — it is client UI state.

@@ -1,0 +1,8 @@
+vault = "vault"
+vault_flag = false
+machine_config = '''
+default = "/nonexistent-mda-w4a"
+vaults = ["/nonexistent-mda-w4a"]
+'''
+params = { path = "Snippets/hello.md" }
+expect_error = "vault.unavailable"

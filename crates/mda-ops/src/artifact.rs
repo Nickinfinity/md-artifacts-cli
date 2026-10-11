@@ -130,10 +130,17 @@ pub(crate) fn bad_path(p: &str) -> OpError {
     OpError::new(error::ARTIFACT_BAD_PATH).with("path", p)
 }
 
-pub(crate) fn root_of(ctx: &Ctx) -> Result<&Root, OpError> {
-    ctx.root
-        .as_ref()
-        .ok_or_else(|| OpError::new(error::VAULT_NOT_SELECTED))
+/// The session vault (owned: `select`/`use` may switch it); else the deferred default error
+/// (`vault.unavailable` / `config.invalid`, V-3); else `vault.not_selected`.
+pub(crate) fn root_of(ctx: &Ctx) -> Result<Root, OpError> {
+    if let Some(r) = ctx.root.borrow().as_ref() {
+        return Ok(r.clone());
+    }
+    Err(ctx
+        .default_error
+        .borrow()
+        .clone()
+        .unwrap_or_else(|| OpError::new(error::VAULT_NOT_SELECTED)))
 }
 
 /// The artifact path rule (before any I/O): `<TypeDir>/<rel>.md`, every segment valid. Returns the
@@ -165,7 +172,7 @@ pub(crate) fn load(root: &Root, rel: &str) -> Result<ReadResponse, OpError> {
 /// assert_eq!(artifact::read(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn read(ctx: &Ctx, req: ReadRequest) -> Result<ReadResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     artifact_path(&req.path)?;
     load(root, &req.path)
 }
@@ -180,7 +187,7 @@ pub fn read(ctx: &Ctx, req: ReadRequest) -> Result<ReadResponse, OpError> {
 /// assert!(artifact::tree(&Ctx::new(None), req).is_err());
 /// ```
 pub fn tree(ctx: &Ctx, req: TreeRequest) -> Result<TreeResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     if let Some(d) = &req.dir {
         segments(d).map_err(|()| bad_path(d))?;
     }

@@ -1,7 +1,10 @@
 //! THE registration list: one line per op, sorted by name. Orchestrator-owned.
 
 use crate::registry::{OpSpec, typed};
-use crate::{artifact, artifact_write, index, index_create, prefill, render, system, write_file};
+use crate::{
+    artifact, artifact_write, index, index_create, prefill, render, system, types, vault,
+    write_file,
+};
 
 pub(crate) static OPS: &[OpSpec] = &[
     OpSpec {
@@ -50,6 +53,11 @@ pub(crate) static OPS: &[OpSpec] = &[
         handler: |c, v| typed(c, v, write_file::write_file),
     },
     OpSpec {
+        name: "config.get",
+        summary: "The session vault, its source and the config dir",
+        handler: |c, v| typed(c, v, vault::get),
+    },
+    OpSpec {
         name: "index.create",
         summary: "Scaffold sibling artifacts and an index linking them",
         handler: |c, v| typed(c, v, index_create::create),
@@ -73,5 +81,35 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "system.version",
         summary: "Engine and protocol versions",
         handler: |c, v| typed(c, v, system::version),
+    },
+    OpSpec {
+        name: "types.list",
+        summary: "Each artifact type: dir, enabled, dir exists",
+        handler: |c, v| typed(c, v, types::list),
+    },
+    OpSpec {
+        name: "types.set_enabled",
+        summary: "Enable or disable a type in the current vault",
+        handler: |c, v| typed(c, v, types::set_enabled),
+    },
+    OpSpec {
+        name: "vault.inspect",
+        summary: "Inspect a folder as a vault (reads only)",
+        handler: |c, v| typed(c, v, vault::inspect),
+    },
+    OpSpec {
+        name: "vault.list",
+        summary: "Known vaults and the default",
+        handler: |c, v| typed(c, v, vault::list),
+    },
+    OpSpec {
+        name: "vault.select",
+        summary: "Validate, prepare, remember and use a vault",
+        handler: |c, v| typed(c, v, vault::select),
+    },
+    OpSpec {
+        name: "vault.use",
+        summary: "Make a known vault the default and use it",
+        handler: |c, v| typed(c, v, vault::use_vault),
     },
 ];

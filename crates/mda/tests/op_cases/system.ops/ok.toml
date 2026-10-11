@@ -35,6 +35,10 @@ name = "artifact.write_file"
 summary = "Render a whole-file artifact into a workspace file"
 
 [[expect.ops]]
+name = "config.get"
+summary = "The session vault, its source and the config dir"
+
+[[expect.ops]]
 name = "index.create"
 summary = "Scaffold sibling artifacts and an index linking them"
 
@@ -53,3 +57,27 @@ summary = "List every registered operation"
 [[expect.ops]]
 name = "system.version"
 summary = "Engine and protocol versions"
+
+[[expect.ops]]
+name = "types.list"
+summary = "Each artifact type: dir, enabled, dir exists"
+
+[[expect.ops]]
+name = "types.set_enabled"
+summary = "Enable or disable a type in the current vault"
+
+[[expect.ops]]
+name = "vault.inspect"
+summary = "Inspect a folder as a vault (reads only)"
+
+[[expect.ops]]
+name = "vault.list"
+summary = "Known vaults and the default"
+
+[[expect.ops]]
+name = "vault.select"
+summary = "Validate, prepare, remember and use a vault"
+
+[[expect.ops]]
+name = "vault.use"
+summary = "Make a known vault the default and use it"

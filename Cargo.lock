@@ -251,8 +251,10 @@ version = "0.1.0"
 dependencies = [
  "log",
  "mda-core",
+ "serde",
  "sha2",
  "thiserror",
+ "toml",
 ]
 
 [[package]]

@@ -1,0 +1,2 @@
+vault = "vault"
+expect = { vault = "$VAULT", source = "flag", configDir = "$CONFIG" }

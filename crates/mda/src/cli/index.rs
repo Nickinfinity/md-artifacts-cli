@@ -81,7 +81,10 @@ fn run_params(
 ) -> Result<Value, OpError> {
     let mut p = Map::new();
     p.insert("path".into(), json!(path));
-    p.insert("workspaceRoot".into(), json!(absolute(workspace)?));
+    p.insert(
+        "workspaceRoot".into(),
+        json!(absolute(workspace, "workspace")?),
+    );
     p.insert("steps".into(), read_array(steps)?);
     if let Some(f) = values {
         p.insert("values".into(), read_object(&f)?);

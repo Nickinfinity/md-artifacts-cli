@@ -243,7 +243,7 @@ pub fn limit_error(limit: &str, max: usize) -> OpError {
 /// assert_eq!(index::plan(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn plan(ctx: &Ctx, req: PlanRequest) -> Result<PlanResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     artifact_path(&req.path)?;
     // The mirrored folder is client text: reject, never sanitise.
     let mirror = if req.mirror_from.is_empty() {
@@ -347,7 +347,7 @@ fn read_linked(
 /// assert_eq!(index::run(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn run(ctx: &Ctx, req: RunRequest) -> Result<BatchResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     artifact_path(&req.path)?;
     if !Path::new(&req.workspace_root).is_absolute() {
         return Err(

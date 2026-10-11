@@ -1,0 +1,5 @@
+vault = "vault"
+vault_flag = false
+machine_config = "default = ["
+params = { path = "Snippets/hello.md" }
+expect_error = "config.invalid"

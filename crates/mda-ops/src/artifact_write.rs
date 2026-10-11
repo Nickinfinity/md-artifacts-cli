@@ -221,7 +221,7 @@ fn written(path: String, text: &str) -> WriteResponse {
 /// assert_eq!(create(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     if artifact_path(&req.path)? != req.model.artifact_type {
         return Err(bad_path(&req.path));
     }
@@ -242,7 +242,7 @@ pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
 /// assert_eq!(update(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn update(ctx: &Ctx, req: UpdateRequest) -> Result<WriteResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     let t = artifact_path(&req.path)?;
     let bytes = read_checked(root, &req.path, &req.expected_hash)?;
     let content = decode(&bytes);
@@ -282,7 +282,7 @@ pub fn update(ctx: &Ctx, req: UpdateRequest) -> Result<WriteResponse, OpError> {
 /// assert_eq!(patch(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn patch(ctx: &Ctx, req: PatchRequest) -> Result<WriteResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     artifact_path(&req.path)?;
     let edit = req.edit;
     let bad = |r: &str| OpError::new(error::OP_BAD_REQUEST).with("reason", r);
@@ -357,7 +357,7 @@ pub fn patch(ctx: &Ctx, req: PatchRequest) -> Result<WriteResponse, OpError> {
 /// assert_eq!(delete(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn delete(ctx: &Ctx, req: DeleteRequest) -> Result<DeleteResponse, OpError> {
-    let root = root_of(ctx)?;
+    let root = &root_of(ctx)?;
     artifact_path(&req.path)?;
     vault_delete(
         root,

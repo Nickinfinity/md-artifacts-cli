@@ -254,3 +254,20 @@ fn debug_index_run_does_not_log_values() {
     );
     std::fs::remove_dir_all(ws).unwrap();
 }
+
+#[test]
+fn debug_select_never_logs_machine_file_bytes() {
+    let cfg = tmp("sel-cfg");
+    std::fs::write(cfg.join("config.toml"), "marker = \"m-4d1e\"\n").unwrap();
+    let v = tmp("sel-vault");
+    std::fs::create_dir(v.join(".obsidian")).unwrap();
+    let out = common::run_cfg(
+        &["--debug=debug", "vault", "select", v.to_str().unwrap()],
+        b"",
+        &cfg,
+    );
+    assert_eq!(out.status.code(), Some(0));
+    let err = String::from_utf8(out.stderr).unwrap();
+    assert!(err.contains(r#"op "vault.select""#), "stderr: {err}");
+    assert!(!err.contains("m-4d1e"), "stderr: {err}");
+}

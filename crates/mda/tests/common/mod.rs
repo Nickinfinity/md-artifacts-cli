@@ -6,14 +6,33 @@
 use std::io::Write;
 use std::process::{Command, Output, Stdio};
 
-/// The built `mda` binary.
+static SPAWNS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// The built `mda` binary, with `MDA_CONFIG_DIR` set to a unique, **uncreated** temp path: no test
+/// ever reads or writes the real user config (V-8); a missing dir reads as "no machine config".
 pub fn bin() -> Command {
-    Command::new(env!("CARGO_BIN_EXE_mda"))
+    let n = SPAWNS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let cfg = std::env::temp_dir().join(format!("mda-cfg-{}-{n}", std::process::id()));
+    let mut c = Command::new(env!("CARGO_BIN_EXE_mda"));
+    c.env("MDA_CONFIG_DIR", cfg);
+    c
+}
+
+/// [`run`] with `MDA_CONFIG_DIR` = `cfg` (a test's own machine config dir).
+pub fn run_cfg(args: &[&str], stdin: &[u8], cfg: &std::path::Path) -> Output {
+    let mut cmd = bin();
+    cmd.env("MDA_CONFIG_DIR", cfg);
+    run_with(cmd, args, stdin)
 }
 
 /// Run `mda <args>` with `stdin` piped in; wait for it to exit.
 pub fn run(args: &[&str], stdin: &[u8]) -> Output {
-    let mut child = bin()
+    run_with(bin(), args, stdin)
+}
+
+/// Spawn `cmd <args>` with `stdin` piped in; wait for it to exit.
+pub fn run_with(mut cmd: Command, args: &[&str], stdin: &[u8]) -> Output {
+    let mut child = cmd
         .args(args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
