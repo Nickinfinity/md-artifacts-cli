@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "path" = "Variables/bad.md", "expectedHash" = "35f60475e1f7fa0dffe4e3859f51d4cc5c0019985d8c6f7fe021a1c8e559cd41", "heading" = "X" }
+expect_error = "artifact.vars_invalid"
+expect_files = { "Variables/bad.md" = "---\nartifactType: Variables\ntitle: Bad\n---\n\n```vks\nVK-a: x # note\n```\n" }

@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "title" = "Flat" }
+expect_error = "file.exists"
+expect_files = { "Variables/flat.md" = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```vks\nVK-host: localhost\nVK-port: '3000'\n```\n" }

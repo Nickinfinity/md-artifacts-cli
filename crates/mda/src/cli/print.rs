@@ -29,6 +29,15 @@ pub fn english(code: &str) -> Option<&'static str> {
         VAULT_UNKNOWN => "not a known vault (add it with \"mda vault select\")",
         VAULT_UNAVAILABLE => "the default vault is no longer available",
         CONFIG_INVALID => "the configuration file is invalid; fix or remove it",
+        VARS_BAD_NAME => "variable names are VK- then a letter, then letters, digits or _",
+        VARS_VAR_EXISTS => "a variable with that name already exists in this sub-set",
+        VARS_VAR_NOT_FOUND => "no variable with that name in this sub-set",
+        VARS_SUBSET_EXISTS => "a sub-set with that heading already exists",
+        VARS_BAD_HEADING => "the sub-set heading is invalid",
+        VARS_UNTITLED_DESCRIPTION => {
+            "the untitled block has no heading to keep a description under; add a sub-set first"
+        }
+        VARS_BAD_TITLE => "the title is empty",
         ARTIFACT_BAD_PATH => "not an artifact path (expected <TypeDir>/….md)",
         VKS_SYNTAX => "variables block: syntax error",
         VKS_INDENT => "variables block: bad indentation",
@@ -186,7 +195,14 @@ pub fn success(op: &str, v: &Value) -> String {
         "artifact.read" => show(v),
         "artifact.tree" => ls(v),
         "artifact.render" => v["output"].as_str().unwrap_or("").to_owned(),
-        "artifact.create" | "artifact.update" | "artifact.patch" | "artifact.write_file" => {
+        op if ["vars.file.", "vars.meta.", "vars.subset.", "vars.var."]
+            .iter()
+            .any(|p| op.starts_with(p))
+            || matches!(
+                op,
+                "artifact.create" | "artifact.update" | "artifact.patch" | "artifact.write_file"
+            ) =>
+        {
             format!("wrote {}  {}", s(v, "path"), s(v, "hash"))
         }
         "artifact.delete" => format!("deleted {}", s(v, "path")),
@@ -337,6 +353,14 @@ fn ls(v: &Value) -> String {
 mod tests {
     use super::success;
     use serde_json::json;
+
+    #[test]
+    fn vars_write_prints_wrote() {
+        let w = json!({"path": "Variables/flat.md", "hash": "h"});
+        assert_eq!(success("vars.var.set", &w), "wrote Variables/flat.md  h");
+        assert_eq!(success("vars.file.new", &w), "wrote Variables/flat.md  h");
+        assert_ne!(success("vars.list", &w), "wrote Variables/flat.md  h");
+    }
 
     #[test]
     fn write_printers() {

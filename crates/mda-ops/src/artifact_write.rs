@@ -5,7 +5,7 @@
 use std::path::Path;
 
 use mda_core::error::Refusal;
-use mda_core::model::ArtifactModel;
+use mda_core::model::{ArtifactModel, ParsedArtifact};
 use mda_core::parse::{decode, is_flagged, parse_from_content};
 use mda_core::patch::{CodeTarget, FmField, PatchError, patch_code, patch_field};
 use mda_core::serialize::{SerializeError, serialize};
@@ -244,31 +244,52 @@ pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
 pub fn update(ctx: &Ctx, req: UpdateRequest) -> Result<WriteResponse, OpError> {
     let root = &root_of(ctx)?;
     let t = artifact_path(&req.path)?;
-    let bytes = read_checked(root, &req.path, &req.expected_hash)?;
+    let UpdateRequest {
+        path,
+        expected_hash,
+        model,
+    } = req;
+    rewrite(root, &path, &expected_hash, |_| {
+        if t == model.artifact_type {
+            Ok(model)
+        } else {
+            Err(bad_path(&path))
+        }
+    })
+}
+
+/// The one rewrite path (X-12): read bounded → hash check → refuse flagged / index / varsError →
+/// `edit` → serialize + guard → replace. Shared by `artifact.update` and every `vars.*` edit, so
+/// lossy UTF-8 (#35), no BOM (#36) and legacy → YAML (W-3) hold for all of them.
+pub(crate) fn rewrite(
+    root: &Root,
+    path: &str,
+    expected: &str,
+    edit: impl FnOnce(ParsedArtifact) -> Result<ArtifactModel, OpError>,
+) -> Result<WriteResponse, OpError> {
+    let bytes = read_checked(root, path, expected)?;
     let content = decode(&bytes);
     if is_flagged(&content) {
         return Err(not_serializable(Refusal::Flagged));
     }
-    let cur = parse_from_content(&content, &req.path);
+    let cur = parse_from_content(&content, path);
     if cur.frontmatter.index == Some(true) {
         return Err(not_serializable(Refusal::Index));
     }
     if cur.vars_error.is_some() || cur.blocks.iter().any(|b| b.vars_error.is_some()) {
-        return Err(OpError::new(error::ARTIFACT_VARS_INVALID).with("path", req.path));
+        return Err(OpError::new(error::ARTIFACT_VARS_INVALID).with("path", path));
     }
-    if t != req.model.artifact_type {
-        return Err(bad_path(&req.path));
-    }
-    let text = serialize(&req.model, max_bytes()).map_err(|e| map_serialize(e, &req.path))?;
+    let model = edit(cur)?;
+    let text = serialize(&model, max_bytes()).map_err(|e| map_serialize(e, path))?;
     replace(
         root,
-        Path::new(&req.path),
+        Path::new(path),
         text.as_bytes(),
-        &req.expected_hash,
+        expected,
         MAX_ARTIFACT_BYTES,
     )
     .map_err(|e| vault_error(e, root))?;
-    Ok(written(req.path, &text))
+    Ok(written(path.to_owned(), &text))
 }
 
 /// `artifact.patch`: one byte-surgical edit, when the file's hash is `expectedHash`.

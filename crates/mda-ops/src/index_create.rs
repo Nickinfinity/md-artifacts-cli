@@ -175,7 +175,7 @@ fn index_name(links: &[String]) -> String {
     name
 }
 
-fn model(t: ArtifactType, title: &str) -> ArtifactModel {
+pub(crate) fn model(t: ArtifactType, title: &str) -> ArtifactModel {
     ArtifactModel {
         artifact_type: t,
         title: title.to_owned(),

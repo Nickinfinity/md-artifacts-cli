@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "path" = "Variables/legacy-badkey.md", "expectedHash" = "a5bc6d5983c22e5a2da293632f7c7a2dba56214884924c010f731f6b49379519", "name" = "VK-a:b", "newName" = "VK-a" }
+expect = { "path" = "Variables/legacy-badkey.md", "hash" = "e7c67497f04ce2d8773ff291416747beb37b41b7b24af7126795cc80d9a4312e" }
+expect_files = { "Variables/legacy-badkey.md" = "---\nartifactType: Variables\ntitle: Bad key\n---\n\n```vks\nVK-a: c\nVK-ok: '1'\n```\n" }

@@ -12,6 +12,7 @@ pub mod registry;
 pub mod render;
 pub mod system;
 pub mod types;
+pub mod vars;
 pub mod vault;
 pub mod write_file;
 

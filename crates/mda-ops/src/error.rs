@@ -113,6 +113,21 @@ pub const VAULT_UNAVAILABLE: &str = "vault.unavailable";
 /// A configuration file is corrupt or breaks a spec §12 rule, or no config dir exists. Param `path`.
 pub const CONFIG_INVALID: &str = "config.invalid";
 
+/// `vars.var.add` / `vars.var.rename`: not `VK-` + a letter, then letters, digits or `_`. Param `name`.
+pub const VARS_BAD_NAME: &str = "vars.bad_name";
+/// A variable with that name already exists in the sub-set. Param `name`.
+pub const VARS_VAR_EXISTS: &str = "vars.var_exists";
+/// No variable of that exact name in the sub-set. Param `name`.
+pub const VARS_VAR_NOT_FOUND: &str = "vars.var_not_found";
+/// Another sub-set already has that (trimmed) heading. Param `heading`.
+pub const VARS_SUBSET_EXISTS: &str = "vars.subset_exists";
+/// The sub-set heading is invalid. Param `reason` (`empty`).
+pub const VARS_BAD_HEADING: &str = "vars.bad_heading";
+/// A description on the untitled block. No params.
+pub const VARS_UNTITLED_DESCRIPTION: &str = "vars.untitled_description";
+/// `vars.file.new`: the title is empty after trimming. No params.
+pub const VARS_BAD_TITLE: &str = "vars.bad_title";
+
 /// Every code, for exhaustive checks (English table, exit codes, op cases).
 pub const ALL_CODES: &[&str] = &[
     OP_UNKNOWN,
@@ -170,6 +185,13 @@ pub const ALL_CODES: &[&str] = &[
     VAULT_UNKNOWN,
     VAULT_UNAVAILABLE,
     CONFIG_INVALID,
+    VARS_BAD_NAME,
+    VARS_VAR_EXISTS,
+    VARS_VAR_NOT_FOUND,
+    VARS_SUBSET_EXISTS,
+    VARS_BAD_HEADING,
+    VARS_UNTITLED_DESCRIPTION,
+    VARS_BAD_TITLE,
 ];
 
 /// Map a vault error from an op that holds `root`: every `path` param becomes vault-relative POSIX,
@@ -271,6 +293,25 @@ impl From<mda_core::naming::NameError> for OpError {
             NameError::PathInjection(f) => op.with("field", f.as_str()),
             NameError::TooLong => op.with("max", MAX_NAME_BYTES.to_string()),
             _ => op,
+        }
+    }
+}
+
+// A refused Variables-file edit (`mda_core::variables`): one code per variant.
+impl From<mda_core::variables::EditError> for OpError {
+    fn from(e: mda_core::variables::EditError) -> Self {
+        use mda_core::variables::EditError;
+        match e {
+            EditError::BadName(n) => Self::new(VARS_BAD_NAME).with("name", n),
+            EditError::VarExists(n) => Self::new(VARS_VAR_EXISTS).with("name", n),
+            EditError::VarNotFound(n) => Self::new(VARS_VAR_NOT_FOUND).with("name", n),
+            EditError::SubsetExists(h) => Self::new(VARS_SUBSET_EXISTS).with("heading", h),
+            EditError::EmptyHeading => Self::new(VARS_BAD_HEADING).with("reason", "empty"),
+            EditError::UntitledDescription => Self::new(VARS_UNTITLED_DESCRIPTION),
+            EditError::BlockNotFound(i) => Self::new(ARTIFACT_BLOCK_NOT_FOUND)
+                .with("block", i.map(|i| i.to_string()).unwrap_or_default()),
+            EditError::Mixed => Self::new(ARTIFACT_NOT_SERIALIZABLE)
+                .with("reason", mda_core::error::Refusal::Variables.as_str()),
         }
     }
 }

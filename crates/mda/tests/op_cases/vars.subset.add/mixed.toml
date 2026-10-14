@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "path" = "Variables/mixed.md", "expectedHash" = "1d2e25615a2588edbe5bf9cd7ed534682a14ed77604da09a7857bcdc32daa9d8", "heading" = "X" }
+expect_error = "artifact.not_serializable"
+expect_files = { "Variables/mixed.md" = "---\nartifactType: Variables\ntitle: Mixed\n---\n\n```vks\nVK-top: t\n```\n\n## A\n\n```vks\nVK-a: a\n```\n" }

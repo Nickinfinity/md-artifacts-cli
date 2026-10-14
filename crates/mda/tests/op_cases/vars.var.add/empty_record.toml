@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "path" = "Variables/flat.md", "expectedHash" = "a56e89a491ff92348440f538849cd298827e12c81fda3f88b8e4e22f0c273bdd", "name" = "VK-new", "value" = {} }
+expect_error = "vks.unrepresentable"
+expect_files = { "Variables/flat.md" = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```vks\nVK-host: localhost\nVK-port: '3000'\n```\n" }

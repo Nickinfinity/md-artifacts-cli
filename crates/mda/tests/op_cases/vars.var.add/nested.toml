@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "path" = "Variables/sub/nested.md", "expectedHash" = "52b09ca811b2724fe1a939855608d4e0610840e93362728f2c86704559303acd", "name" = "VK-y", "value" = "2" }
+expect = { "path" = "Variables/sub/nested.md", "hash" = "ec98abe431163bcbc6f44bea33020f8c2fb41712c68b7ebdbe5afe3c519cb34d" }
+expect_files = { "Variables/sub/nested.md" = "---\nartifactType: Variables\ntitle: Nested\n---\n\n```vks\nVK-x: '1'\nVK-y: '2'\n```\n" }

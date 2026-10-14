@@ -271,3 +271,51 @@ fn debug_select_never_logs_machine_file_bytes() {
     assert!(err.contains(r#"op "vault.select""#), "stderr: {err}");
     assert!(!err.contains("m-4d1e"), "stderr: {err}");
 }
+
+#[test]
+fn debug_vars_set_keeps_values_out_of_stderr() {
+    let d = tmp("varsset");
+    common::copy_tree(
+        std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/vault")),
+        &d,
+    );
+    let v = d.to_str().unwrap();
+    let h = "a56e89a491ff92348440f538849cd298827e12c81fda3f88b8e4e22f0c273bdd";
+    let args = |lvl: &'static str| {
+        [
+            "--vault",
+            v,
+            lvl,
+            "vars",
+            "var",
+            "set",
+            "Variables/flat.md",
+            "VK-host",
+            "--value",
+            "SECRET-m5v",
+            "--hash",
+            h,
+        ]
+    };
+    let o = run(&args("--debug"), b"");
+    assert_eq!(o.status.code(), Some(0), "{:?}", o.stderr);
+    let err = String::from_utf8(o.stderr).unwrap();
+    assert!(err.contains(r#"op "vars.var.set""#), "{err}");
+    assert!(!err.contains("SECRET-m5v"), "{err}");
+    std::fs::remove_dir_all(&d).unwrap();
+    common::copy_tree(
+        std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/vault")),
+        &d,
+    );
+    let o = run(&args("--debug=trace"), b"");
+    let err = String::from_utf8(o.stderr).unwrap();
+    assert!(
+        err.lines()
+            .next()
+            .unwrap()
+            .contains("trace output may include secrets"),
+        "{err}"
+    );
+    assert!(err.contains("SECRET-m5v"), "{err}");
+    std::fs::remove_dir_all(&d).unwrap();
+}

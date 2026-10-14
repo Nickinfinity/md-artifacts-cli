@@ -657,6 +657,7 @@ of records.
 Counting: **depth** = containers inside one var's value (the top-level map is depth 0, so a var holding a
 record is depth 1); **nodes** = every value (strings, lists, records), not keys and not the top-level map.
 Each limit is checked before the push it bounds. Legacy bodies (§9.6) are bounded by the body size only.
+On emission, a body over 64 KiB is refused (`vks.limit{limit: body_bytes}`) by every writer (§13.1).
 
 **`block_defaults`** bounds the parser, not the codec: every block of a flagged multi-block file (§7)
 receives every file default, so the output grows with regions × defaults. The product is checked
@@ -825,7 +826,8 @@ A sub-set is addressed by its index **and** heading; both must match. With no su
 
 The flat (untitled) block is addressed as sub-set index 0 with an empty heading; renaming it gives a `sets` file, deleting it a
 `blank` one. It takes no description. A file with an untitled fence **before** its first `## ` section cannot be edited this way
-(`artifact.not_serializable{reason: variables}`): an edit would drop those vars. The emitted fence body is capped at 64 KiB (§9.7)
+(`artifact.not_serializable{reason: variables}`): an edit would drop those vars. A `## ` section with **no** `vks` fence is not part of the
+model (the parser skips it, §2) and is dropped by any rewrite (`artifact.update` and every Variables edit alike). The emitted fence body is capped at 64 KiB (§9.7)
 for every writer. Var names follow the token grammar (§4.1, `VK-` + identifier, no dots); a legacy
 prefix-less key may be set, renamed or deleted, never added. Names are unique per sub-set; headings are trimmed, non-empty and
 unique per file.

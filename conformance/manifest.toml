@@ -3,11 +3,11 @@
 #
 # [[cases]]
 # id = "unique-id"                 # unique
-# kind = "parse"                   # parse | serialize | render
+# kind = "parse"                   # parse | serialize | render | idempotent
 # input = "parse/x.md"             # path relative to conformance/
 # expected = "parse/x.expected.json"
 # values = "render/x.values.json"  # render only; path relative to conformance/
-# path = "<TypeDir>/<rel>.md"      # parse and render: drives the type, filePath, fileName, relativePath
+# path = "<TypeDir>/<rel>.md"      # parse, render and idempotent: drives the type, filePath, fileName, relativePath
 # block = 0                        # render only: the block index (spec block-selection rules)
 # origin = "ts@b368c20"            # or "rust" (hand-derived from the spec, never run through TS)
 # deviates_from_ts = "reason"      # optional: a recorded, deliberate difference from the TS extension
@@ -1527,3 +1527,43 @@ input = "serialize/rs-empty-whole-file.model.json"
 expected = "serialize/rs-empty-whole-file.md"
 origin = "rust"
 deviates_from_ts = "W3b B-RISK 1: an empty whole-file body is written as frontmatter only (TS writes an empty fence its own parser reads back as the body)"
+
+[[cases]]
+id = "rs-idem-flat"
+kind = "idempotent"
+input = "serialize/rs-idem-flat.md"
+path = "Variables/flat.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-idem-sets"
+kind = "idempotent"
+input = "serialize/rs-idem-sets.md"
+path = "Variables/sets.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-idem-empty-subset"
+kind = "idempotent"
+input = "serialize/rs-idem-empty-subset.md"
+path = "Variables/empty-subset.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-idem-descriptions"
+kind = "idempotent"
+input = "serialize/rs-idem-descriptions.md"
+path = "Variables/descriptions.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-idem-env"
+kind = "idempotent"
+input = "serialize/rs-idem-env.md"
+path = "Variables/env.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"

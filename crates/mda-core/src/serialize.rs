@@ -3,7 +3,7 @@
 //! (W-11), so a model the format cannot carry is refused, never written. Ports
 //! `artifact-serializer.service.ts` (extension @ `b368c20`).
 
-use crate::error::{FieldReason, Unrepresentable, VarsError};
+use crate::error::{FieldReason, Limit, Unrepresentable, VarsError};
 use crate::model::{ArtifactModel, ModelBlock, ParsedArtifact, ParsedVar};
 use crate::parse::parse_from_content;
 use crate::parse::text::{js_trim, js_trim_end};
@@ -98,7 +98,7 @@ pub fn serialize(model: &ArtifactModel, max_bytes: usize) -> Result<String, Seri
     if !t.info().multi_block && model.blocks.len() > 1 {
         return Err(refuse("blocks", FieldReason::MultiBlock));
     }
-    let out = emit(model).map_err(SerializeError::Vks)?;
+    let out = emit(model)?;
     if out.len() > max_bytes {
         return Err(SerializeError::TooLarge { size: out.len() });
     }
@@ -128,7 +128,7 @@ fn lang_for(t: ArtifactType, block_lang: &str) -> String {
     }
 }
 
-fn emit(m: &ArtifactModel) -> Result<String, Unrepresentable> {
+fn emit(m: &ArtifactModel) -> Result<String, SerializeError> {
     let t = m.artifact_type;
     if t == ArtifactType::Variables {
         let body = if variables_subsets(&m.blocks) {
@@ -195,11 +195,20 @@ fn frontmatter(m: &ArtifactModel, lang: &str) -> String {
 }
 
 /// `\n```vks\n<body>```\n`; with no vars the empty fence a sub-set needs (`ts:181-210`).
-fn vks_fence(vars: &[ParsedVar]) -> Result<String, Unrepresentable> {
-    Ok(format!("\n```vks\n{}```\n", vks::emit_body(vars)?))
+fn vks_fence(vars: &[ParsedVar]) -> Result<String, SerializeError> {
+    let body = vks::emit_body(vars).map_err(SerializeError::Vks)?;
+    // Per fence, where the reader applies the same bound (X-15): a larger body could not be re-read.
+    if body.len() > vks::MAX_BODY_BYTES {
+        return Err(SerializeError::Vars(vks::limit_error(
+            Limit::BodyBytes,
+            vks::MAX_BODY_BYTES,
+            0,
+        )));
+    }
+    Ok(format!("\n```vks\n{body}```\n"))
 }
 
-fn subset(b: &ModelBlock) -> Result<String, Unrepresentable> {
+fn subset(b: &ModelBlock) -> Result<String, SerializeError> {
     let desc = if b.description.is_empty() {
         String::new()
     } else {
@@ -208,7 +217,7 @@ fn subset(b: &ModelBlock) -> Result<String, Unrepresentable> {
     Ok(format!("\n## {}\n{desc}{}", b.heading, vks_fence(&b.vars)?))
 }
 
-fn multi_block(b: &ModelBlock, t: ArtifactType) -> Result<String, Unrepresentable> {
+fn multi_block(b: &ModelBlock, t: ArtifactType) -> Result<String, SerializeError> {
     let desc = if b.description.is_empty() {
         "\n".to_owned()
     } else {
@@ -229,7 +238,7 @@ fn is_empty_str(v: &ParsedVar) -> bool {
 
 /// The `vars:` section of a code block: only vars that carry a value (`ts:281-284`, spec §1.4);
 /// a detected-but-empty token is not a default.
-fn vars_part(vars: &[ParsedVar]) -> Result<String, Unrepresentable> {
+fn vars_part(vars: &[ParsedVar]) -> Result<String, SerializeError> {
     let kept: Vec<ParsedVar> = vars.iter().filter(|v| !is_empty_str(v)).cloned().collect();
     if kept.is_empty() {
         return Ok(String::new());

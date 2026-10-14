@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Variables/sets.md", expectedHash = "0000000000000000000000000000000000000000000000000000000000000000", subset = { index = 0, heading = "Dev" }, x = 1 }
+expect_error = "op.bad_request"

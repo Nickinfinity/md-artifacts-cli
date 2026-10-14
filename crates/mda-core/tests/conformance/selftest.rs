@@ -278,3 +278,35 @@ fn typo_field_is_rejected() {
     let d = tmp("typo", &m, &["parse/a.md"]);
     assert!(err_of(&d).contains("expectd"));
 }
+
+const FLAT_MD: &str = "---\nartifactType: Variables\ntitle: V\n---\n\n```vks\nVK-a: x\n```\n";
+
+fn idem_case(md: &str, with_path: bool, name: &str) -> PathBuf {
+    let path = if with_path {
+        "path = \"Variables/x.md\"\n"
+    } else {
+        ""
+    };
+    let m = format!("{}{path}", case("i1", "idempotent", "serialize/x.md"));
+    tmp_with(name, &m, &[("serialize/x.md", md.as_bytes())])
+}
+
+#[test]
+fn idempotent_case_matches() {
+    let d = idem_case(FLAT_MD, true, "idok");
+    assert_eq!(check(&d), Ok(()));
+    std::fs::remove_dir_all(&d).unwrap();
+}
+
+#[test]
+fn idempotent_diff_names_id_and_line() {
+    let d = idem_case(&FLAT_MD.replace("VK-a: x", "VK-a: 'x'"), true, "iddiff");
+    let e = err_of(&d);
+    assert!(e.contains("i1") && e.contains("line 7"), "{e}");
+}
+
+#[test]
+fn idempotent_without_path_names_id() {
+    let d = idem_case(FLAT_MD, false, "idnopath");
+    assert!(err_of(&d).contains("i1: idempotent needs path"));
+}

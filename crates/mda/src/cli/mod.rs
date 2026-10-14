@@ -15,6 +15,7 @@ mod artifact;
 mod index;
 mod input;
 pub mod print;
+mod vars;
 mod vault;
 
 /// Global flags and the subcommand.
@@ -61,6 +62,9 @@ pub enum Command {
     /// Artifact types in the current vault.
     #[command(subcommand)]
     Types(vault::TypesCmd),
+    /// Variables files: create, edit sub-sets and variables.
+    #[command(subcommand)]
+    Vars(vars::VarsCmd),
     /// Run any operation by dotted name with raw JSON params (default `{}`).
     Call {
         /// Dotted op name, e.g. `system.ops`.
@@ -143,6 +147,7 @@ fn request(cmd: Command) -> Option<(String, Result<Value, OpError>)> {
         Command::Vault(cmd) => return Some(vault::vault_request(cmd)),
         Command::Config(cmd) => return Some(vault::config_request(cmd)),
         Command::Types(cmd) => return Some(vault::types_request(cmd)),
+        Command::Vars(cmd) => return Some(vars::vars_request(cmd)),
         Command::System(SystemCmd::Version) => ("system.version".to_owned(), Ok(json!({}))),
         Command::System(SystemCmd::Ops) => ("system.ops".to_owned(), Ok(json!({}))),
         Command::Call { op, params } => {

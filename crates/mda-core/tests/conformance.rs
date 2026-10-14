@@ -89,15 +89,35 @@ fn run_serialize(dir: &Path, c: &Case) -> Result<(), String> {
     let got = mda_core::serialize::serialize(&model, MAX)
         .map_err(|e| format!("{}: refused {e:?}", c.id))?;
     let want = std::fs::read_to_string(dir.join(exp)).map_err(io)?;
+    same_lines(&c.id, &got, &want)
+}
+
+/// Line-by-line exact comparison; the error names the case id and the first differing line.
+fn same_lines(id: &str, got: &str, want: &str) -> Result<(), String> {
     let (mut g, mut w) = (got.split('\n'), want.split('\n'));
     for n in 1.. {
         match (g.next(), w.next()) {
             (None, None) => return Ok(()),
             (a, b) if a == b => {}
-            (a, b) => return Err(format!("{}: line {n}: got {a:?} want {b:?}", c.id)),
+            (a, b) => return Err(format!("{id}: line {n}: got {a:?} want {b:?}")),
         }
     }
     Ok(())
+}
+
+/// parse -> `from_parsed` -> `serialize` must give the input back byte for byte (X-22): the
+/// canonical form is a fixed point.
+fn run_idempotent(dir: &Path, c: &Case) -> Result<(), String> {
+    let Some(path) = &c.path else {
+        return Err(format!("{}: idempotent needs path", c.id));
+    };
+    let bytes = std::fs::read(dir.join(&c.input)).map_err(|e| format!("{}: {e}", c.id))?;
+    let text = mda_core::parse::decode(&bytes);
+    let parsed = mda_core::parse::parse_from_content(&text, path);
+    let model = mda_core::serialize::from_parsed(&parsed);
+    let got = mda_core::serialize::serialize(&model, MAX)
+        .map_err(|e| format!("{}: refused {e:?}", c.id))?;
+    same_lines(&c.id, &got, &text)
 }
 
 /// Parse + render the input with the client values; compares the whole `Rendered` JSON, so a
@@ -134,6 +154,7 @@ fn run_case(dir: &Path, c: &Case) -> Result<(), String> {
         "parse" => run_parse(dir, c),
         "serialize" => run_serialize(dir, c),
         "render" => run_render(dir, c),
+        "idempotent" => run_idempotent(dir, c),
         k => Err(format!("{}: unknown kind {k}", c.id)),
     }
 }

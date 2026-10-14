@@ -2,7 +2,7 @@
 
 use crate::registry::{OpSpec, typed};
 use crate::{
-    artifact, artifact_write, index, index_create, prefill, render, system, types, vault,
+    artifact, artifact_write, index, index_create, prefill, render, system, types, vars, vault,
     write_file,
 };
 
@@ -91,6 +91,56 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "types.set_enabled",
         summary: "Enable or disable a type in the current vault",
         handler: |c, v| typed(c, v, types::set_enabled),
+    },
+    OpSpec {
+        name: "vars.file.new",
+        summary: "Create a blank Variables file",
+        handler: |c, v| typed(c, v, vars::file_new),
+    },
+    OpSpec {
+        name: "vars.meta.tags",
+        summary: "Replace a Variables file's tags",
+        handler: |c, v| typed(c, v, vars::meta_tags),
+    },
+    OpSpec {
+        name: "vars.subset.add",
+        summary: "Add an empty sub-set",
+        handler: |c, v| typed(c, v, vars::subset_add),
+    },
+    OpSpec {
+        name: "vars.subset.delete",
+        summary: "Delete a sub-set",
+        handler: |c, v| typed(c, v, vars::subset_delete),
+    },
+    OpSpec {
+        name: "vars.subset.describe",
+        summary: "Set a sub-set's description",
+        handler: |c, v| typed(c, v, vars::subset_describe),
+    },
+    OpSpec {
+        name: "vars.subset.rename",
+        summary: "Rename a sub-set",
+        handler: |c, v| typed(c, v, vars::subset_rename),
+    },
+    OpSpec {
+        name: "vars.var.add",
+        summary: "Add a variable",
+        handler: |c, v| typed(c, v, vars::var_add),
+    },
+    OpSpec {
+        name: "vars.var.delete",
+        summary: "Delete a variable",
+        handler: |c, v| typed(c, v, vars::var_delete),
+    },
+    OpSpec {
+        name: "vars.var.rename",
+        summary: "Rename a variable",
+        handler: |c, v| typed(c, v, vars::var_rename),
+    },
+    OpSpec {
+        name: "vars.var.set",
+        summary: "Set a variable's value",
+        handler: |c, v| typed(c, v, vars::var_set),
     },
     OpSpec {
         name: "vault.inspect",

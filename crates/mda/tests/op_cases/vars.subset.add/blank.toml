@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "path" = "Variables/blank.md", "expectedHash" = "0f73bf522876dd2005835327567c881a162f7c8b7fbc9ed0fab5e0a50aff57f0", "heading" = "X" }
+expect = { "path" = "Variables/blank.md", "hash" = "25e04731239b8944a3906a785b18943048d10ad690783ddaa74d5914c6cbeb35" }
+expect_files = { "Variables/blank.md" = "---\nartifactType: Variables\ntitle: Blank\n---\n\n## X\n\n```vks\n```\n" }

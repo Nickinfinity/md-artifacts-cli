@@ -67,6 +67,46 @@ name = "types.set_enabled"
 summary = "Enable or disable a type in the current vault"
 
 [[expect.ops]]
+name = "vars.file.new"
+summary = "Create a blank Variables file"
+
+[[expect.ops]]
+name = "vars.meta.tags"
+summary = "Replace a Variables file's tags"
+
+[[expect.ops]]
+name = "vars.subset.add"
+summary = "Add an empty sub-set"
+
+[[expect.ops]]
+name = "vars.subset.delete"
+summary = "Delete a sub-set"
+
+[[expect.ops]]
+name = "vars.subset.describe"
+summary = "Set a sub-set's description"
+
+[[expect.ops]]
+name = "vars.subset.rename"
+summary = "Rename a sub-set"
+
+[[expect.ops]]
+name = "vars.var.add"
+summary = "Add a variable"
+
+[[expect.ops]]
+name = "vars.var.delete"
+summary = "Delete a variable"
+
+[[expect.ops]]
+name = "vars.var.rename"
+summary = "Rename a variable"
+
+[[expect.ops]]
+name = "vars.var.set"
+summary = "Set a variable's value"
+
+[[expect.ops]]
 name = "vault.inspect"
 summary = "Inspect a folder as a vault (reads only)"
 

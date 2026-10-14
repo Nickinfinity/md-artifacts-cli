@@ -248,3 +248,78 @@ fn vault_error_maps_w4() {
         (VAULT_NOT_OBSIDIAN, "/v")
     );
 }
+
+#[test]
+fn w5_codes_exact_json() {
+    let with = [
+        (VARS_BAD_NAME, "vars.bad_name", "name"),
+        (VARS_VAR_EXISTS, "vars.var_exists", "name"),
+        (VARS_VAR_NOT_FOUND, "vars.var_not_found", "name"),
+        (VARS_SUBSET_EXISTS, "vars.subset_exists", "heading"),
+        (VARS_BAD_HEADING, "vars.bad_heading", "reason"),
+    ];
+    for (code, want, key) in with {
+        assert!(ALL_CODES.contains(&code), "{code}");
+        assert_eq!(
+            serde_json::to_value(OpError::new(code).with(key, "x")).unwrap(),
+            serde_json::json!({"code": want, "params": {key: "x"}})
+        );
+    }
+    for (code, want) in [
+        (VARS_UNTITLED_DESCRIPTION, "vars.untitled_description"),
+        (VARS_BAD_TITLE, "vars.bad_title"),
+    ] {
+        assert!(ALL_CODES.contains(&code), "{code}");
+        assert_eq!(
+            serde_json::to_value(OpError::new(code)).unwrap(),
+            serde_json::json!({"code": want, "params": {}})
+        );
+    }
+}
+
+#[test]
+fn edit_error_maps() {
+    use mda_core::variables::EditError;
+    let j = |e: EditError| serde_json::to_value(OpError::from(e)).unwrap();
+    let cases = [
+        (
+            EditError::BadName("h".into()),
+            serde_json::json!({"code": "vars.bad_name", "params": {"name": "h"}}),
+        ),
+        (
+            EditError::VarExists("VK-a".into()),
+            serde_json::json!({"code": "vars.var_exists", "params": {"name": "VK-a"}}),
+        ),
+        (
+            EditError::VarNotFound("VK-a".into()),
+            serde_json::json!({"code": "vars.var_not_found", "params": {"name": "VK-a"}}),
+        ),
+        (
+            EditError::SubsetExists("Dev".into()),
+            serde_json::json!({"code": "vars.subset_exists", "params": {"heading": "Dev"}}),
+        ),
+        (
+            EditError::EmptyHeading,
+            serde_json::json!({"code": "vars.bad_heading", "params": {"reason": "empty"}}),
+        ),
+        (
+            EditError::UntitledDescription,
+            serde_json::json!({"code": "vars.untitled_description", "params": {}}),
+        ),
+        (
+            EditError::BlockNotFound(None),
+            serde_json::json!({"code": "artifact.block_not_found", "params": {"block": ""}}),
+        ),
+        (
+            EditError::BlockNotFound(Some(3)),
+            serde_json::json!({"code": "artifact.block_not_found", "params": {"block": "3"}}),
+        ),
+        (
+            EditError::Mixed,
+            serde_json::json!({"code": "artifact.not_serializable", "params": {"reason": "variables"}}),
+        ),
+    ];
+    for (e, want) in cases {
+        assert_eq!(j(e), want);
+    }
+}
