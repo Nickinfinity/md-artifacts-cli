@@ -322,8 +322,8 @@ the engine only renders).
 
 Variable sets are `artifactType: Variables` files in `Variables/` (any depth). A flat file is one set;
 a `sets` file holds one independent sub-set per `## Heading`. Matching against an artifact uses the
-full `VK-…` name, exact and case-sensitive. (Scoring and apply behaviour are engine behaviour, not
-format; see `AGENTS.md`.)
+full `VK-…` name, exact and case-sensitive. Scoring, apply, save and the shape transitions are engine
+behaviour, specified in §13.
 
 ---
 
@@ -802,3 +802,46 @@ enabled = false
 Table names are `artifactType` values (§5). A type is **enabled** when its entry says so; with no entry, when its directory
 (§5) exists. Enabling creates the directory; disabling never deletes it (directories are create-only). Whether a type is enabled
 changes no engine operation — it is client UI state.
+
+---
+
+## 13. Variable sets behaviour *(ruled — engine-port W5 Role A pass 1, 2026-10-14)*
+
+Engine behaviour over the §3 / §6 format (owners: `mda-core/src/variables.rs` mutations, `mda-core/src/varset.rs` scoring /
+apply / save, `mda-vault/src/listing.rs` the walk).
+
+### 13.1 Edits and shape transitions
+
+Every edit rewrites the file through the §1.4 emitter (legacy bodies become YAML, §9.6; unknown frontmatter keys are not kept).
+A sub-set is addressed by its index **and** heading; both must match. With no sub-set, an edit targets the flat (untitled) vars.
+
+| From | Edit | To |
+|---|---|---|
+| `blank` | add a var (no sub-set) | `flat` |
+| `blank` / `sets` | add a sub-set | `sets` |
+| `flat` | add a sub-set | `sets`; the untitled block is titled `Default` (`Default 2`, … if taken) |
+| `sets` | delete down to one sub-set | `sets` (one titled section stays `sets`) |
+| `flat` / `sets` | delete the last var / sub-set | `blank` |
+
+The flat (untitled) block is addressed as sub-set index 0 with an empty heading; renaming it gives a `sets` file, deleting it a
+`blank` one. It takes no description. A file with an untitled fence **before** its first `## ` section cannot be edited this way
+(`artifact.not_serializable{reason: variables}`): an edit would drop those vars. The emitted fence body is capped at 64 KiB (§9.7)
+for every writer. Var names follow the token grammar (§4.1, `VK-` + identifier, no dots); a legacy
+prefix-less key may be set, renamed or deleted, never added. Names are unique per sub-set; headings are trimmed, non-empty and
+unique per file.
+
+### 13.2 Listing and search
+
+Variables files are found under `Variables/` at any depth. Symlinked directories are not followed. A call stops at depth 32,
+10 000 files or 64 MiB read (`vars.limit`). A file that fails to read or parse is listed with its error; other `.md` files are
+skipped; a missing `Variables/` lists nothing. Search is case-insensitive over file title, description and tags, sub-set heading
+and description, var name and every string inside its value; a match keeps its ancestors and everything below it.
+
+### 13.3 Scoring, apply, save
+
+- **Score** of a non-empty sub-set against an artifact's variables (the render variable rule) and tags:
+  `matchRatio × 0.7 + tagRatio × 0.3`. Results are ordered by score (descending), then path, then sub-set index.
+- **Apply** returns the new values and one change per var: `filled` (old value absent or `""`), `overridden`, `kept`.
+  Structured values are applied whole. Nothing is written.
+- **Save** creates `Variables/<slug>.md` (or under a given `Variables/` subdirectory); the file name is `slugify(title)`, falling
+  back to `untitled`, and must pass the §5.1 name rules. An existing file is never overwritten. Empty values are kept (§3).
