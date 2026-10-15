@@ -1567,3 +1567,12 @@ input = "serialize/rs-idem-env.md"
 path = "Variables/env.md"
 origin = "rust"
 deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-fm-block-list"
+kind = "parse"
+input = "parse/rs-fm-block-list.md"
+expected = "parse/rs-fm-block-list.expected.json"
+path = "Commands/artifact-form/command-with-defaults.md"
+origin = "rust"
+deviates_from_ts = "frontmatter block-list tags/paths (Obsidian's property form, #56); TS reads inline arrays only"

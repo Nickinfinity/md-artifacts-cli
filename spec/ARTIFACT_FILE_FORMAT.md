@@ -69,7 +69,7 @@ each line is split on its **first** `:`; the key and value are trimmed. Unknown 
 | `title`, `description`, `language`, `env`, `target` | string | single line |
 | `extension` | string | `Template` only (§5.1) |
 | `provider`, `model`, `version` | string | `AIAgentsConfig` only (§5.2) |
-| `tags`, `paths` | inline array | `[a, b]`; brackets optional; split on `,`, trimmed, empties dropped. `paths` is index-only (§8) |
+| `tags`, `paths` | inline array or block list | `[a, b]`; brackets optional; split on `,`, trimmed, empties dropped. Or, with an empty value, the following `- item` lines (any indent; one pair of matching quotes stripped; empties dropped) — the form Obsidian's property editor writes (engine only; the extension reads inline arrays). Emitted inline. `paths` is index-only (§8) |
 | `index` | boolean | **only the exact value `true`** is true (§8) |
 
 - **`artifactType` is the only type key.** A legacy `type: <lowercase>` line is **not read** — not as
