@@ -750,22 +750,62 @@ const users = [
 
 ---
 
-## 11. Migrations
+## 11. Migrations *(ruled — engine-port W6 Role A pass 1, 2026-10-16)*
+
+Two migrations, each a **plan** op that writes nothing and an **apply** op that rewrites files
+surgically: `migrate.frontmatter.plan|apply` and `migrate.vks.plan|apply` (CLI `mda migrate
+frontmatter|vks plan|apply`). Never automatic. Shared rules:
+
+- **Scope:** the six type directories (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`,
+  `AIPrompts/`, `Variables/`), walked once with one shared budget (depth 32, 10 000 entries, 64 MiB
+  read; past it → `walk.limit{limit, max}`). Symlinked directories are **never descended** (deviation
+  from the extension, which descends contained ones); a symlinked `.md` file inside the vault is read
+  and written through (as `artifact.update`). `.obsidian/`, `.mda/`, `.git/`, `.trash/` are out of
+  scope by construction.
+- **Plan** → `{changes[…], skipped[{path, code, params}]}`; every change carries the file's `hash`.
+  A plan never carries variable values.
+- **Apply** takes `{files[{path, hash}]}` (≤ 10 000 entries; each path vault-relative, `.md`, under a
+  type directory, else the whole request is refused `artifact.bad_path` before any I/O). Per file:
+  bounded read (64 MiB budget across the call) → hash check (`file.conflict`) → the rewrite re-run on
+  the fresh bytes → atomic replace. Result per file: `written{hash}` or `skipped{code, params}`
+  (`migrate.up_to_date` when nothing is left to change), plus `written` / `skipped` counts. One file's
+  failure never aborts the rest; a file the plan cannot read is listed in `skipped` with its code.
+- **Bytes:** only the migrated span changes, except that the file is decoded lossily and written
+  without a BOM, as every engine write (§1); the plan flags such files with `normalises: [bom |
+  encoding]`. Idempotent: apply, then plan → no change.
 
 ### 11.1 Frontmatter — `type:` → `artifactType:`
 
-`mda migrate frontmatter --dry-run` lists every file whose frontmatter has a legacy `type: <value>` and
-no `artifactType:`; `--apply` rewrites that one line to `artifactType: <PascalCase>` (`snippet` →
-`Snippet`, `agent` → `AIAgentsConfig`, …) inside the first frontmatter block. Every other byte, `index:`
-and `paths:` included, is preserved. Idempotent; never automatic; symlinks are followed only within
-the vault.
+Inside the first frontmatter block, when no `artifactType:` key exists, the first `type:` line whose
+trimmed value is a legacy name (the registry type name in lowercase, plus `agent` → `AIAgentsConfig`;
+`AIPrompt` has none) is rewritten to `artifactType: <TypeName>`, keeping its line ending. Unknown
+values are left silently. Skipped with a code: a blank line before the frontmatter
+(`migrate.leading_blank`), a quoted value (`migrate.quoted_type{value}`). Every other byte — `index:`,
+`paths:`, unknown keys, block-list `tags:`/`paths:` (§1.1; not normalised) — is preserved.
 
-### 11.2 `vks` bodies — legacy → YAML *(proposed)*
+### 11.2 `vks` bodies — legacy → YAML
 
-`mda migrate vks --dry-run` / `--apply` rewrites **only the bytes between a legacy ```` ```vks ```` line
-and its closing fence** into YAML (§9.5), preserving values (§9.6). YAML fences are skipped
-(idempotent); unfenced legacy `vars:` sections are **reported, not rewritten**; a legacy body containing
-a control character is reported, not rewritten. Never automatic.
+Only fences the parser reads (§9: the first `vks` fence of a single-block body, the first per `##`
+section) are candidates, and only when the body is legacy (§9.6) **and** holds at least one variable
+(an empty or comment-only body is left alone). Only the bytes between the opening `vks` line and its
+closing fence are replaced, by the §9.5 emission of the same values (CRLF kept when the opening line
+ends CRLF); legacy comment and junk lines are dropped (§9.8; the plan reports `droppedLines`). A file
+is migrated whole or not at all; it is skipped, untouched, when any candidate fence fails to read
+(its `vks.*` code), fails `check_vars` (`vks.bad_key`, `vks.duplicate_key`, `vks.limit`), cannot be
+emitted (`vks.unrepresentable`), or emits a body over 64 KiB (`vks.limit{limit: body_bytes}`). Keys
+YAML cannot hold are **reported, never renamed** (a rename would also need the code's tokens
+rewritten). An unfenced legacy `vars:` section is reported (`migrate.unfenced_vars`), not rewritten.
+
+### 11.3 Validation — `vault.validate`
+
+Same scope and walk as §11. Response `{files, errors, warnings, truncated, issues[{path, code, params,
+severity}]}`, listing only files with issues; at most 10 000 issues are listed (`truncated: true`
+past that; the counts stay exact). A block's `varsError` carries `block` in its params and is not
+repeated when it equals the file-level one. **Errors:** a read failure (`file.too_large`,
+`file.not_regular`, `io.failed`, `path.outside_root`) or a file/block `varsError`. **Warnings:** a
+pending migration (`migrate.pending{kind}`), `migrate.unfenced_vars`, a `## ` section with no `vks`
+fence in a Variables file (dropped by every rewrite), a mixed Variables file (§13.1). `mda vault
+validate` exits 1 when `errors > 0`, else 0.
 
 ## 12. Engine configuration files *(ruled — engine-port W4 Role A pass 1, 2026-10-11)*
 
@@ -835,7 +875,7 @@ unique per file.
 ### 13.2 Listing and search
 
 Variables files are found under `Variables/` at any depth. Symlinked directories are not followed. A call stops at depth 32,
-10 000 entries (`.md` files and directories entered) or 64 MiB read (`vars.limit`). A file that fails to read or parse is listed with its error; other `.md` files are
+10 000 entries (`.md` files and directories entered) or 64 MiB read (`walk.limit`, renamed from `vars.limit` in W6, M-2). A file that fails to read or parse is listed with its error; other `.md` files are
 skipped; a missing `Variables/` lists nothing. Search is case-insensitive over file title, description and tags, sub-set heading
 and description, var name and every string inside its value; a match keeps its ancestors and everything below it.
 
