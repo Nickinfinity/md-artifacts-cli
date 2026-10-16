@@ -835,7 +835,7 @@ unique per file.
 ### 13.2 Listing and search
 
 Variables files are found under `Variables/` at any depth. Symlinked directories are not followed. A call stops at depth 32,
-10 000 files or 64 MiB read (`vars.limit`). A file that fails to read or parse is listed with its error; other `.md` files are
+10 000 entries (`.md` files and directories entered) or 64 MiB read (`vars.limit`). A file that fails to read or parse is listed with its error; other `.md` files are
 skipped; a missing `Variables/` lists nothing. Search is case-insensitive over file title, description and tags, sub-set heading
 and description, var name and every string inside its value; a match keeps its ancestors and everything below it.
 
@@ -843,6 +843,8 @@ and description, var name and every string inside its value; a match keeps its a
 
 - **Score** of a non-empty sub-set against an artifact's variables (the render variable rule) and tags:
   `matchRatio × 0.7 + tagRatio × 0.3`. Results are ordered by score (descending), then path, then sub-set index.
+  The response lists each file path once (matches refer to it by index) and the artifact's variables once; a
+  sub-set's unmatched variables are the artifact's minus its matched ones.
 - **Apply** returns the new values and one change per var: `filled` (old value absent or `""`), `overridden`, `kept`.
   Structured values are applied whole. Nothing is written.
 - **Save** creates `Variables/<slug>.md` (or under a given `Variables/` subdirectory); the file name is `slugify(title)`, falling
