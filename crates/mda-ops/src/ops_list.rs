@@ -2,8 +2,8 @@
 
 use crate::registry::{OpSpec, typed};
 use crate::{
-    artifact, artifact_write, index, index_create, prefill, render, system, types, vars, vault,
-    write_file,
+    artifact, artifact_write, index, index_create, prefill, render, system, types, vars, varsets,
+    vault, write_file,
 };
 
 pub(crate) static OPS: &[OpSpec] = &[
@@ -73,6 +73,11 @@ pub(crate) static OPS: &[OpSpec] = &[
         handler: |c, v| typed(c, v, index::run),
     },
     OpSpec {
+        name: "render.text",
+        summary: "Fill tokens in text with values (no artifact)",
+        handler: |c, v| typed(c, v, render::text),
+    },
+    OpSpec {
         name: "system.ops",
         summary: "List every registered operation",
         handler: |c, v| typed(c, v, system::list_ops),
@@ -98,9 +103,19 @@ pub(crate) static OPS: &[OpSpec] = &[
         handler: |c, v| typed(c, v, vars::file_new),
     },
     OpSpec {
+        name: "vars.list",
+        summary: "List Variables files with their sub-sets and variables",
+        handler: |c, v| typed(c, v, vars::list),
+    },
+    OpSpec {
         name: "vars.meta.tags",
         summary: "Replace a Variables file's tags",
         handler: |c, v| typed(c, v, vars::meta_tags),
+    },
+    OpSpec {
+        name: "vars.search",
+        summary: "Search Variables files, sub-sets and variables",
+        handler: |c, v| typed(c, v, vars::search),
     },
     OpSpec {
         name: "vars.subset.add",
@@ -141,6 +156,21 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "vars.var.set",
         summary: "Set a variable's value",
         handler: |c, v| typed(c, v, vars::var_set),
+    },
+    OpSpec {
+        name: "varsets.apply",
+        summary: "Merge a sub-set's values over the client's",
+        handler: |c, v| typed(c, v, varsets::apply),
+    },
+    OpSpec {
+        name: "varsets.match",
+        summary: "Rank variable sub-sets against an artifact",
+        handler: |c, v| typed(c, v, varsets::match_),
+    },
+    OpSpec {
+        name: "varsets.save",
+        summary: "Save values as a new Variables file",
+        handler: |c, v| typed(c, v, varsets::save),
     },
     OpSpec {
         name: "vault.inspect",

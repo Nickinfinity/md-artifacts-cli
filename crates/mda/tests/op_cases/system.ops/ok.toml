@@ -51,6 +51,10 @@ name = "index.run"
 summary = "Write every step of a template index into a workspace"
 
 [[expect.ops]]
+name = "render.text"
+summary = "Fill tokens in text with values (no artifact)"
+
+[[expect.ops]]
 name = "system.ops"
 summary = "List every registered operation"
 
@@ -71,8 +75,16 @@ name = "vars.file.new"
 summary = "Create a blank Variables file"
 
 [[expect.ops]]
+name = "vars.list"
+summary = "List Variables files with their sub-sets and variables"
+
+[[expect.ops]]
 name = "vars.meta.tags"
 summary = "Replace a Variables file's tags"
+
+[[expect.ops]]
+name = "vars.search"
+summary = "Search Variables files, sub-sets and variables"
 
 [[expect.ops]]
 name = "vars.subset.add"
@@ -105,6 +117,18 @@ summary = "Rename a variable"
 [[expect.ops]]
 name = "vars.var.set"
 summary = "Set a variable's value"
+
+[[expect.ops]]
+name = "varsets.apply"
+summary = "Merge a sub-set's values over the client's"
+
+[[expect.ops]]
+name = "varsets.match"
+summary = "Rank variable sub-sets against an artifact"
+
+[[expect.ops]]
+name = "varsets.save"
+summary = "Save values as a new Variables file"
 
 [[expect.ops]]
 name = "vault.inspect"

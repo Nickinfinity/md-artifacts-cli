@@ -157,3 +157,16 @@ pub(crate) fn read_array(p: &str) -> Result<Value, OpError> {
         Err(bad_request("steps must be a JSON array"))
     }
 }
+
+/// `render.text` params: the text (file, or `-` for stdin) and optional values (a JSON object file).
+pub(crate) fn render_text_params(file: &str, values: Option<String>) -> Result<Value, OpError> {
+    if file == "-" && values.as_deref() == Some("-") {
+        return Err(bad_request("file and values both read stdin"));
+    }
+    let mut p = Map::new();
+    p.insert("text".into(), json!(read_input(file)?));
+    if let Some(f) = values {
+        p.insert("values".into(), read_object(&f)?);
+    }
+    Ok(Value::Object(p))
+}

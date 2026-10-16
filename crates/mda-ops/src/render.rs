@@ -78,6 +78,46 @@ pub fn render(ctx: &Ctx, req: RenderRequest) -> Result<Rendered, OpError> {
     render_artifact(&art, req.block, req.code.as_deref(), &req.values).map_err(render_error)
 }
 
+/// `render.text` params: free text and the client's values (no artifact, no vault).
+///
+/// # Examples
+///
+/// ```
+/// let r: mda_ops::render::TextRequest = serde_json::from_value(serde_json::json!({"text": "<VK-a>"})).unwrap();
+/// assert!(r.values.is_empty());
+/// ```
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TextRequest {
+    pub text: String,
+    #[serde(default)]
+    pub values: Values,
+}
+
+/// `render.text`: fill `<VK-…>` tokens in `text` (X-7) — the `artifact.render` response, every render
+/// limit, no vault.
+///
+/// # Examples
+///
+/// ```
+/// use mda_ops::{Ctx, render};
+/// let req = render::TextRequest { text: "plain".into(), values: Default::default() };
+/// assert!(!render::text(&Ctx::new(None), req).unwrap().contains_escape);
+/// ```
+pub fn text(ctx: &Ctx, req: TextRequest) -> Result<Rendered, OpError> {
+    // Pure: no vault, so no `root_of`. Same gates and order as `artifact.render`.
+    let _ = ctx;
+    if req.text.len() as u64 > MAX_ARTIFACT_BYTES {
+        return Err(OpError::new(error::FILE_TOO_LARGE)
+            .with("path", "")
+            .with("size", req.text.len().to_string())
+            .with("max", MAX_ARTIFACT_BYTES.to_string()));
+    }
+    check_values(&req.values)?;
+    mda_core::render::render(&req.text, &[], &req.values)
+        .map_err(|l| render_error(RenderError::Limit(l)))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

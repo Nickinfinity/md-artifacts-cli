@@ -1,0 +1,3 @@
+vault = "vault_vars"
+params = { query = "zzz" }
+expect = { files = [] }

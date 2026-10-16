@@ -14,4 +14,5 @@ pub mod registry;
 pub mod render;
 pub mod serialize;
 pub mod variables;
+pub mod varset;
 pub mod vks;

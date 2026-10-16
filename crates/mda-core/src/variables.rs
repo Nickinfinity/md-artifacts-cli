@@ -17,8 +17,9 @@ use crate::vks::VksValue;
 /// use mda_core::variables::SubsetRef;
 /// let r: SubsetRef = serde_json::from_value(serde_json::json!({"index": 1, "heading": "Prod"})).unwrap();
 /// assert_eq!(r, SubsetRef { index: 1, heading: "Prod".into() });
+/// assert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({"index": 1, "heading": "Prod"}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SubsetRef {
     pub index: usize,
@@ -313,8 +314,16 @@ fn block(m: &mut ArtifactModel, i: usize) -> Result<&mut ModelBlock, EditError> 
 }
 
 /// The block an edit addresses (X-10): index and heading must both match; absent `at` is the
-/// untitled block of a flat file.
-fn target(m: &ArtifactModel, at: Option<&SubsetRef>) -> Result<usize, EditError> {
+/// untitled block of a flat file. Shared by the edits and `varsets.apply` (one address rule).
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::{parse::parse_from_content, serialize::from_parsed, variables::target};
+/// let p = parse_from_content("---\nartifactType: Variables\n---\n\n```vks\nVK-a: x\n```\n", "Variables/f.md");
+/// assert_eq!(target(&from_parsed(&p), None), Ok(0));
+/// ```
+pub fn target(m: &ArtifactModel, at: Option<&SubsetRef>) -> Result<usize, EditError> {
     match at {
         Some(r) => m
             .blocks

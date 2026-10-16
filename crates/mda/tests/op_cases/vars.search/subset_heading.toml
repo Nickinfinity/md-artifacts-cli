@@ -1,0 +1,13 @@
+vault = "vault_vars"
+params = { query = "stage" }
+[[expect.files]]
+path = "Variables/envs.md"
+name = "envs"
+title = "Envs"
+description = "Deploy targets"
+shape = "sets"
+[[expect.files.subsets]]
+index = 0
+heading = "Stage"
+description = "Staging box."
+vars = [{ name = "VK-host", defaultValue = "stage.example.com" }]

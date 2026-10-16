@@ -129,21 +129,7 @@ pub fn render_artifact(
     code: Option<&str>,
     values: &Values,
 ) -> Result<Rendered, RenderError> {
-    // Block rules: no blocks -> the top code/vars; one block -> `None` or `Some(0)` selects it.
-    let (body, vars) = if p.blocks.is_empty() {
-        if block.is_some() {
-            return Err(RenderError::BlockNotFound(block));
-        }
-        (&p.code, &p.vars)
-    } else {
-        let i = match (block, p.blocks.len()) {
-            (Some(i), _) => i,
-            (None, 1) => 0,
-            (None, _) => return Err(RenderError::BlockNotFound(None)),
-        };
-        let b = p.blocks.get(i).ok_or(RenderError::BlockNotFound(Some(i)))?;
-        (&b.code, &b.vars)
-    };
+    let (body, vars) = select_block(p, block)?;
     render(code.unwrap_or(body), vars, values).map_err(RenderError::Limit)
 }
 
@@ -166,4 +152,54 @@ pub fn check_values(values: &Values) -> Result<(), VarsError> {
         })
         .collect();
     crate::vks::check_vars(&vars)
+}
+
+/// The block a render reads (spec block rules): no blocks → the top code/vars; one block → `None` or
+/// `Some(0)`; several → `Some(i)` required.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::{parse::parse_from_content, render::select_block};
+/// let p = parse_from_content("---\nartifactType: Snippet\n---\n```sh\nx\n```\n", "Snippets/a.md");
+/// assert!(select_block(&p, Some(5)).is_err());
+/// ```
+pub fn select_block(
+    p: &ParsedArtifact,
+    block: Option<usize>,
+) -> Result<(&str, &[ParsedVar]), RenderError> {
+    // Block rules: no blocks -> the top code/vars; one block -> `None` or `Some(0)` selects it.
+    if p.blocks.is_empty() {
+        if block.is_some() {
+            return Err(RenderError::BlockNotFound(block));
+        }
+        return Ok((&p.code, &p.vars));
+    }
+    let i = match (block, p.blocks.len()) {
+        (Some(i), _) => i,
+        (None, 1) => 0,
+        (None, _) => return Err(RenderError::BlockNotFound(None)),
+    };
+    let b = p.blocks.get(i).ok_or(RenderError::BlockNotFound(Some(i)))?;
+    Ok((&b.code, &b.vars))
+}
+
+/// The render variable rule (R-25(1)): declared names, then every detected root, deduped, first
+/// appearance.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::{model::ParsedVar, render::variable_names};
+/// let n = variable_names("echo", &[ParsedVar::text("VK-a", "x")]);
+/// assert_eq!(n.first().map(String::as_str), Some("VK-a"));
+/// ```
+pub fn variable_names(code: &str, vars: &[ParsedVar]) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
+    let detected = crate::parse::tokens::detect_vars(code);
+    vars.iter()
+        .chain(&detected)
+        .filter(|v| seen.insert(v.name.as_str()))
+        .map(|v| v.name.clone())
+        .collect()
 }

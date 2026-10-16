@@ -16,8 +16,12 @@ use crate::artifact_write::{WriteResponse, map_serialize, max_bytes, rewrite};
 use crate::write_file::exists_actual;
 use crate::{ArtifactType, Ctx, OpError, error, index_create};
 
+mod list;
 mod requests;
+mod scan;
+pub use list::*;
 pub use requests::*;
+pub(crate) use scan::{Scanned, scan};
 
 /// The one edit path: the file must sit under `Variables/` **and** parse as a Variables file (a
 /// Snippet parked there must not be rewritten as vars), then `f` edits the model and `rewrite`

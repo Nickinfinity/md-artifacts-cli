@@ -1,0 +1,9 @@
+vault = "vault"
+params = { path = "Variables/flat.md", values = { "VK-host" = "x", "VK-zzz" = "o" } }
+[expect]
+values = { "VK-host" = "localhost", "VK-port" = "3000", "VK-zzz" = "o" }
+changes = [
+  { name = "VK-host", oldValue = "x", newValue = "localhost", action = "overridden" },
+  { name = "VK-port", oldValue = "", newValue = "3000", action = "filled" },
+  { name = "VK-zzz", oldValue = "o", newValue = "o", action = "kept" },
+]

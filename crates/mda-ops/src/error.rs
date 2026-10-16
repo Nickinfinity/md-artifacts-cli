@@ -127,6 +127,8 @@ pub const VARS_BAD_HEADING: &str = "vars.bad_heading";
 pub const VARS_UNTITLED_DESCRIPTION: &str = "vars.untitled_description";
 /// `vars.file.new`: the title is empty after trimming. No params.
 pub const VARS_BAD_TITLE: &str = "vars.bad_title";
+/// The Variables walk hit a cap (spec §13.2). Params `limit` (`depth` | `files` | `bytes`), `max`.
+pub const VARS_LIMIT: &str = "vars.limit";
 
 /// Every code, for exhaustive checks (English table, exit codes, op cases).
 pub const ALL_CODES: &[&str] = &[
@@ -192,6 +194,7 @@ pub const ALL_CODES: &[&str] = &[
     VARS_BAD_HEADING,
     VARS_UNTITLED_DESCRIPTION,
     VARS_BAD_TITLE,
+    VARS_LIMIT,
 ];
 
 /// Map a vault error from an op that holds `root`: every `path` param becomes vault-relative POSIX,
@@ -208,7 +211,8 @@ pub const ALL_CODES: &[&str] = &[
 /// assert_eq!(e.params["path"], "Snippets/x.md");
 /// ```
 pub fn vault_error(mut e: VaultError, root: &Root) -> OpError {
-    let (VaultError::OutsideRoot { path }
+    // `Limit` carries no path (the whole walk is refused); every other variant is relativized.
+    if let VaultError::OutsideRoot { path }
     | VaultError::NotFound { path }
     | VaultError::TooLarge { path, .. }
     | VaultError::NotRegular { path }
@@ -217,8 +221,9 @@ pub fn vault_error(mut e: VaultError, root: &Root) -> OpError {
     | VaultError::NotDir { path }
     | VaultError::NotObsidian { path }
     | VaultError::ConfigInvalid { path }
-    | VaultError::Io { path, .. }) = &mut e;
-    if let Ok(rel) = path.strip_prefix(root.path()) {
+    | VaultError::Io { path, .. } = &mut e
+        && let Ok(rel) = path.strip_prefix(root.path())
+    {
         let posix: Vec<_> = rel
             .components()
             .map(|c| c.as_os_str().to_string_lossy())
@@ -267,6 +272,9 @@ impl From<VaultError> for OpError {
             VaultError::ConfigInvalid { path } => {
                 Self::new(CONFIG_INVALID).with("path", path.display().to_string())
             }
+            VaultError::Limit { limit, max } => Self::new(VARS_LIMIT)
+                .with("limit", limit.as_str())
+                .with("max", max.to_string()),
             VaultError::Io { path, kind } => Self::new(IO_FAILED)
                 .with("path", path.display().to_string())
                 .with("kind", kind.to_string()),

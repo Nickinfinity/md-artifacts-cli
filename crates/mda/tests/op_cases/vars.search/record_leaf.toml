@@ -1,0 +1,13 @@
+vault = "vault_vars"
+params = { query = "eu-west" }
+[[expect.files]]
+path = "Variables/envs.md"
+name = "envs"
+title = "Envs"
+description = "Deploy targets"
+shape = "sets"
+[[expect.files.subsets]]
+index = 1
+heading = "Prod"
+description = ""
+vars = [{ name = "VK-db", defaultValue = "", value = { user = "admin", zone = "eu-west" } }]

@@ -20,6 +20,13 @@ pub enum VarsCmd {
     /// Variables.
     #[command(subcommand)]
     Var(VarCmd),
+    /// List every Variables file: shape, sub-sets, variables.
+    List,
+    /// Search Variables files, sub-sets and variables.
+    Search {
+        /// Case-insensitive text.
+        query: String,
+    },
 }
 
 /// Optional sub-set reference (absent = the untitled block).
@@ -211,11 +218,13 @@ fn op_name(cmd: &VarsCmd) -> &'static str {
         VarsCmd::Var(VarCmd::Rename { .. }) => "vars.var.rename",
         VarsCmd::Var(VarCmd::Set { .. }) => "vars.var.set",
         VarsCmd::Var(VarCmd::Delete { .. }) => "vars.var.delete",
+        VarsCmd::List => "vars.list",
+        VarsCmd::Search { .. } => "vars.search",
     }
 }
 
 /// `{"index", "heading"}` when both are given (clap requires them together).
-fn at(a: At) -> Option<Value> {
+pub(super) fn at(a: At) -> Option<Value> {
     Some(json!({ "index": a.index?, "heading": a.heading? }))
 }
 
@@ -346,6 +355,8 @@ fn params(cmd: VarsCmd) -> Result<Value, OpError> {
         }
         VarsCmd::Subset(c) => subset_params(c),
         VarsCmd::Var(c) => var_params(c)?,
+        VarsCmd::List => json!({}),
+        VarsCmd::Search { query } => json!({ "query": query }),
     })
 }
 

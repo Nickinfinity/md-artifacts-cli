@@ -319,3 +319,47 @@ fn debug_vars_set_keeps_values_out_of_stderr() {
     assert!(err.contains("SECRET-m5v"), "{err}");
     std::fs::remove_dir_all(&d).unwrap();
 }
+
+const VARS_FIX: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/vault_vars");
+
+#[test]
+fn debug_vars_search_keeps_query_out_of_stderr() {
+    let args = |lvl: &'static str| ["--vault", VARS_FIX, lvl, "vars", "search", "SECRET-q9"];
+    let err = String::from_utf8(run(&args("--debug"), b"").stderr).unwrap();
+    assert!(err.contains(r#"op "vars.search""#), "{err}");
+    assert!(!err.contains("SECRET-q9"), "{err}");
+    let err = String::from_utf8(run(&args("--debug=trace"), b"").stderr).unwrap();
+    assert!(
+        err.lines()
+            .next()
+            .unwrap()
+            .contains("trace output may include secrets"),
+        "{err}"
+    );
+    assert!(err.contains("SECRET-q9"), "{err}");
+}
+
+#[test]
+fn debug_varsets_apply_keeps_values_out() {
+    let d = tmp("applyvals");
+    let f = d.join("v.json");
+    std::fs::write(&f, r#"{"VK-host":"SECRET-v4"}"#).unwrap();
+    let o = run(
+        &[
+            "--vault",
+            VARS_FIX,
+            "--debug",
+            "varsets",
+            "apply",
+            "Variables/dev.md",
+            "--values",
+            f.to_str().unwrap(),
+        ],
+        b"",
+    );
+    assert_eq!(o.status.code(), Some(0), "{:?}", o.stderr);
+    let err = String::from_utf8(o.stderr).unwrap();
+    assert!(err.contains(r#"op "varsets.apply""#), "{err}");
+    assert!(!err.contains("SECRET-v4"), "{err}");
+    std::fs::remove_dir_all(&d).unwrap();
+}

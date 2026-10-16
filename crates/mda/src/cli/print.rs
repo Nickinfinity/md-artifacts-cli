@@ -1,98 +1,9 @@
-//! Human rendering: the one English error table and per-op success printers.
+//! Human rendering: per-op success printers (the English error table lives in `english.rs`).
 
 use mda_ops::OpError;
 use serde_json::Value;
 
-/// English text for an error code; `None` for a code this table does not know.
-///
-/// # Examples
-///
-/// ```
-/// assert!(mda::cli::print::english("op.unknown").is_some());
-/// assert!(mda::cli::print::english("no.such").is_none());
-/// ```
-pub fn english(code: &str) -> Option<&'static str> {
-    use mda_ops::error::*;
-    Some(match code {
-        OP_UNKNOWN => "no such operation",
-        OP_BAD_REQUEST => "the request parameters are invalid",
-        PROTOCOL_VERSION_MISMATCH => "client and engine protocol versions are incompatible",
-        PATH_OUTSIDE_ROOT => "path is outside the allowed root",
-        PATH_NOT_FOUND => "path does not exist",
-        FILE_TOO_LARGE => "file exceeds the size limit",
-        FILE_NOT_REGULAR => "not a regular file",
-        IO_FAILED => "I/O failure",
-        OP_INTERNAL => "internal engine error",
-        VAULT_NOT_SELECTED => "no vault selected (run \"mda vault select <path>\" or pass --vault)",
-        VAULT_NOT_OBSIDIAN => "not an Obsidian vault (no .obsidian folder)",
-        PATH_NOT_DIR => "path is not a directory",
-        VAULT_UNKNOWN => "not a known vault (add it with \"mda vault select\")",
-        VAULT_UNAVAILABLE => "the default vault is no longer available",
-        CONFIG_INVALID => "the configuration file is invalid; fix or remove it",
-        VARS_BAD_NAME => "variable names are VK- then a letter, then letters, digits or _",
-        VARS_VAR_EXISTS => "a variable with that name already exists in this sub-set",
-        VARS_VAR_NOT_FOUND => "no variable with that name in this sub-set",
-        VARS_SUBSET_EXISTS => "a sub-set with that heading already exists",
-        VARS_BAD_HEADING => "the sub-set heading is invalid",
-        VARS_UNTITLED_DESCRIPTION => {
-            "the untitled block has no heading to keep a description under; add a sub-set first"
-        }
-        VARS_BAD_TITLE => "the title is empty",
-        ARTIFACT_BAD_PATH => "not an artifact path (expected <TypeDir>/….md)",
-        VKS_SYNTAX => "variables block: syntax error",
-        VKS_INDENT => "variables block: bad indentation",
-        VKS_BAD_KEY => "variables block: invalid key",
-        VKS_DUPLICATE_KEY => "variables block: duplicate key",
-        VKS_UNSUPPORTED => "variables block: unsupported YAML construct",
-        VKS_MIXED_LIST => "variables block: list mixes strings and records",
-        VKS_INLINE_COMMENT => "variables block: comment after a value",
-        VKS_CONTROL_CHAR => "variables block: control character",
-        VKS_LIMIT => "variables block: size limit exceeded",
-        VKS_MIXED_DIALECT => "variables block: KEY=value line in a YAML block",
-        VKS_UNREPRESENTABLE => "variables block: value cannot be written",
-        FILE_CONFLICT => "the file changed since it was read (hash mismatch)",
-        FILE_EXISTS => "a file already exists at that path",
-        ARTIFACT_VARS_INVALID => "the file's variables block is invalid; fix it before saving",
-        ARTIFACT_UNREPRESENTABLE => "the artifact cannot be written in the file format",
-        ARTIFACT_BLOCK_NOT_FOUND => "no block with that index and heading",
-        ARTIFACT_NOT_SERIALIZABLE => "this file cannot be rewritten by the engine",
-        RENDER_LIMIT => "rendering exceeds a size limit",
-        RENDER_CONTAINS_ESCAPE => {
-            "rendered output contains an ESC character; use --json to receive it"
-        }
-        NAMING_PATH_INJECTION => "the output file name contains a path separator, \"..\", or NUL",
-        NAMING_EMPTY => "the output file name is empty",
-        NAMING_EDGE_SPACE => "the output file name starts or ends with a space",
-        NAMING_EDGE_DOT => "the output file name ends with a dot",
-        NAMING_ILLEGAL_CHAR => {
-            "the output file name contains an illegal character (\\ / : * ? \" < > |)"
-        }
-        NAMING_CONTROL_CHAR => "the output file name contains a control character",
-        NAMING_RESERVED => "the output file name is a reserved system name",
-        NAMING_TOO_LONG => "the output file name is longer than 255 bytes",
-        ARTIFACT_NOT_WHOLE_FILE => "this artifact type does not write a file",
-        ARTIFACT_MULTI_BLOCK => "a whole-file artifact must have a single block",
-        ARTIFACT_IS_INDEX => "a template index is run, not written",
-        RENDER_UNKNOWN_VAR => "variable has no value; token left as written",
-        RENDER_EACH_NOT_LIST => "each: the value is not a list",
-        RENDER_UNTERMINATED => "each without a matching end",
-        RENDER_UNMATCHED_END => "end without a matching each",
-        RENDER_SELF_NESTED => "each over a list it is already inside",
-        RENDER_NOT_SCALAR => "the token reaches a list or record outside a loop",
-        RENDER_JOIN_RECORD => "join reaches a record",
-        RENDER_JOIN_EMPTY => "join found no values",
-        PATH_EMPTY => "the path is empty",
-        PATH_CONTROL_CHAR => "the path contains a control character",
-        PATH_DRIVE_OR_SCHEME => "the path contains a drive letter or URI scheme (\":\")",
-        PATH_BACKSLASH => "the path contains a backslash",
-        PATH_ABSOLUTE => "the path is absolute",
-        PATH_PARENT_SEGMENT => "the path contains a \"..\" segment",
-        INDEX_NOT_INDEX => "not a template index (index: true on a Template or AIAgentsConfig)",
-        INDEX_UNSLUGGABLE => "a path segment has no letters or digits to name a file",
-        INDEX_LIMIT => "the index exceeds a size limit",
-        _ => return None,
-    })
-}
+pub use super::english::english;
 
 /// `<code>: <English>` plus params. Values are Debug-escaped: they can echo client text, and a raw
 /// ESC or newline must not reach the terminal.
@@ -120,7 +31,7 @@ fn coded_line<'a>(code: &str, params: impl Iterator<Item = (&'a String, &'a Stri
 pub fn refuse(op: &str, v: &Value) -> Option<OpError> {
     // ponytail: refuses ESC only; C1 U+009B (single-char CSI) passes — R-25(15); refuse C1 too if a terminal client needs it.
     // write_file output goes to a file, so only render can reach the terminal.
-    (op == "artifact.render" && v["containsEscape"] == true)
+    (matches!(op, "artifact.render" | "render.text") && v["containsEscape"] == true)
         .then(|| OpError::new(mda_ops::error::RENDER_CONTAINS_ESCAPE))
 }
 
@@ -194,18 +105,25 @@ pub fn success(op: &str, v: &Value) -> String {
             .unwrap_or_default(),
         "artifact.read" => show(v),
         "artifact.tree" => ls(v),
-        "artifact.render" => v["output"].as_str().unwrap_or("").to_owned(),
+        "artifact.render" | "render.text" => v["output"].as_str().unwrap_or("").to_owned(),
         op if ["vars.file.", "vars.meta.", "vars.subset.", "vars.var."]
             .iter()
             .any(|p| op.starts_with(p))
             || matches!(
                 op,
-                "artifact.create" | "artifact.update" | "artifact.patch" | "artifact.write_file"
+                "artifact.create"
+                    | "artifact.update"
+                    | "artifact.patch"
+                    | "artifact.write_file"
+                    | "varsets.save"
             ) =>
         {
             format!("wrote {}  {}", s(v, "path"), s(v, "hash"))
         }
         "artifact.delete" => format!("deleted {}", s(v, "path")),
+        "vars.list" | "vars.search" | "varsets.match" | "varsets.apply" => {
+            super::varsets::success(op, v).unwrap_or_default()
+        }
         "index.plan" => plan(v),
         "index.run" | "index.create" => batch(v),
         op if op.starts_with("vault.") || op.starts_with("types.") || op == "config.get" => {
@@ -381,5 +299,33 @@ mod tests {
         for op in ["artifact.create", "artifact.delete"] {
             assert!(!success(op, &w).contains('\u{1b}'), "{op}");
         }
+    }
+
+    #[test]
+    fn varsets_save_prints_wrote() {
+        let w = json!({"path": "Variables/local-dev.md", "hash": "h"});
+        assert_eq!(
+            success("varsets.save", &w),
+            "wrote Variables/local-dev.md  h"
+        );
+    }
+
+    #[test]
+    fn render_text_refused_with_esc() {
+        let r = json!({"output": "x", "containsEscape": true});
+        assert!(super::refuse("render.text", &r).is_some());
+        assert!(super::refuse("render.text", &json!({"containsEscape": false})).is_none());
+        assert_eq!(success("render.text", &json!({"output": "hi x"})), "hi x");
+    }
+
+    #[test]
+    fn list_escapes_vault_text() {
+        let v = json!({"files": [{"path": "Variables/e.md", "name": "e", "title": "a\u{1b}[31mb",
+            "shape": "sets", "tags": ["t\u{1b}x"],
+            "subsets": [{"index": 0, "heading": "h\u{1b}h", "description": "d\u{1b}d",
+                "vars": [{"name": "VK-a", "defaultValue": "v\u{1b}v"}]}]}]});
+        let out = success("vars.list", &v);
+        assert!(out.contains("Variables/e.md"), "{out:?}");
+        assert!(!out.contains('\u{1b}'), "{out:?}");
     }
 }

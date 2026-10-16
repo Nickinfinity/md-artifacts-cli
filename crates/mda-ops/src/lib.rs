@@ -13,6 +13,7 @@ pub mod render;
 pub mod system;
 pub mod types;
 pub mod vars;
+pub mod varsets;
 pub mod vault;
 pub mod write_file;
 

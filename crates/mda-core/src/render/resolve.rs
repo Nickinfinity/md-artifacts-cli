@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use super::Values;
 use crate::error::{RENDER_NOT_SCALAR, RENDER_UNKNOWN_VAR};
 use crate::model::ParsedVar;
-use crate::parse::tokens::detect_vars;
 use crate::vks::{VksList, VksRecord, VksValue};
 
 /// Full name (`VK-x`) -> effective value. A name with no effective value is absent.
@@ -87,19 +86,15 @@ impl<'v> Table<'v> {
     pub fn new(vars: &'v [ParsedVar], code: &str, values: &'v Values) -> Self {
         let defaults: HashMap<&str, &VksValue> =
             vars.iter().map(|v| (v.name.as_str(), &v.value)).collect();
-        let detected = detect_vars(code);
-        let names = vars
-            .iter()
-            .map(|v| v.name.as_str())
-            .chain(detected.iter().map(|v| v.name.as_str()));
+        let names = super::variable_names(code, vars);
         let mut t = HashMap::new();
         for name in names {
             let chosen = values
-                .get(name)
+                .get(&name)
                 .filter(|v| nonempty(v))
-                .or_else(|| defaults.get(name).copied().filter(|v| nonempty(v)));
+                .or_else(|| defaults.get(name.as_str()).copied().filter(|v| nonempty(v)));
             if let Some(v) = chosen {
-                t.insert(name.to_owned(), v);
+                t.insert(name, v);
             }
         }
         Self(t)

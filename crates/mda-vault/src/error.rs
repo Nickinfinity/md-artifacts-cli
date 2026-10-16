@@ -45,10 +45,38 @@ pub enum VaultError {
     /// A configuration file is corrupt, too large, not UTF-8, or breaks a spec §12 rule.
     #[error("invalid config: {path:?}")]
     ConfigInvalid { path: PathBuf },
+    /// A walk cap was reached; refused before the work it bounds (no path: the whole call is refused).
+    #[error("walk limit {limit:?} ({max})")]
+    Limit { limit: WalkLimit, max: u64 },
     /// Any other I/O failure.
     #[error("io failed on {path:?}: {kind}")]
     Io {
         path: PathBuf,
         kind: std::io::ErrorKind,
     },
+}
+
+/// Which walk cap was reached (spec §13.2).
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(mda_vault::WalkLimit::Files.as_str(), "files");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WalkLimit {
+    Depth,
+    Files,
+    Bytes,
+}
+
+impl WalkLimit {
+    /// `depth` | `files` | `bytes`.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Depth => "depth",
+            Self::Files => "files",
+            Self::Bytes => "bytes",
+        }
+    }
 }

@@ -6,7 +6,9 @@ disagree, and fix this file in the same change.
 > **Status (2026-10-14): W5 landed (MAC-8)** — Variables-file edits: `mda-core/src/variables.rs` (sub-set addressing, shape
 > transitions, the name rule), ten `vars.*` ops (`mda-ops/src/vars.rs` + `vars/requests.rs`, through the shared
 > `artifact_write::rewrite`), `mda vars …` (`cli/vars.rs`), the emitter's 64 KiB vks body cap, conformance kind `idempotent`
-> (5 cases). W5b (listing, search, var sets, `render.text`) follows. **W4 landed (MAC-7).** The workspace exists: `mda-core` (model, type registry, parse incl.
+> (5 cases). **W5b landed (MAC-9)** — the bounded `Variables/` walk (`mda_vault::walk_md`: never follows symlinked dirs, caps depth 32 /
+> 10 000 entries / 64 MiB), `vars.list|search`, `varsets.match|apply|save` (`mda-core/src/varset/`), `render.text`; `mda vars list|search`,
+> `mda varsets …`, `mda render text`. **W4 landed (MAC-7).** The workspace exists: `mda-core` (model, type registry, parse incl.
 > flags and `<VK-…>` detection, the vks codec reading legacy and YAML bodies and emitting YAML, the `.md`
 > serializer with its re-parse guard (`index: true` emitted last; empty whole-file bodies frontmatter-only), the
 > byte-surgical patcher, the render engine `render/` with the directive engine and its four expansion limits,
@@ -100,7 +102,7 @@ md-artifacts-cli/
 │   │       ├── render/        # token substitution + the directive engine (paths, each/end, join, limits)
 │   │       ├── naming.rs      # slugify, file names, whole-file output names
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
-│   │       ├── varset.rs      # scoring, apply, save (W5b — not yet)
+│   │       ├── varset/        # shapes, sub-sets, search text; score.rs: scoring, order, apply (W5b)
 │   │       ├── variables.rs   # Variables-file edits: sub-sets, vars, name rule, shapes (W5)
 │   │       ├── migrate/       # frontmatter rewrite (vks rewrite later)
 │   │       └── error.rs       # vks.* code constants + VarsError
@@ -113,7 +115,7 @@ md-artifacts-cli/
 │   │       ├── read.rs        # bounded reads (size limit before reading)
 │   │       ├── config.rs      # machine config (known vaults, default) + <vault>/.mda/config.toml
 │   │       ├── vault.rs       # inspect / select / create default dirs (create only, never delete)
-│   │       ├── listing.rs     # per-type tree, Variables files, the pane search (today's needs only)
+│   │       ├── listing.rs     # per-type tree (`list_dir`); the bounded Variables walk (`walk_md`, W5b)
 │   │       └── migrate.rs     # plan/apply walkers (symlink-aware)
 │   ├── mda-ops/               # THE command list — one typed request → response per operation
 │   │   └── src/
@@ -123,13 +125,14 @@ md-artifacts-cli/
 │   │       ├── error.rs       # OpError { code, params } — the ONLY error shape clients see
 │   │       ├── render.rs · write_file.rs · prefill.rs  # artifact.render / write_file / prefill (W3)
 │   │       ├── index.rs · index_create.rs  # index.plan / run / create (W3b)
-│   │       ├── vars.rs        # vars.file/meta/subset/var edits (W5)
-│   │       └── <group>.rs     # varsets (W5b) · migrate · validate
+│   │       ├── vars.rs        # vars.file/meta/subset/var edits (W5); vars/{requests,list,scan}.rs (W5b: list, search, the walk collector)
+│   │       ├── varsets.rs     # varsets.match / apply / save (W5b)
+│   │       └── <group>.rs     # migrate · validate
 │   ├── mda/                   # lib + bin: `mda`
 │   │   └── src/
 │   │       ├── main.rs        # 3 lines: `mda::cli::run()`
 │   │       ├── lib.rs         # pub mod cli · serve · debug
-│   │       ├── cli/           # clap derive, one enum per ops group (`artifact.rs`, `index.rs`, `vault.rs`), `mda call`; human printer + --json; exit codes
+│   │       ├── cli/           # clap derive, one enum per ops group (`artifact.rs`, `index.rs`, `vault.rs`, `vars.rs`, `varsets.rs`; English table `english.rs`), `mda call`; human printer + --json; exit codes
 │   │       ├── serve/         # NDJSON JSON-RPC server: framing, handshake, dispatch via the op registry
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
@@ -235,6 +238,9 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Slugs and file names | `mda-core/src/naming.rs` |
 | Vault-authored relative paths (index links, `paths:`) | `mda-core/src/multi_index.rs` — `safe_rel_path` |
 | Variables-file edits (addressing, shape transitions, names) | `mda-core/src/variables.rs` |
+| The Variables walk (caps, symlink rule) | `mda-vault/src/listing.rs` (`walk_md`) |
+| Var-set scoring, apply, search text | `mda-core/src/varset/` |
+| The render variable rule | `mda-core/src/render/` (`variable_names`) |
 | Path containment | `mda-vault/src/contain.rs` |
 | Atomic writes + content hash (`content_hash`, SHA-256) | `mda-vault/src/write.rs` |
 | Configuration files | `mda-vault/src/config.rs` |
@@ -280,7 +286,7 @@ through a `serve` NDJSON session (asserting every stdout line is JSON).
   case, or the suite fails. A new op without cases cannot land.
 - **Human CLI output** (the non-`--json` form) is asserted per command in `tests/cli_human*.rs` (split by group) and `tests/cli_<group>.rs`.
 - **Fixture vault:** `crates/mda/tests/fixtures/vault/` (with `.obsidian/`), tracked, extended per wave;
-  W4 adds `vault_bare/`, `vault_cfg/`, `vault_badcfg/`, `not_vault/`.
+  W4 adds `vault_bare/`, `vault_cfg/`, `vault_badcfg/`, `not_vault/`; W5b adds `vault_vars/`.
 - **Machine config per leg:** every leg gets a fresh canonical config dir (`MDA_CONFIG_DIR`);
   `machine_config` seeds it, `expect_config_files` asserts it, `vault_flag = false` copies the fixture
   without passing `--vault`; `$VAULT` / `$CONFIG` / `$WORKSPACE` are substituted. `expect` is full-body equality.
@@ -321,7 +327,7 @@ analysis:
   (`render.contains_escape`); `--json` returns the response unchanged.
 - **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete`,
   `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled`, `vars.file.new`, `vars.meta.tags`,
-  `vars.subset.*`, `vars.var.*` (`varsets.save` at W5b).
+  `vars.subset.*`, `vars.var.*`, `varsets.save`.
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the
 **sink** (the file outside the vault is unchanged; stdout carried only protocol lines; nothing was

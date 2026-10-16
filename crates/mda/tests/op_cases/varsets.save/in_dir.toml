@@ -1,0 +1,4 @@
+vault = "vault"
+params = { title = "X", dir = "Variables/sub", values = { "VK-a" = "b" } }
+expect = { path = "Variables/sub/x.md", hash = "3df065a83266a59f45719c6631857de281355433e989a9312ebda962bd3e3904" }
+expect_files = { "Variables/sub/x.md" = "---\nartifactType: Variables\ntitle: X\n---\n\n```vks\nVK-a: b\n```\n" }

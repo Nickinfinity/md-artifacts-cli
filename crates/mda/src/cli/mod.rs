@@ -12,10 +12,12 @@ use serde_json::{Value, json};
 use crate::{debug, serve};
 
 mod artifact;
+mod english;
 mod index;
 mod input;
 pub mod print;
 mod vars;
+mod varsets;
 mod vault;
 
 /// Global flags and the subcommand.
@@ -65,12 +67,32 @@ pub enum Command {
     /// Variables files: create, edit sub-sets and variables.
     #[command(subcommand)]
     Vars(vars::VarsCmd),
+    /// Variable sets: match an artifact, apply, save.
+    #[command(subcommand)]
+    Varsets(varsets::VarsetsCmd),
+    /// Render text without an artifact.
+    #[command(subcommand)]
+    Render(RenderCmd),
     /// Run any operation by dotted name with raw JSON params (default `{}`).
     Call {
         /// Dotted op name, e.g. `system.ops`.
         op: String,
         /// JSON params.
         params: Option<String>,
+    },
+}
+
+/// `mda render …`
+#[derive(clap::Subcommand)]
+pub enum RenderCmd {
+    /// Fill `<VK-…>` tokens in text (FILE or `-` = stdin) with `--values` (a JSON object file, `-` = stdin).
+    Text {
+        /// The text file, or `-` for stdin.
+        #[arg(default_value = "-")]
+        file: String,
+        /// Values as a JSON object (file, or `-` for stdin).
+        #[arg(long)]
+        values: Option<String>,
     },
 }
 
@@ -148,6 +170,11 @@ fn request(cmd: Command) -> Option<(String, Result<Value, OpError>)> {
         Command::Config(cmd) => return Some(vault::config_request(cmd)),
         Command::Types(cmd) => return Some(vault::types_request(cmd)),
         Command::Vars(cmd) => return Some(vars::vars_request(cmd)),
+        Command::Varsets(cmd) => return Some(varsets::varsets_request(cmd)),
+        Command::Render(RenderCmd::Text { file, values }) => (
+            "render.text".to_owned(),
+            input::render_text_params(&file, values),
+        ),
         Command::System(SystemCmd::Version) => ("system.version".to_owned(), Ok(json!({}))),
         Command::System(SystemCmd::Ops) => ("system.ops".to_owned(), Ok(json!({}))),
         Command::Call { op, params } => {

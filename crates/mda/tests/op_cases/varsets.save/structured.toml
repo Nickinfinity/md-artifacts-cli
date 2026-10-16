@@ -1,0 +1,4 @@
+vault = "vault"
+params = { title = "S", values = { "VK-db" = { host = "h" } } }
+expect = { path = "Variables/s.md", hash = "39b91acf3d23622a06785b161a867d064d1619d178e5ef6495427d8a010c16c9" }
+expect_files = { "Variables/s.md" = "---\nartifactType: Variables\ntitle: S\n---\n\n```vks\nVK-db:\n  host: h\n```\n" }

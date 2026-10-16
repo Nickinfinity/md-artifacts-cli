@@ -12,8 +12,8 @@ mod vault;
 mod write;
 
 pub use contain::{Root, contain};
-pub use error::VaultError;
-pub use listing::{DirListing, list_dir};
+pub use error::{VaultError, WalkLimit};
+pub use listing::{DirListing, MAX_WALK_BYTES, MAX_WALK_DEPTH, MAX_WALK_FILES, list_dir, walk_md};
 pub use read::read_bounded;
 pub use vault::{DirState, create_type_dir, dir_state, validate_vault};
 pub use write::{content_hash, create_new, delete, replace};

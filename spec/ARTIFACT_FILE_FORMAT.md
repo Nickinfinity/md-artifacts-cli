@@ -849,3 +849,5 @@ and description, var name and every string inside its value; a match keeps its a
   Structured values are applied whole. Nothing is written.
 - **Save** creates `Variables/<slug>.md` (or under a given `Variables/` subdirectory); the file name is `slugify(title)`, falling
   back to `untitled`, and must pass the §5.1 name rules. An existing file is never overwritten. Empty values are kept (§3).
+- **Render text** fills `<VK-…>` tokens in free text with values: the same response, rules and limits as rendering an
+  artifact (§4.1, §10), with no file and no vault.

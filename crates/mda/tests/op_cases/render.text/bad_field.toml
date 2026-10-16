@@ -1,0 +1,2 @@
+params = { text = "t", x = 1 }
+expect_error = "op.bad_request"

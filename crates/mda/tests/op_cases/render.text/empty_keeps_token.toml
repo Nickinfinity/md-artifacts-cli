@@ -1,0 +1,5 @@
+params = { text = "<VK-a>/<VK-b>", values = { "VK-a" = "x", "VK-b" = "" } }
+[expect]
+output = "x/<VK-b>"
+warnings = [ { code = "render.unknown_var", params = { line = "1", name = "VK-b" } } ]
+containsEscape = false

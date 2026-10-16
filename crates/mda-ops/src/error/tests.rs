@@ -323,3 +323,34 @@ fn edit_error_maps() {
         assert_eq!(j(e), want);
     }
 }
+
+#[test]
+fn w5b_code_exact_json() {
+    assert!(ALL_CODES.contains(&VARS_LIMIT));
+    assert_eq!(
+        serde_json::to_value(
+            OpError::new(VARS_LIMIT)
+                .with("limit", "files")
+                .with("max", "10000")
+        )
+        .unwrap(),
+        serde_json::json!({"code": "vars.limit", "params": {"limit": "files", "max": "10000"}})
+    );
+}
+
+#[test]
+fn vault_limit_maps() {
+    use mda_vault::WalkLimit;
+    let root = Root::new(&std::env::temp_dir()).unwrap();
+    for (l, s, max) in [
+        (WalkLimit::Depth, "depth", 32),
+        (WalkLimit::Files, "files", 10_000),
+        (WalkLimit::Bytes, "bytes", 67_108_864),
+    ] {
+        let want = serde_json::json!({"code": "vars.limit", "params": {"limit": s, "max": max.to_string()}});
+        let e = vault_error(VaultError::Limit { limit: l, max }, &root);
+        assert_eq!(serde_json::to_value(e).unwrap(), want);
+        let e = OpError::from(VaultError::Limit { limit: l, max });
+        assert_eq!(serde_json::to_value(e).unwrap(), want);
+    }
+}
