@@ -3,7 +3,11 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-14): W5 landed (MAC-8)** — Variables-file edits: `mda-core/src/variables.rs` (sub-set addressing, shape
+> **Status (2026-10-17): W6 landed (MAC-10)** — migrate + validate: `mda-core/src/migrate/` (frontmatter `type:` → `artifactType:`,
+> legacy vks → YAML, surgical and idempotent), `migrate.frontmatter|vks.plan|apply` + `vault.validate` (`mda-ops/src/{migrate,validate}.rs`),
+> `mda migrate …`, `mda vault validate` (exit 1 on errors); `walk_md` takes several starts with one budget; `vars.limit` renamed
+> `walk.limit`; conformance kind `migrate` (35 cases); fixture `vault_migrate/`.
+> **W5 landed (MAC-8)** — Variables-file edits: `mda-core/src/variables.rs` (sub-set addressing, shape
 > transitions, the name rule), ten `vars.*` ops (`mda-ops/src/vars.rs` + `vars/requests.rs`, through the shared
 > `artifact_write::rewrite`), `mda vars …` (`cli/vars.rs`), the emitter's 64 KiB vks body cap, conformance kind `idempotent`
 > (5 cases). **W5b landed (MAC-9)** — the bounded `Variables/` walk (`mda_vault::walk_md`: never follows symlinked dirs, caps depth 32 /
@@ -104,7 +108,7 @@ md-artifacts-cli/
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
 │   │       ├── varset/        # shapes, sub-sets, search text; score.rs: scoring, order, apply (W5b)
 │   │       ├── variables.rs   # Variables-file edits: sub-sets, vars, name rule, shapes (W5)
-│   │       ├── migrate/       # frontmatter rewrite (vks rewrite later)
+│   │       ├── migrate/       # {mod, frontmatter, vks}.rs — the two pure migration rewrites (W6, spec §11)
 │   │       └── error.rs       # vks.* code constants + VarsError
 │   ├── mda-vault/             # ALL filesystem access
 │   │   └── src/
@@ -112,11 +116,10 @@ md-artifacts-cli/
 │   │       ├── error.rs       # VaultError (mapped to OpError codes in mda-ops)
 │   │       ├── contain.rs     # THE containment rule (canonicalize + component compare)
 │   │       ├── write.rs       # atomic write (same-dir temp → fsync → rename) + content hash check
-│   │       ├── read.rs        # bounded reads (size limit before reading)
+│   │       ├── read.rs        # bounded reads (size limit before reading); `file_len` (W6)
 │   │       ├── config.rs      # machine config (known vaults, default) + <vault>/.mda/config.toml
 │   │       ├── vault.rs       # inspect / select / create default dirs (create only, never delete)
-│   │       ├── listing.rs     # per-type tree (`list_dir`); the bounded Variables walk (`walk_md`, W5b)
-│   │       └── migrate.rs     # plan/apply walkers (symlink-aware)
+│   │       └── listing.rs     # per-type tree (`list_dir`); the bounded walk (`walk_md`: W5b, several starts W6)
 │   ├── mda-ops/               # THE command list — one typed request → response per operation
 │   │   └── src/
 │   │       ├── lib.rs         # PROTOCOL constant, re-exports (Ctx, OpSpec, OpError, dispatch, Root)
@@ -127,12 +130,13 @@ md-artifacts-cli/
 │   │       ├── index.rs · index_create.rs  # index.plan / run / create (W3b)
 │   │       ├── vars.rs        # vars.file/meta/subset/var edits (W5); vars/{requests,list,scan}.rs (W5b: list, search, the walk collector)
 │   │       ├── varsets.rs     # varsets.match / apply / save (W5b)
-│   │       └── <group>.rs     # migrate · validate
+│   │       ├── migrate.rs     # migrate.frontmatter|vks.plan|apply over the shared walk (W6)
+│   │       └── validate.rs    # vault.validate (W6)
 │   ├── mda/                   # lib + bin: `mda`
 │   │   └── src/
 │   │       ├── main.rs        # 3 lines: `mda::cli::run()`
 │   │       ├── lib.rs         # pub mod cli · serve · debug
-│   │       ├── cli/           # clap derive, one enum per ops group (`artifact.rs`, `index.rs`, `vault.rs`, `vars.rs`, `varsets.rs`; English table `english.rs`), `mda call`; human printer + --json; exit codes
+│   │       ├── cli/           # clap derive, one enum per ops group (`artifact.rs`, `index.rs`, `vault.rs`, `vars.rs`, `varsets.rs`, `migrate.rs`; English table `english.rs`), `mda call`; human printer + --json; exit codes
 │   │       ├── serve/         # NDJSON JSON-RPC server: framing, handshake, dispatch via the op registry
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
@@ -238,7 +242,9 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Slugs and file names | `mda-core/src/naming.rs` |
 | Vault-authored relative paths (index links, `paths:`) | `mda-core/src/multi_index.rs` — `safe_rel_path` |
 | Variables-file edits (addressing, shape transitions, names) | `mda-core/src/variables.rs` |
-| The Variables walk (caps, symlink rule) | `mda-vault/src/listing.rs` (`walk_md`) |
+| The bounded walk (caps, symlink rule, starts) | `mda-vault/src/listing.rs` (`walk_md`) |
+| Migrations (frontmatter, vks) | `mda-core/src/migrate/` |
+| The migration / validate scope walk | `mda-ops/src/migrate.rs` (`scope`) over `walk_md` |
 | Var-set scoring, apply, search text | `mda-core/src/varset/` |
 | The render variable rule | `mda-core/src/render/` (`variable_names`) |
 | Path containment | `mda-vault/src/contain.rs` |
@@ -259,7 +265,7 @@ parser disagree, that is a bug to reconcile, never a judgement call.**
 ## Conformance — parity with the TypeScript extension
 
 `conformance/` (tracked) holds language-neutral cases: `parse/` (input `.md` → expected JSON),
-`serialize/` (model JSON → expected bytes; kind `idempotent`: a `.md` that must serialize back byte for byte), `render/` (file + values → expected `{output, warnings, containsEscape}`) and
+`serialize/` (model JSON → expected bytes; kind `idempotent`: a `.md` that must serialize back byte for byte), `render/` (file + values → expected `{output, warnings, containsEscape}`), `migrate/` (input `.md` → exact migrated bytes or a skip code, W6) and
 `manifest.toml`. TS-derived cases are generated **once** by an exporter in the extension repo from
 its current services, its goldens and the real vault. `tests/conformance.rs` walks the manifest.
 
@@ -286,7 +292,7 @@ through a `serve` NDJSON session (asserting every stdout line is JSON).
   case, or the suite fails. A new op without cases cannot land.
 - **Human CLI output** (the non-`--json` form) is asserted per command in `tests/cli_human*.rs` (split by group) and `tests/cli_<group>.rs`.
 - **Fixture vault:** `crates/mda/tests/fixtures/vault/` (with `.obsidian/`), tracked, extended per wave;
-  W4 adds `vault_bare/`, `vault_cfg/`, `vault_badcfg/`, `not_vault/`; W5b adds `vault_vars/`.
+  W4 adds `vault_bare/`, `vault_cfg/`, `vault_badcfg/`, `not_vault/`; W5b adds `vault_vars/`; W6 adds `vault_migrate/`.
 - **Machine config per leg:** every leg gets a fresh canonical config dir (`MDA_CONFIG_DIR`);
   `machine_config` seeds it, `expect_config_files` asserts it, `vault_flag = false` copies the fixture
   without passing `--vault`; `$VAULT` / `$CONFIG` / `$WORKSPACE` are substituted. `expect` is full-body equality.
@@ -327,7 +333,7 @@ analysis:
   (`render.contains_escape`); `--json` returns the response unchanged.
 - **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete`,
   `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled`, `vars.file.new`, `vars.meta.tags`,
-  `vars.subset.*`, `vars.var.*`, `varsets.save`.
+  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`, `migrate.vks.apply`.
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the
 **sink** (the file outside the vault is unchanged; stdout carried only protocol lines; nothing was

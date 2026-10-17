@@ -18,12 +18,12 @@ pub(crate) struct Scanned {
 }
 
 /// Walk `Variables/`: Variables files parsed, other `.md` dropped, read failures kept as entries;
-/// a walk limit refuses the whole call (`vars.limit`).
+/// a walk limit refuses the whole call (`walk.limit`).
 pub(crate) fn scan(root: &Root) -> Result<Vec<Scanned>, OpError> {
     let mut out = Vec::new();
     walk_md(
         root,
-        ArtifactType::Variables.info().dir,
+        &[ArtifactType::Variables.info().dir],
         MAX_ARTIFACT_BYTES,
         |rel, res| match res {
             Ok(bytes) => {
@@ -108,7 +108,7 @@ mod tests {
         fs::create_dir_all(&d).unwrap();
         fs::write(d.join("x.md"), "").unwrap();
         let e = scan(&root).err().unwrap();
-        assert_eq!(e.code, crate::error::VARS_LIMIT);
+        assert_eq!(e.code, crate::error::WALK_LIMIT);
         assert_eq!(e.params["limit"], "depth");
         assert_eq!(e.params["max"], "32");
         let _ = fs::remove_dir_all(p);

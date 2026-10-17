@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use mda_vault::{Root, VaultError};
 
 pub use mda_core::error::{
+    ARTIFACT_UNREPRESENTABLE, MIGRATE_LEADING_BLANK, MIGRATE_QUOTED_TYPE, MIGRATE_UNFENCED_VARS,
     NAMING_CONTROL_CHAR, NAMING_EDGE_DOT, NAMING_EDGE_SPACE, NAMING_EMPTY, NAMING_ILLEGAL_CHAR,
     NAMING_PATH_INJECTION, NAMING_RESERVED, NAMING_TOO_LONG, PATH_ABSOLUTE, PATH_BACKSLASH,
     PATH_CODES, PATH_CONTROL_CHAR, PATH_DRIVE_OR_SCHEME, PATH_EMPTY, PATH_PARENT_SEGMENT,
@@ -75,8 +76,6 @@ pub const FILE_CONFLICT: &str = "file.conflict";
 pub const FILE_EXISTS: &str = "file.exists";
 /// The file carries a `varsError`; create/update will not write over it (D-6, W-6). Param `path`.
 pub const ARTIFACT_VARS_INVALID: &str = "artifact.vars_invalid";
-/// The model cannot be written in the file format. Params `field`, `reason` (`round_trip` | `multi_block`).
-pub const ARTIFACT_UNREPRESENTABLE: &str = "artifact.unrepresentable";
 /// No block with the given index and heading. Param `block` (index, or `""`).
 pub const ARTIFACT_BLOCK_NOT_FOUND: &str = "artifact.block_not_found";
 /// The engine will not rewrite this file. Param `reason` (`flagged` | `index` | `variables` |
@@ -127,8 +126,18 @@ pub const VARS_BAD_HEADING: &str = "vars.bad_heading";
 pub const VARS_UNTITLED_DESCRIPTION: &str = "vars.untitled_description";
 /// `vars.file.new`: the title is empty after trimming. No params.
 pub const VARS_BAD_TITLE: &str = "vars.bad_title";
-/// The Variables walk hit a cap (spec §13.2). Params `limit` (`depth` | `files` | `bytes`), `max`.
-pub const VARS_LIMIT: &str = "vars.limit";
+/// A folder walk hit a cap (spec §11, §13.2; renamed from `vars.limit` in W6, M-2). Params `limit`
+/// (`depth` | `files` | `bytes`), `max`.
+pub const WALK_LIMIT: &str = "walk.limit";
+/// Migration apply: the rewrite on the fresh bytes finds nothing to change (spec §11). No params.
+pub const MIGRATE_UP_TO_DATE: &str = "migrate.up_to_date";
+/// Validate warning: a migration is pending for this file. Param `kind` (`frontmatter` | `vks`).
+pub const MIGRATE_PENDING: &str = "migrate.pending";
+/// Validate warning: a `## ` section with no `vks` fence in a Variables file (dropped by every rewrite,
+/// #54). Param `heading`.
+pub const VARS_FENCELESS_SECTION: &str = "vars.fenceless_section";
+/// Validate warning: a Variables fence sits before the first `## ` section (spec §13.1). No params.
+pub const VARS_MIXED_FILE: &str = "vars.mixed_file";
 
 /// Every code, for exhaustive checks (English table, exit codes, op cases).
 pub const ALL_CODES: &[&str] = &[
@@ -194,7 +203,14 @@ pub const ALL_CODES: &[&str] = &[
     VARS_BAD_HEADING,
     VARS_UNTITLED_DESCRIPTION,
     VARS_BAD_TITLE,
-    VARS_LIMIT,
+    WALK_LIMIT,
+    MIGRATE_UP_TO_DATE,
+    MIGRATE_LEADING_BLANK,
+    MIGRATE_QUOTED_TYPE,
+    MIGRATE_UNFENCED_VARS,
+    MIGRATE_PENDING,
+    VARS_FENCELESS_SECTION,
+    VARS_MIXED_FILE,
 ];
 
 /// Map a vault error from an op that holds `root`: every `path` param becomes vault-relative POSIX,
@@ -272,7 +288,7 @@ impl From<VaultError> for OpError {
             VaultError::ConfigInvalid { path } => {
                 Self::new(CONFIG_INVALID).with("path", path.display().to_string())
             }
-            VaultError::Limit { limit, max } => Self::new(VARS_LIMIT)
+            VaultError::Limit { limit, max } => Self::new(WALK_LIMIT)
                 .with("limit", limit.as_str())
                 .with("max", max.to_string()),
             VaultError::Io { path, kind } => Self::new(IO_FAILED)

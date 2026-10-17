@@ -1,0 +1,4 @@
+vault = "vault_migrate"
+params = { files = [{ path = "Variables/legacy.md", hash = "24e43b3273d3d1c8e34d759bc9d4d5e7723edf987c2197669cbc06124a59659c" }, { path = "/abs.md", hash = "0000000000000000000000000000000000000000000000000000000000000000" }] }
+expect_error = "artifact.bad_path"
+expect_files = { "Variables/legacy.md" = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```vks\n# hosts\nVK-host=localhost\nVK-port=8080\n```\n" }

@@ -5,6 +5,7 @@
 
 pub mod error;
 pub mod language;
+pub mod migrate;
 pub mod model;
 pub mod multi_index;
 pub mod naming;

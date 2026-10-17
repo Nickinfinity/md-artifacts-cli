@@ -24,6 +24,10 @@ struct Case {
     /// Render only: the block to select (`render_artifact`'s `block`).
     block: Option<usize>,
     path: Option<String>,
+    /// Migrate only: `frontmatter` | `vks`.
+    migration: Option<String>,
+    /// Migrate only: the expected skip code (no `expected` then).
+    skip: Option<String>,
     #[allow(dead_code)] // reason: provenance, read by humans
     origin: Option<String>,
     #[allow(dead_code)] // recorded decision, read by humans and later kind handlers
@@ -120,6 +124,36 @@ fn run_idempotent(dir: &Path, c: &Case) -> Result<(), String> {
     same_lines(&c.id, &got, &text)
 }
 
+/// Migrate: decode the input, run the core rewrite, compare the exact output bytes (`expected`), the
+/// skip code (`skip`), or "no change" (neither).
+fn run_migrate(dir: &Path, c: &Case) -> Result<(), String> {
+    use mda_core::migrate::{frontmatter, vks};
+    let bytes = std::fs::read(dir.join(&c.input)).map_err(|e| format!("{}: {e}", c.id))?;
+    let text = mda_core::parse::decode(&bytes);
+    let got = match c.migration.as_deref() {
+        Some("frontmatter") => frontmatter::rewrite(&text).map(|r| r.map(|r| r.content)),
+        Some("vks") => {
+            let Some(path) = &c.path else {
+                return Err(format!("{}: vks migrate needs path", c.id));
+            };
+            vks::rewrite(&text, path).map(|r| r.map(|r| r.content))
+        }
+        m => return Err(format!("{}: migrate needs migration, got {m:?}", c.id)),
+    };
+    match (got, &c.expected, &c.skip) {
+        (Ok(Some(out)), Some(exp), None) => {
+            let want = std::fs::read(dir.join(exp)).map_err(|e| format!("{}: {e}", c.id))?;
+            same_lines(&c.id, &out, &String::from_utf8_lossy(&want))
+        }
+        (Ok(None), None, None) => Ok(()),
+        (Err(s), None, Some(code)) if s.code() == code => Ok(()),
+        (got, exp, skip) => Err(format!(
+            "{}: got {got:?}, want expected={exp:?} skip={skip:?}",
+            c.id
+        )),
+    }
+}
+
 /// Parse + render the input with the client values; compares the whole `Rendered` JSON, so a
 /// warning regression cannot hide behind an unchanged `output`.
 fn run_render(dir: &Path, c: &Case) -> Result<(), String> {
@@ -155,6 +189,7 @@ fn run_case(dir: &Path, c: &Case) -> Result<(), String> {
         "serialize" => run_serialize(dir, c),
         "render" => run_render(dir, c),
         "idempotent" => run_idempotent(dir, c),
+        "migrate" => run_migrate(dir, c),
         k => Err(format!("{}: unknown kind {k}", c.id)),
     }
 }
@@ -198,7 +233,7 @@ fn check(dir: &Path) -> Result<(), Vec<String>> {
         }
     }
     let mut files = Vec::new();
-    for sub in ["parse", "serialize", "render"] {
+    for sub in ["parse", "serialize", "render", "migrate"] {
         walk(&dir.join(sub), &mut files);
     }
     for f in files {

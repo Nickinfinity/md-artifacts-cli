@@ -30,6 +30,37 @@ pub(crate) fn block_code_ranges(content: &str) -> Vec<(String, Range<usize>)> {
         .collect()
 }
 
+/// Absolute byte ranges of the first `vks` fence body of every section `block_code_ranges` lists:
+/// the bodies the parser reads (a leading `vks` code fence or the trailing defaults).
+pub(crate) fn block_vks_ranges(content: &str) -> Vec<Range<usize>> {
+    let body = frontmatter::strip(content);
+    let base = content.len() - body.len();
+    sections(body)
+        .filter_map(|(off, sec)| {
+            heading_raw(sec)?;
+            fence::code_range(sec)?;
+            let r = fence::vks_range(sec)?;
+            Some(base + off + r.start..base + off + r.end)
+        })
+        .collect()
+}
+
+/// Index (into the parsed blocks) of the block whose `vks` body is the file-level one — the first
+/// `vks` fence of the unstripped content (`fence.rs` `parse_vars`). Its `varsError` is the file's,
+/// so a report shows it once (spec §11.3). `None` when no block reads that fence.
+pub(crate) fn file_fence_block(content: &str) -> Option<usize> {
+    let file = fence::vks_range(content)?;
+    let body = frontmatter::strip(content);
+    let base = content.len() - body.len();
+    sections(body)
+        .filter(|(_, sec)| heading_raw(sec).is_some() && fence::code_range(sec).is_some())
+        .position(|(off, sec)| {
+            fence::vks_range(sec).is_some_and(|r| {
+                base + off + r.start == file.start && base + off + r.end == file.end
+            })
+        })
+}
+
 /// Slices starting at each `## ` that sits at a JS line start (offset 0 or after `\n \r U+2028
 /// U+2029`; a `(?m)` regex breaks only at `\n`). Text before the first one is dropped.
 fn sections(body: &str) -> impl Iterator<Item = (usize, &str)> {
@@ -94,4 +125,39 @@ fn parse_section(section: &str) -> Option<ParsedBlock> {
 
 fn trailing_defaults(section: &str) -> Result<Vec<ParsedVar>, VarsError> {
     fence::vks_fence(section).map_or(Ok(vec![]), vks::read_fence)
+}
+
+/// Headings (`js_trim`med) of `## ` sections with no code fence, over the frontmatter-stripped body
+/// (#54: the parser drops them, so every rewrite does). A heading-less `## ` line is skipped.
+pub(crate) fn fenceless_headings(content: &str) -> Vec<String> {
+    sections(frontmatter::strip(content))
+        .filter(|(_, s)| fence::code_block(s).is_none())
+        .filter_map(|(_, s)| heading_raw(s).map(|h| js_trim(h).to_owned()))
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn file_fence_block_is_positional() {
+        // Block 0 holds the file-level fence; a later identical block is a different fence.
+        let sets = "## A\n```vks\nVK-a=x\n```\n## B\n```vks\nVK-a=x\n```\n";
+        assert_eq!(file_fence_block(sets), Some(0));
+        // A leading untitled fence is the file-level one: no block reads it.
+        let mixed = "```vks\nVK-t: 1\n```\n## A\n```vks\nVK-a: 1\n```\n";
+        assert_eq!(file_fence_block(mixed), None);
+        // Block 0 has no vks fence: the file-level fence is block 1's.
+        let later = "## A\n```sh\nx\n```\n## B\n```vks\nVK-b: 2\n```\n";
+        assert_eq!(file_fence_block(later), Some(1));
+    }
+
+    #[test]
+    fn fenceless_headings_list() {
+        let c = "## Empty\n\ntext\n## Full\n```vks\nVK-a: x\n```\n";
+        assert_eq!(fenceless_headings(c), ["Empty"]);
+        assert!(fenceless_headings("## \n").is_empty());
+        assert_eq!(fenceless_headings("##  \n"), [""]);
+    }
 }

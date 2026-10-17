@@ -310,3 +310,18 @@ fn idempotent_without_path_names_id() {
     let d = idem_case(FLAT_MD, false, "idnopath");
     assert!(err_of(&d).contains("i1: idempotent needs path"));
 }
+
+#[test]
+fn migrate_wrong_expected_fails_by_id() {
+    let m = "[[cases]]\nid = \"mw\"\nkind = \"migrate\"\nmigration = \"frontmatter\"\ninput = \"migrate/a.md\"\nexpected = \"migrate/a.expected.md\"\n";
+    let d = tmp_with(
+        "mwrong",
+        m,
+        &[
+            ("migrate/a.md", b"---\ntype: snippet\n---\nbody"),
+            ("migrate/a.expected.md", b"wrong"),
+        ],
+    );
+    let e = err_of(&d);
+    assert!(e.contains("mw:"), "{e}");
+}

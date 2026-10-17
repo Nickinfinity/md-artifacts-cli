@@ -15,6 +15,7 @@ mod artifact;
 mod english;
 mod index;
 mod input;
+mod migrate;
 pub mod print;
 mod vars;
 mod varsets;
@@ -73,6 +74,9 @@ pub enum Command {
     /// Render text without an artifact.
     #[command(subcommand)]
     Render(RenderCmd),
+    /// Migrate legacy vault files (plan writes nothing).
+    #[command(subcommand)]
+    Migrate(migrate::MigrateCmd),
     /// Run any operation by dotted name with raw JSON params (default `{}`).
     Call {
         /// Dotted op name, e.g. `system.ops`.
@@ -138,7 +142,8 @@ pub fn run() -> ExitCode {
         Ok(c) => c,
         Err(e) => return fail(&e, cli.json),
     };
-    let Some((op, params)) = request(cli.command) else {
+    let typed = !matches!(cli.command, Command::Call { .. });
+    let Some((op, params)) = request(cli.command, &ctx) else {
         return match serve::run(&ctx, std::io::stdin().lock(), std::io::stdout().lock()) {
             Ok(()) => ExitCode::SUCCESS,
             Err(_) => ExitCode::from(3),
@@ -146,7 +151,7 @@ pub fn run() -> ExitCode {
     };
     // Every subcommand goes through dispatch only: one code path, one dispatch log line.
     match params.and_then(|p| mda_ops::dispatch(&ctx, &op, p)) {
-        Ok(v) if cli.json => emit(&v.to_string()),
+        Ok(v) if cli.json => emit_rc(&v.to_string(), rc_of(typed, &op, &v)),
         Ok(v) => {
             if let Some(e) = print::refuse(&op, &v) {
                 return fail(&e, false);
@@ -154,14 +159,15 @@ pub fn run() -> ExitCode {
             for w in print::warnings(&v) {
                 let _ = writeln!(std::io::stderr().lock(), "{w}");
             }
-            emit(&print::success(&op, &v))
+            emit_rc(&print::success(&op, &v), rc_of(typed, &op, &v))
         }
         Err(e) => fail(&e, cli.json),
     }
 }
 
-/// The op and params a subcommand stands for; `None` for `serve`.
-fn request(cmd: Command) -> Option<(String, Result<Value, OpError>)> {
+/// The op and params a subcommand stands for; `None` for `serve`. `ctx` lets a typed command run
+/// a preparatory op (human `migrate … apply` plans first, M-6).
+fn request(cmd: Command, ctx: &mda_ops::Ctx) -> Option<(String, Result<Value, OpError>)> {
     let (op, params) = match cmd {
         Command::Serve => return None,
         Command::Artifact(cmd) => return Some(artifact::artifact_request(cmd)),
@@ -171,6 +177,7 @@ fn request(cmd: Command) -> Option<(String, Result<Value, OpError>)> {
         Command::Types(cmd) => return Some(vault::types_request(cmd)),
         Command::Vars(cmd) => return Some(vars::vars_request(cmd)),
         Command::Varsets(cmd) => return Some(varsets::varsets_request(cmd)),
+        Command::Migrate(cmd) => return Some(migrate::migrate_request(cmd, ctx)),
         Command::Render(RenderCmd::Text { file, values }) => (
             "render.text".to_owned(),
             input::render_text_params(&file, values),
@@ -190,12 +197,28 @@ fn request(cmd: Command) -> Option<(String, Result<Value, OpError>)> {
     Some((op, params))
 }
 
-/// Write one block to stdout; a broken pipe is an I/O failure.
-fn emit(text: &str) -> ExitCode {
+/// The exit code for a successful response: [`report_exit`] for typed commands, 0 for `mda call`.
+fn rc_of(typed: bool, op: &str, v: &Value) -> u8 {
+    if typed { report_exit(op, v) } else { 0 }
+}
+
+/// Write one block to stdout and exit with `rc`; a broken pipe is an I/O failure.
+fn emit_rc(text: &str, rc: u8) -> ExitCode {
     match writeln!(std::io::stdout().lock(), "{text}") {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(()) => ExitCode::from(rc),
         Err(_) => ExitCode::from(3),
     }
+}
+
+/// Exit code of a successful typed command: 1 for `vault.validate` with `errors > 0` (M-5), else 0.
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(mda::cli::report_exit("system.ops", &serde_json::json!({})), 0);
+/// ```
+pub fn report_exit(op: &str, v: &Value) -> u8 {
+    u8::from(op == "vault.validate" && v["errors"].as_u64() > Some(0))
 }
 
 /// Report an op error (`--json`: the `OpError` JSON on stdout; human: stderr) and map the exit code.

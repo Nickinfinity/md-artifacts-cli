@@ -1,0 +1,3 @@
+vault = "vault_migrate"
+params = { x = 1 }
+expect_error = "op.bad_request"

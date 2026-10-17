@@ -1,9 +1,9 @@
 # Conformance manifest: every case the harness (crates/mda-core/tests/conformance.rs) runs.
-# A file under parse/, serialize/ or render/ that no case lists fails the suite.
+# A file under parse/, serialize/, render/ or migrate/ that no case lists fails the suite.
 #
 # [[cases]]
 # id = "unique-id"                 # unique
-# kind = "parse"                   # parse | serialize | render | idempotent
+# kind = "parse"                   # parse | serialize | render | idempotent | migrate
 # input = "parse/x.md"             # path relative to conformance/
 # expected = "parse/x.expected.json"
 # values = "render/x.values.json"  # render only; path relative to conformance/
@@ -1576,3 +1576,308 @@ expected = "parse/rs-fm-block-list.expected.json"
 path = "Commands/artifact-form/command-with-defaults.md"
 origin = "rust"
 deviates_from_ts = "frontmatter block-list tags/paths (Obsidian's property form, #56); TS reads inline arrays only"
+
+# migrate (W6, spec §11): input decoded, core rewrite run; `expected` = exact output bytes, `skip` = the
+# expected skip code, neither = no change. `migration` = frontmatter | vks; vks needs `path`.
+
+[[cases]]
+id = "fm-snippet"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-snippet.md"
+expected = "migrate/fm-snippet.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-agent"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-agent.md"
+expected = "migrate/fm-agent.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-command"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-command.md"
+expected = "migrate/fm-command.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-template"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-template.md"
+expected = "migrate/fm-template.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-variables"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-variables.md"
+expected = "migrate/fm-variables.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-no-frontmatter"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-no-frontmatter.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-body-fence-only"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-body-fence-only.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-body-fence-kept"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-body-fence-kept.md"
+expected = "migrate/fm-body-fence-kept.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-has-artifacttype"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-has-artifacttype.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-stray-type"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-stray-type.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-bogus"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-bogus.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-aiprompt"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-aiprompt.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-index-paths"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-index-paths.md"
+expected = "migrate/fm-index-paths.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-crlf"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-crlf.md"
+expected = "migrate/fm-crlf.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-no-trailing-newline"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-no-trailing-newline.md"
+expected = "migrate/fm-no-trailing-newline.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-bom"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-bom.md"
+expected = "migrate/fm-bom.expected.md"
+origin = "ts@b368c20"
+deviates_from_ts = "Q-B: BOM stripped on read; TS skips with a BOM reason"
+
+[[cases]]
+id = "fm-leading-blank"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leading-blank.md"
+skip = "migrate.leading_blank"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-quoted"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-quoted.md"
+skip = "migrate.quoted_type"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-plain"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-plain.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-block-list"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-block-list.md"
+expected = "migrate/fm-block-list.expected.md"
+origin = "rust"
+deviates_from_ts = "Rust-only: block-list tags (#57) left as they are"
+
+[[cases]]
+id = "vks-flat"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-flat.md"
+expected = "migrate/vks-flat.expected.md"
+path = "Variables/l.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-crlf"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-crlf.md"
+expected = "migrate/vks-crlf.expected.md"
+path = "Variables/l.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-sets"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-sets.md"
+expected = "migrate/vks-sets.expected.md"
+path = "Variables/s.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-trailing"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-trailing.md"
+expected = "migrate/vks-trailing.expected.md"
+path = "Snippets/s.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-second-fence-kept"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-second-fence-kept.md"
+expected = "migrate/vks-second-fence-kept.expected.md"
+path = "Snippets/t.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-quoting"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-quoting.md"
+expected = "migrate/vks-quoting.expected.md"
+path = "Variables/q.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-close-same-line"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-close-same-line.md"
+expected = "migrate/vks-close-same-line.expected.md"
+path = "Variables/c.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-yaml"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-yaml.md"
+path = "Variables/y.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-comment-only"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-comment-only.md"
+path = "Variables/k.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-empty"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-empty.md"
+path = "Variables/e.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-dup"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-dup.md"
+skip = "vks.duplicate_key"
+path = "Variables/d.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-bad-key"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-bad-key.md"
+skip = "vks.bad_key"
+path = "Variables/b.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-unfenced"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-unfenced.md"
+skip = "migrate.unfenced_vars"
+path = "Snippets/u.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-flagged-outside"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-flagged-outside.md"
+expected = "migrate/vks-flagged-outside.expected.md"
+path = "AIPrompts/f.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"
+
+[[cases]]
+id = "vks-flagged-inside"
+kind = "migrate"
+migration = "vks"
+input = "migrate/vks-flagged-inside.md"
+skip = "artifact.unrepresentable"
+path = "AIPrompts/f.md"
+origin = "rust"
+deviates_from_ts = "Rust-only vks migration (seed D-6)"

@@ -51,6 +51,22 @@ name = "index.run"
 summary = "Write every step of a template index into a workspace"
 
 [[expect.ops]]
+name = "migrate.frontmatter.apply"
+summary = "Rewrite planned files: type: → artifactType:"
+
+[[expect.ops]]
+name = "migrate.frontmatter.plan"
+summary = "List files whose frontmatter type: needs migrating"
+
+[[expect.ops]]
+name = "migrate.vks.apply"
+summary = "Rewrite planned files: legacy variables bodies → YAML"
+
+[[expect.ops]]
+name = "migrate.vks.plan"
+summary = "List files with legacy variables bodies"
+
+[[expect.ops]]
 name = "render.text"
 summary = "Fill tokens in text with values (no artifact)"
 
@@ -145,3 +161,7 @@ summary = "Validate, prepare, remember and use a vault"
 [[expect.ops]]
 name = "vault.use"
 summary = "Make a known vault the default and use it"
+
+[[expect.ops]]
+name = "vault.validate"
+summary = "Check every artifact file; report errors and pending migrations"

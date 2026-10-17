@@ -427,3 +427,13 @@ pub const PATH_CODES: &[&str] = &[
     PATH_ABSOLUTE,
     PATH_PARENT_SEGMENT,
 ];
+
+/// The model cannot be written in the file format. Params `field`, `reason` (`round_trip` |
+/// `multi_block`). Core-owned since W6 so a migration `Skip` names it (re-exported by `mda-ops`).
+pub const ARTIFACT_UNREPRESENTABLE: &str = "artifact.unrepresentable";
+/// Frontmatter migration: blank line(s) precede the frontmatter block (spec §11.1). No params.
+pub const MIGRATE_LEADING_BLANK: &str = "migrate.leading_blank";
+/// Frontmatter migration: the `type:` value is quoted (spec §11.1). Param `value` (raw, quotes kept).
+pub const MIGRATE_QUOTED_TYPE: &str = "migrate.quoted_type";
+/// vks migration: variables sit in an unfenced legacy `vars:` section (spec §11.2). No params.
+pub const MIGRATE_UNFENCED_VARS: &str = "migrate.unfenced_vars";

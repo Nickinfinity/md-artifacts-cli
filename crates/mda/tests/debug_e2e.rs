@@ -363,3 +363,51 @@ fn debug_varsets_apply_keeps_values_out() {
     assert!(!err.contains("SECRET-v4"), "{err}");
     std::fs::remove_dir_all(&d).unwrap();
 }
+
+/// `seen` proves the secret file was actually processed: `Some(bytes)` = its migrated content,
+/// `None` = its path appears on stdout (validate lists it as pending).
+fn debug_vault_run(tag: &str, args: &[&str], ops: &[&str], seen: Option<&str>) {
+    let v = tmp(tag);
+    let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/vault_migrate");
+    common::copy_tree(&src, &v);
+    std::fs::write(
+        v.join("Variables/s.md"),
+        "---\nartifactType: Variables\ntitle: S\n---\n\n```vks\nVK-a=SECRET-mig-77\n```\n",
+    )
+    .unwrap();
+    let mut a = vec!["--vault", v.to_str().unwrap(), "--debug"];
+    a.extend_from_slice(args);
+    let o = run(&a, b"");
+    let err = String::from_utf8(o.stderr).unwrap();
+    for op in ops {
+        assert!(err.contains(&format!(r#"op "{op}""#)), "{err}");
+    }
+    assert!(!err.contains("SECRET-mig-77"), "{err}");
+    match seen {
+        Some(want) => assert_eq!(
+            std::fs::read_to_string(v.join("Variables/s.md")).unwrap(),
+            want
+        ),
+        None => assert!(
+            String::from_utf8(o.stdout)
+                .unwrap()
+                .contains("Variables/s.md")
+        ),
+    }
+    std::fs::remove_dir_all(&v).unwrap();
+}
+
+#[test]
+fn debug_migrate_keeps_values_out() {
+    debug_vault_run(
+        "migdbg",
+        &["migrate", "vks", "apply"],
+        &["migrate.vks.plan", "migrate.vks.apply"],
+        Some("---\nartifactType: Variables\ntitle: S\n---\n\n```vks\nVK-a: SECRET-mig-77\n```\n"),
+    );
+}
+
+#[test]
+fn debug_validate_keeps_values_out() {
+    debug_vault_run("valdbg", &["vault", "validate"], &["vault.validate"], None);
+}

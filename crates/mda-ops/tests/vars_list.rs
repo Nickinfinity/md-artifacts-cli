@@ -82,7 +82,7 @@ fn deep_chain_is_vars_limit_depth() {
         list(&ctx, ListRequest {}).unwrap_err(),
         search(&ctx, SearchRequest { query: "x".into() }).unwrap_err(),
     ] {
-        assert_eq!(e.code, "vars.limit");
+        assert_eq!(e.code, "walk.limit");
         assert_eq!(e.params["limit"], "depth");
         assert_eq!(e.params["max"], "32");
         assert_no_abs(&e, &d);

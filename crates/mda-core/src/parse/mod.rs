@@ -12,7 +12,7 @@ use std::collections::{HashMap, HashSet};
 
 pub use text::decode;
 
-pub(crate) use blocks::block_code_ranges;
+pub(crate) use blocks::{block_code_ranges, block_vks_ranges, fenceless_headings};
 pub(crate) use frontmatter::{body_range, key_of};
 
 use crate::error::{Limit, VKS_LIMIT, VarsError};
@@ -35,6 +35,57 @@ const PAYLOAD_LANG: &str = "markdown";
 /// ```
 pub fn is_flagged(content: &str) -> bool {
     !flags::extract_flagged_regions(frontmatter::strip(content)).is_empty()
+}
+
+/// The frontmatter alone (no payload: `language` is not filled from a fence) — the migration guard
+/// compares it (spec §11.1).
+pub(crate) fn frontmatter_of(content: &str) -> crate::model::Frontmatter {
+    frontmatter::parse(content, ArtifactType::Snippet)
+}
+
+/// Byte ranges (sorted, deduped) of every vks body the parser reads: the first `vks` fence of the
+/// unstripped content, plus — only when the file is unflagged and parses to ≥ 1 block — the first
+/// `vks` fence of each parsed `##` section (spec §11.2).
+#[cfg(test)] // reason: production callers hold a parse already and use `vks_body_ranges_of`
+pub(crate) fn vks_body_ranges(content: &str, path: &str) -> Vec<std::ops::Range<usize>> {
+    let p = parse_from_content(content, path);
+    vks_body_ranges_of(content, &p, is_flagged(content))
+}
+
+/// `vks_body_ranges` (test-only) for a caller that already parsed `content` and knows whether it is flagged
+/// (the migration guard reuses both: a parse of a 1 MiB file is the cost it bounds).
+pub(crate) fn vks_body_ranges_of(
+    content: &str,
+    parsed: &ParsedArtifact,
+    flagged: bool,
+) -> Vec<std::ops::Range<usize>> {
+    let mut out: Vec<_> = fence::vks_range(content).into_iter().collect();
+    if !flagged && !parsed.blocks.is_empty() {
+        out.extend(block_vks_ranges(content));
+    }
+    out.sort_by_key(|r| (r.start, r.end));
+    out.dedup();
+    out
+}
+
+/// Index of the parsed block whose `vks` fence is also the file-level fence (its `varsError` is the
+/// file's): `vault.validate` reports that error once, other blocks' errors always (spec §11.3).
+///
+/// # Examples
+///
+/// ```
+/// let c = "## A\n```vks\nVK-a: 1\n```\n## B\n```vks\nVK-b: 2\n```\n";
+/// assert_eq!(mda_core::parse::file_fence_block(c), Some(0));
+/// assert_eq!(mda_core::parse::file_fence_block("no fence"), None);
+/// ```
+pub fn file_fence_block(content: &str) -> Option<usize> {
+    blocks::file_fence_block(content)
+}
+
+/// The unfenced `vars:` section `parse_vars` reads: `None` when a `vks` fence exists or no section
+/// matches.
+pub(crate) fn unfenced_vars(content: &str) -> Option<Result<Vec<ParsedVar>, VarsError>> {
+    fence::unfenced_vars(content)
 }
 
 /// Absolute byte range of the code of the file's first fence (the single-body payload).
@@ -225,6 +276,40 @@ mod tests {
             name: name.into(),
             content: content.into(),
         }
+    }
+
+    fn spans<'a>(c: &'a str, path: &str) -> Vec<&'a str> {
+        let r = vks_body_ranges(c, path);
+        r.into_iter().filter_map(|r| c.get(r)).collect()
+    }
+
+    #[test]
+    fn ranges_are_what_the_parser_reads() {
+        let v = "Variables/v.md";
+        let flat = "---\nartifactType: Variables\n---\n\n```vks\nVK-a=1\n```\n";
+        assert_eq!(
+            vks_body_ranges(flat, v),
+            vec![top_code_range(flat).unwrap()]
+        );
+        let sets = "## D\n```vks\nVK-a=1\n```\n## P\n```vks\nVK-a=2\n```\n";
+        assert_eq!(spans(sets, v), ["VK-a=1\n", "VK-a=2\n"]);
+        let trail = "## A\n```sh\nx\n```\n```vks\nVK-a=1\n```\n```vks\nVK-b=2\n```\n";
+        assert_eq!(spans(trail, "Snippets/t.md"), ["VK-a=1\n"]);
+        let late = "```vks\nVK-t=1\n```\n## \n```vks\nVK-a=1\n```\n";
+        assert_eq!(spans(late, v), ["VK-t=1\n"]);
+        let (a, z) = (format!("%%oa:{}%%", "start"), format!("%%oa:{}%%", "end"));
+        let flagged =
+            format!("{a}\nx\n{z}\n## S\n```vks\nVK-a=1\n```\n## T\n```vks\nVK-b=1\n```\n");
+        assert_eq!(spans(&flagged, "AIPrompts/f.md"), ["VK-a=1\n"]);
+        let bare = "Intro\n```vks\nA=1\n```\n## S\n```sh\nx\n```\n";
+        assert_eq!(spans(bare, "AIAgentsConf/b.md"), ["A=1\n"]);
+    }
+
+    #[test]
+    fn unfenced_vars_reads_only_without_a_vks_fence() {
+        assert!(unfenced_vars("```sh\nx\n```\n\nvars:\nVK-a=1\n").is_some());
+        assert!(unfenced_vars("```vks\nVK-a=1\n```\nvars:\nVK-b=1\n").is_none());
+        assert!(unfenced_vars("```sh\nx\n```\n").is_none());
     }
 
     #[test]

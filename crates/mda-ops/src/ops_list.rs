@@ -2,8 +2,8 @@
 
 use crate::registry::{OpSpec, typed};
 use crate::{
-    artifact, artifact_write, index, index_create, prefill, render, system, types, vars, varsets,
-    vault, write_file,
+    artifact, artifact_write, index, index_create, migrate, prefill, render, system, types,
+    validate, vars, varsets, vault, write_file,
 };
 
 pub(crate) static OPS: &[OpSpec] = &[
@@ -71,6 +71,26 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "index.run",
         summary: "Write every step of a template index into a workspace",
         handler: |c, v| typed(c, v, index::run),
+    },
+    OpSpec {
+        name: "migrate.frontmatter.apply",
+        summary: "Rewrite planned files: type: → artifactType:",
+        handler: |c, v| typed(c, v, migrate::frontmatter_apply),
+    },
+    OpSpec {
+        name: "migrate.frontmatter.plan",
+        summary: "List files whose frontmatter type: needs migrating",
+        handler: |c, v| typed(c, v, migrate::frontmatter_plan),
+    },
+    OpSpec {
+        name: "migrate.vks.apply",
+        summary: "Rewrite planned files: legacy variables bodies → YAML",
+        handler: |c, v| typed(c, v, migrate::vks_apply),
+    },
+    OpSpec {
+        name: "migrate.vks.plan",
+        summary: "List files with legacy variables bodies",
+        handler: |c, v| typed(c, v, migrate::vks_plan),
     },
     OpSpec {
         name: "render.text",
@@ -191,5 +211,10 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "vault.use",
         summary: "Make a known vault the default and use it",
         handler: |c, v| typed(c, v, vault::use_vault),
+    },
+    OpSpec {
+        name: "vault.validate",
+        summary: "Check every artifact file; report errors and pending migrations",
+        handler: |c, v| typed(c, v, validate::validate),
     },
 ];

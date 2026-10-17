@@ -31,6 +31,8 @@ pub enum VaultCmd {
         /// A known vault folder.
         path: PathBuf,
     },
+    /// Check every artifact file: read errors, invalid variables, pending migrations (exit 1 on errors).
+    Validate,
 }
 
 /// `mda config …`
@@ -77,6 +79,7 @@ pub(super) fn vault_request(cmd: VaultCmd) -> (String, Result<Value, OpError>) {
             "vault.use".to_owned(),
             path(&p).map(|p| json!({ "path": p })),
         ),
+        VaultCmd::Validate => ("vault.validate".to_owned(), Ok(json!({}))),
     }
 }
 

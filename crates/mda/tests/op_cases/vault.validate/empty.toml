@@ -1,0 +1,9 @@
+vault = "vault_bare"
+params = {}
+
+[expect]
+files = 0
+errors = 0
+warnings = 0
+truncated = false
+issues = []

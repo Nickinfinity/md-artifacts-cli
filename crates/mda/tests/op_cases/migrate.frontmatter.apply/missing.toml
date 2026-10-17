@@ -1,0 +1,5 @@
+vault = "vault_migrate"
+params = { files = [{ path = "Snippets/none.md", hash = "0000000000000000000000000000000000000000000000000000000000000000" }] }
+expect = { results = [
+  { status = "skipped", path = "Snippets/none.md", code = "path.not_found", params = { path = "Snippets/none.md" } },
+], written = 0, skipped = 1 }

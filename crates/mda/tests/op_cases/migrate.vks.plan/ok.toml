@@ -1,0 +1,16 @@
+vault = "vault_migrate"
+params = {}
+expect = { changes = [
+  { path = "Variables/crlf.md", hash = "660938c5d2e5a182485b1d83e92208d1c3777f4ce205c67d26a4c668f274bca9", fences = 1, vars = 1, droppedLines = 0 },
+  { path = "Variables/legacy.md", hash = "24e43b3273d3d1c8e34d759bc9d4d5e7723edf987c2197669cbc06124a59659c", fences = 1, vars = 2, droppedLines = 1 },
+  { path = "Variables/old.md", hash = "b8411e195515b68d1305840d3bad1e1cafe9304c20140f328d6f07cd926627ae", fences = 1, vars = 1, droppedLines = 0 },
+  { path = "Variables/sets.md", hash = "a6cdb69b5b738b9904efeb12d94306b71f56818c1748d5b08c718e15d5a0e6ad", fences = 2, vars = 2, droppedLines = 0 },
+  { path = "AIPrompts/flagged.md", hash = "b4567299df80c0fabc548ba29484392596192ee02213b8642e59ab30ceadbc45", fences = 1, vars = 1, droppedLines = 0 },
+], skipped = [
+  { path = "Snippets/unfenced.md", code = "migrate.unfenced_vars", params = {} },
+  { path = "Variables/badkey.md", code = "vks.bad_key", params = { key = "VK-a.b", line = "0", var = "VK-a.b" } },
+  { path = "Variables/ctrl.md", code = "vks.control_char", params = { line = "1" } },
+  { path = "Variables/dup.md", code = "vks.duplicate_key", params = { key = "VK-a", line = "0", var = "VK-a" } },
+  { path = "AIPrompts/inside.md", code = "artifact.unrepresentable", params = { field = "vars", reason = "round_trip" } },
+] }
+expect_files = { "Variables/legacy.md" = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```vks\n# hosts\nVK-host=localhost\nVK-port=8080\n```\n" }

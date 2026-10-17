@@ -326,15 +326,15 @@ fn edit_error_maps() {
 
 #[test]
 fn w5b_code_exact_json() {
-    assert!(ALL_CODES.contains(&VARS_LIMIT));
+    assert!(ALL_CODES.contains(&WALK_LIMIT));
     assert_eq!(
         serde_json::to_value(
-            OpError::new(VARS_LIMIT)
+            OpError::new(WALK_LIMIT)
                 .with("limit", "files")
                 .with("max", "10000")
         )
         .unwrap(),
-        serde_json::json!({"code": "vars.limit", "params": {"limit": "files", "max": "10000"}})
+        serde_json::json!({"code": "walk.limit", "params": {"limit": "files", "max": "10000"}})
     );
 }
 
@@ -347,10 +347,53 @@ fn vault_limit_maps() {
         (WalkLimit::Files, "files", 10_000),
         (WalkLimit::Bytes, "bytes", 67_108_864),
     ] {
-        let want = serde_json::json!({"code": "vars.limit", "params": {"limit": s, "max": max.to_string()}});
+        let want = serde_json::json!({"code": "walk.limit", "params": {"limit": s, "max": max.to_string()}});
         let e = vault_error(VaultError::Limit { limit: l, max }, &root);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
         let e = OpError::from(VaultError::Limit { limit: l, max });
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
+}
+
+#[test]
+fn w6_codes_exact_json() {
+    let cases = [
+        (
+            OpError::new(MIGRATE_UP_TO_DATE),
+            serde_json::json!({"code": "migrate.up_to_date", "params": {}}),
+        ),
+        (
+            OpError::new(MIGRATE_LEADING_BLANK),
+            serde_json::json!({"code": "migrate.leading_blank", "params": {}}),
+        ),
+        (
+            OpError::new(MIGRATE_QUOTED_TYPE).with("value", "\"template\""),
+            serde_json::json!({"code": "migrate.quoted_type", "params": {"value": "\"template\""}}),
+        ),
+        (
+            OpError::new(MIGRATE_UNFENCED_VARS),
+            serde_json::json!({"code": "migrate.unfenced_vars", "params": {}}),
+        ),
+        (
+            OpError::new(MIGRATE_PENDING).with("kind", "vks"),
+            serde_json::json!({"code": "migrate.pending", "params": {"kind": "vks"}}),
+        ),
+        (
+            OpError::new(VARS_FENCELESS_SECTION).with("heading", "Empty"),
+            serde_json::json!({"code": "vars.fenceless_section", "params": {"heading": "Empty"}}),
+        ),
+        (
+            OpError::new(VARS_MIXED_FILE),
+            serde_json::json!({"code": "vars.mixed_file", "params": {}}),
+        ),
+    ];
+    for (e, want) in cases {
+        assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
+        assert_eq!(serde_json::to_value(e).unwrap(), want);
+    }
+    assert_eq!(ALL_CODES.len(), 70);
+    assert_eq!(
+        ARTIFACT_UNREPRESENTABLE,
+        mda_core::error::ARTIFACT_UNREPRESENTABLE
+    );
 }

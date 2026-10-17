@@ -126,6 +126,9 @@ pub fn success(op: &str, v: &Value) -> String {
         }
         "index.plan" => plan(v),
         "index.run" | "index.create" => batch(v),
+        op if op.starts_with("migrate.") || op == "vault.validate" => {
+            super::migrate::success(op, v).unwrap_or_default()
+        }
         op if op.starts_with("vault.") || op.starts_with("types.") || op == "config.get" => {
             super::vault::success(op, v).unwrap_or_default()
         }

@@ -35,7 +35,18 @@ pub fn english(code: &str) -> Option<&'static str> {
             "the untitled block has no heading to keep a description under; add a sub-set first"
         }
         VARS_BAD_TITLE => "the title is empty",
-        VARS_LIMIT => "the Variables folder exceeds a walk limit (depth, files or bytes)",
+        WALK_LIMIT => "a folder walk exceeds a limit (depth, entries or bytes)",
+        MIGRATE_UP_TO_DATE => "nothing left to migrate in this file",
+        MIGRATE_LEADING_BLANK => "blank line(s) precede the frontmatter; remove them to migrate",
+        MIGRATE_QUOTED_TYPE => "the type: value is quoted; expected a bare legacy value",
+        MIGRATE_UNFENCED_VARS => {
+            "variables are in an unfenced vars: section; move them into a ```vks fence"
+        }
+        MIGRATE_PENDING => "a migration is pending for this file",
+        VARS_FENCELESS_SECTION => "a ## section with no vks fence is dropped by every rewrite",
+        VARS_MIXED_FILE => {
+            "a variables fence sits before the first ## section; edits refuse this file"
+        }
         ARTIFACT_BAD_PATH => "not an artifact path (expected <TypeDir>/….md)",
         VKS_SYNTAX => "variables block: syntax error",
         VKS_INDENT => "variables block: bad indentation",

@@ -43,7 +43,7 @@ type Seen = Vec<(String, Result<Vec<u8>, VaultError>)>;
 
 fn walk(t: &Tmp, max_file: u64) -> (Result<(), VaultError>, Seen) {
     let mut seen: Seen = Vec::new();
-    let r = walk_md(&t.root(), "Variables", max_file, |rel, res| {
+    let r = walk_md(&t.root(), &["Variables"], max_file, |rel, res| {
         seen.push((rel.to_owned(), res));
     });
     (r, seen)
@@ -161,7 +161,7 @@ fn fifo_is_not_regular() {
     let (tx, rx) = std::sync::mpsc::channel();
     std::thread::spawn(move || {
         let mut seen = Vec::new();
-        let r = walk_md(&root, "Variables", 1024, |rel, res| {
+        let r = walk_md(&root, &["Variables"], 1024, |rel, res| {
             seen.push((rel.to_owned(), res.map(|b| b.len())));
         });
         let _ = tx.send((r.is_ok(), seen));
@@ -271,7 +271,7 @@ fn too_large_file_is_an_entry_not_counted() {
 #[test]
 fn start_outside_root_is_refused() {
     let t = Tmp::new("startout");
-    let r = walk_md(&t.root(), "../outside", 1024, |_, _| {});
+    let r = walk_md(&t.root(), &["../outside"], 1024, |_, _| {});
     assert!(matches!(r, Err(VaultError::OutsideRoot { .. })));
 }
 
@@ -290,4 +290,33 @@ fn non_utf8_name_is_skipped() {
     let (r, seen) = walk(&t, 1024);
     r.unwrap();
     assert_eq!(names(&seen), ["Variables/ok.md"]);
+}
+
+/// One budget for the whole call (M-8): 33 + 33 MiB across two starts passes 64 MiB.
+#[test]
+fn starts_share_one_budget() {
+    let t = Tmp::new("shared");
+    for d in ["A", "B"] {
+        fs::create_dir_all(t.v(d)).unwrap();
+        for i in 0..33 {
+            let f = fs::File::create(t.v(&format!("{d}/f{i:02}.md"))).unwrap();
+            f.set_len(1 << 20).unwrap();
+        }
+    }
+    let r = walk_md(&t.root(), &["A", "B"], 1 << 20, |_, _| {});
+    assert_eq!(limit(&r), (WalkLimit::Bytes, 67_108_864));
+}
+
+/// Starts are walked in the order given; a missing start is skipped.
+#[test]
+fn starts_in_order_missing_skipped() {
+    let t = Tmp::new("order");
+    t.write("A/a.md", b"a");
+    t.write("B/b.md", b"b");
+    let mut seen = Vec::new();
+    let r = walk_md(&t.root(), &["Nope", "B", "A"], 1024, |rel, _| {
+        seen.push(rel.to_owned());
+    });
+    r.unwrap();
+    assert_eq!(seen, ["B/b.md", "A/a.md"]);
 }

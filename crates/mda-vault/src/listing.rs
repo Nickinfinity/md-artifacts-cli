@@ -69,27 +69,25 @@ pub const MAX_WALK_FILES: usize = 10_000;
 /// Bytes read per walk: each file's size is added (and checked) before it is read.
 pub const MAX_WALK_BYTES: u64 = 64 << 20;
 
-/// Every `.md` under `start` (vault-relative POSIX), depth-first; `visit(rel, bytes-or-error)` once per
-/// file. Symlinked directories are never descended; limits refuse the whole call (spec §13.2).
+/// Every `.md` under each of `starts` (vault-relative POSIX), in `starts` order, depth-first;
+/// `visit(rel, bytes-or-error)` once per file. One budget for the whole call (depth per start,
+/// entries and bytes across starts). Symlinked directories are never descended; limits refuse the
+/// whole call (spec §11, §13.2). A missing start, or one that is not a directory, is skipped.
 ///
 /// # Examples
 ///
 /// ```
 /// let root = mda_vault::Root::new(&std::env::temp_dir()).unwrap();
-/// let r = mda_vault::walk_md(&root, "mda-no-such-dir-walk", 1024, |_, _| {});
+/// let r = mda_vault::walk_md(&root, &["mda-no-such-dir-walk"], 1024, |_, _| {});
 /// assert!(r.is_ok());
 /// ```
 pub fn walk_md<F: FnMut(&str, Result<Vec<u8>, VaultError>)>(
     root: &Root,
-    start: &str,
+    starts: &[&str],
     max_file: u64,
     visit: F,
 ) -> Result<(), VaultError> {
-    let abs = contain(root, Path::new(start))?;
-    // A missing start, or one that is not a directory, is an empty walk (TS `catch → return`).
-    if !fs::metadata(&abs).is_ok_and(|m| m.is_dir()) {
-        return Ok(());
-    }
+    // One `Walk` for every start: the entry and byte caps bound the whole call (M-8).
     let mut st = Walk {
         root,
         max_file,
@@ -97,7 +95,15 @@ pub fn walk_md<F: FnMut(&str, Result<Vec<u8>, VaultError>)>(
         bytes: 0,
         visit,
     };
-    walk_dir(&mut st, start, 0)
+    for start in starts {
+        let abs = contain(root, Path::new(start))?;
+        // A missing start, or one that is not a directory, is an empty walk (TS `catch → return`).
+        if !fs::metadata(&abs).is_ok_and(|m| m.is_dir()) {
+            continue;
+        }
+        walk_dir(&mut st, start, 0)?;
+    }
+    Ok(())
 }
 
 /// Walk state: the work counters are shared by the whole call.

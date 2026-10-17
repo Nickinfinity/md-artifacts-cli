@@ -44,17 +44,29 @@ pub(super) fn vks_fence(s: &str) -> Option<&str> {
     VKS_FENCE_RE.captures(s)?.get(1).map(|m| m.as_str())
 }
 
+/// Byte range of the first ```` ```vks ```` fence's body (group 1) in `s`.
+pub(super) fn vks_range(s: &str) -> Option<Range<usize>> {
+    VKS_FENCE_RE.captures(s)?.get(1).map(|m| m.range())
+}
+
 /// File-level defaults: the first `vks` fence anywhere in the **unstripped** `content`, else the
 /// unfenced `vars:` section after the first code fence. `Ok([])` when neither exists.
 pub(super) fn parse_vars(content: &str) -> Result<Vec<ParsedVar>, VarsError> {
     if let Some(body) = vks_fence(content) {
         return vks::read_fence(body);
     }
-    let after_code = CODE_FENCE_RE.replacen(frontmatter::strip(content), 1, "");
-    match VARS_SECTION_RE.captures(&after_code).and_then(|c| c.get(1)) {
-        Some(m) => vks::read_section(m.as_str()),
-        None => Ok(vec![]),
+    unfenced_vars(content).unwrap_or(Ok(vec![]))
+}
+
+/// The unfenced `vars:` section after the first code fence, read as legacy. `None` when a `vks`
+/// fence exists (it wins) or no section matches.
+pub(super) fn unfenced_vars(content: &str) -> Option<Result<Vec<ParsedVar>, VarsError>> {
+    if vks_fence(content).is_some() {
+        return None;
     }
+    let after_code = CODE_FENCE_RE.replacen(frontmatter::strip(content), 1, "");
+    let m = VARS_SECTION_RE.captures(&after_code)?.get(1)?;
+    Some(vks::read_section(m.as_str()))
 }
 
 /// `body` minus its first `vks` fence and the first `vars:` label line (that line's text only; its

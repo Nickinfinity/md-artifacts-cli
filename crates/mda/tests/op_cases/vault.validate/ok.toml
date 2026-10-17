@@ -1,0 +1,29 @@
+vault = "vault_migrate"
+params = {}
+
+# Writes nothing: two files stay byte-identical (the fixture bytes).
+[expect_files]
+"Variables/dup.md" = "---\nartifactType: Variables\ntitle: D\n---\n\n```vks\nVK-a=1\nVK-a=2\n```\n"
+"Commands/done.md" = "---\nartifactType: Command\ntitle: Done\n---\n\n```bash\nls\n```\n"
+
+[expect]
+files = 20
+errors = 1
+warnings = 13
+truncated = false
+issues = [
+  { path = "Snippets/bom.md", code = "migrate.pending", severity = "warning", params = {kind = "frontmatter"} },
+  { path = "Snippets/legacy.md", code = "migrate.pending", severity = "warning", params = {kind = "frontmatter"} },
+  { path = "Snippets/unfenced.md", code = "migrate.unfenced_vars", severity = "warning", params = {} },
+  { path = "AIAgentsConf/agent.md", code = "migrate.pending", severity = "warning", params = {kind = "frontmatter"} },
+  { path = "Commands/latin1.md", code = "migrate.pending", severity = "warning", params = {kind = "frontmatter"} },
+  { path = "Variables/crlf.md", code = "migrate.pending", severity = "warning", params = {kind = "vks"} },
+  { path = "Variables/ctrl.md", code = "vks.control_char", severity = "error", params = {line = "1"} },
+  { path = "Variables/fenceless.md", code = "vars.fenceless_section", severity = "warning", params = {heading = "Empty"} },
+  { path = "Variables/legacy.md", code = "migrate.pending", severity = "warning", params = {kind = "vks"} },
+  { path = "Variables/mixed.md", code = "vars.mixed_file", severity = "warning", params = {} },
+  { path = "Variables/old.md", code = "migrate.pending", severity = "warning", params = {kind = "frontmatter"} },
+  { path = "Variables/old.md", code = "migrate.pending", severity = "warning", params = {kind = "vks"} },
+  { path = "Variables/sets.md", code = "migrate.pending", severity = "warning", params = {kind = "vks"} },
+  { path = "AIPrompts/flagged.md", code = "migrate.pending", severity = "warning", params = {kind = "vks"} },
+]

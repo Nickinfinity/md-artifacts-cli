@@ -1,0 +1,14 @@
+vault = "vault_migrate"
+params = {}
+expect = { changes = [
+  { path = "Snippets/bom.md", hash = "b94089d244728cb68c4e0750969c76c0198e0aef601e5d85478286a8b464c019", oldLine = "type: snippet", newLine = "artifactType: Snippet", artifactType = "Snippet", normalises = ["bom"] },
+  { path = "Snippets/legacy.md", hash = "a7abd74eb92db4e8f437c783fd5c48642e25c5fbcc95ba18beef5e7134102abb", oldLine = "type: snippet", newLine = "artifactType: Snippet", artifactType = "Snippet" },
+  { path = "AIAgentsConf/agent.md", hash = "6a05e7ff2407fe586a3c51a685ff275f7f8a0fc19d50b1e939fe31c68c0cca9b", oldLine = "type: agent", newLine = "artifactType: AIAgentsConfig", artifactType = "AIAgentsConfig" },
+  { path = "Commands/latin1.md", hash = "5c14d681b051518f4867510a22d050fb0f798f966da9f9b38c083edcd5adad86", oldLine = "type: command", newLine = "artifactType: Command", artifactType = "Command", normalises = ["encoding"] },
+  { path = "Variables/old.md", hash = "b8411e195515b68d1305840d3bad1e1cafe9304c20140f328d6f07cd926627ae", oldLine = "type: variables", newLine = "artifactType: Variables", artifactType = "Variables" },
+], skipped = [
+  { path = "Commands/blank.md", code = "migrate.leading_blank", params = {} },
+  { path = "Templates/quoted.md", code = "migrate.quoted_type", params = { value = "\"template\"" } },
+] }
+# a plan writes nothing
+expect_files = { "Snippets/legacy.md" = "---\ntype: snippet\ntitle: Legacy\n---\n\n```sh\necho hi\n```\n", "AIAgentsConf/agent.md" = "---\r\ntype: agent\r\ntarget: CLAUDE.md\r\n---\r\n\r\nBody.\r\n" }
