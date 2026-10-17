@@ -1,3 +1,4 @@
 # file_injection
 params = { source = "file", type = "Snippet", text = "x", fileName = "../../etc/passwd" }
 expect_error = "naming.path_injection"
+expect_error_params = { field = "fileName" }

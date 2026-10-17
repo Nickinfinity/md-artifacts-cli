@@ -1,4 +1,5 @@
 vault = "vault"
 params = { path = "Templates/bk.md", model = { artifactType = "Template", blocks = [{ code = "a", vars = [{ name = "bad key", value = "a" }] }] } }
 expect_error = "vks.bad_key"
+expect_error_params = { line = "0", key = "bad key", var = "bad key" }
 expect_files = { "Templates/bk.md" = false }

@@ -14,7 +14,10 @@
 //! `<cfg>/config.toml` before the leg; `expect_config_files` (cfg-relative) is asserted after it.
 //! `vault_flag = false` copies the fixture (and sets `$VAULT`) without passing it as `--vault`.
 //! `$VAULT` (canonical vault copy), `$CONFIG` (canonical config dir) and `$WORKSPACE` are replaced in
-//! `params`, `expect`, `machine_config` and every expected file's bytes.
+//! `params`, `expect`, `machine_config`, `expect_error_params` and every expected file's bytes.
+//!
+//! Error params (W7, S-23): `expect_error_params` (needs `expect_error`) is compared for equality
+//! with the error's `params` (`data.params` on the wire) on every leg.
 #![allow(
     dead_code,
     clippy::panic,
@@ -44,6 +47,8 @@ pub struct Case {
     pub vault_flag: bool,
     pub expect: Option<Value>,
     pub expect_error: Option<String>,
+    #[serde(default)]
+    pub expect_error_params: Option<BTreeMap<String, String>>,
     #[serde(default)]
     pub expect_files: BTreeMap<String, FileExpect>,
     #[serde(default)]
@@ -101,6 +106,12 @@ pub fn load(path: &Path) -> Result<Case, String> {
     {
         return Err(format!(
             "{}: expected files take bytes or false",
+            path.display()
+        ));
+    }
+    if case.expect_error_params.is_some() && case.expect_error.is_none() {
+        return Err(format!(
+            "{}: expect_error_params needs expect_error",
             path.display()
         ));
     }
@@ -267,13 +278,20 @@ pub fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
                     && seen.body["code"] == *c
                     && ALL_CODES.contains(&c.as_str())
                     && seen.exit.is_none_or(|x| Some(x) == want_exit)
+                    && case.expect_error_params.as_ref().is_none_or(|p| {
+                        let want: BTreeMap<_, _> = p
+                            .iter()
+                            .map(|(k, v)| (k.clone(), subst_str(v, &pairs)))
+                            .collect();
+                        seen.body["params"] == json!(want)
+                    })
             }
             _ => false,
         };
         if !ok {
             fails.push(format!(
-                "{op}/{name} [{leg}]: got {} (exit {:?}), want {:?}{:?}",
-                seen.body, seen.exit, expect, case.expect_error
+                "{op}/{name} [{leg}]: got {} (exit {:?}), want {:?}{:?}{:?}",
+                seen.body, seen.exit, expect, case.expect_error, case.expect_error_params
             ));
         }
         let tag = format!("{op}/{name} [{leg}]");

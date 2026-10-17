@@ -1,4 +1,5 @@
 vault = "vault"
 params = { path = "Templates/../x.md", model = { artifactType = "Template", title = "x" } }
 expect_error = "artifact.bad_path"
+expect_error_params = { path = "Templates/../x.md" }
 expect_files = { "x.md" = false }

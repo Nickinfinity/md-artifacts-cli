@@ -1,4 +1,5 @@
 vault = "vault"
 params = { type = "Template", dir = "Templates/gen", paths = ["C:\\tmp\\x"] }
 expect_error = "path.drive_or_scheme"
+expect_error_params = { path = "C:\\tmp\\x" }
 expect_files = { "Templates/gen/index.md" = false }

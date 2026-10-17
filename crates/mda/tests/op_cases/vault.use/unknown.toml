@@ -6,6 +6,7 @@ vaults = ["/other"]
 '''
 params = { path = "$VAULT" }
 expect_error = "vault.unknown"
+expect_error_params = { path = "$VAULT" }
 [expect_config_files]
 "config.toml" = '''
 default = "/other"

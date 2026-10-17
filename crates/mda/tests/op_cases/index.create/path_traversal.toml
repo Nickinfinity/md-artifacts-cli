@@ -1,4 +1,5 @@
 vault = "vault"
 params = { type = "Template", dir = "Templates/gen", paths = ["a.ts", "../x"] }
 expect_error = "path.parent_segment"
+expect_error_params = { path = "../x" }
 expect_files = { "Templates/gen/a.md" = false, "Templates/gen/index.md" = false }

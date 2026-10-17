@@ -3,7 +3,12 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-17): W6 landed (MAC-10)** — migrate + validate: `mda-core/src/migrate/` (frontmatter `type:` → `artifactType:`,
+> **Status (2026-10-17): W7 landed (MAC-11)** — protocol **1.0 frozen**, engine `0.7.0` (tag `v0.7.0`): `spec/PROTOCOL.md` (methods,
+> error/warning codes with params, transport, compatibility, client notes) guarded by `crates/mda/tests/protocol_doc.rs`; `serve`
+> hardened (five `protocol.*` codes, `message` = code, ids string or i64/u64 integer and never echoed when invalid, no batch, malformed
+> id-less → −32600, notifications ignored); `typed` refuses non-object params; op cases pin `expect_error_params`; real-binary e2e
+> (`tests/serve_e2e.rs`). Push notifications = W7b.
+> **W6 landed (MAC-10)** — migrate + validate: `mda-core/src/migrate/` (frontmatter `type:` → `artifactType:`,
 > legacy vks → YAML, surgical and idempotent), `migrate.frontmatter|vks.plan|apply` + `vault.validate` (`mda-ops/src/{migrate,validate}.rs`),
 > `mda migrate …`, `mda vault validate` (exit 1 on errors); `walk_md` takes several starts with one budget; `vars.limit` renamed
 > `walk.limit`; conformance kind `migrate` (35 cases); fixture `vault_migrate/`.
@@ -141,6 +146,7 @@ md-artifacts-cli/
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 1.0) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
 ├── docs/                      # gitignored working area (plans, references) — never committed
 ├── AGENTS.md
@@ -185,11 +191,14 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
+- **Authority: `spec/PROTOCOL.md`** (protocol `1.0`, frozen in W7). Its method, error-code and warning-code
+  tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
+  `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
-  the type registry (the registry is added in W1; W0 answers `{ protocol, engine }`). A major
-  mismatch is refused.
+  the type registry. A major mismatch is refused. **Within major 1 every change is additive** (no rename,
+  removal or retype of a method, code, param key or response field). v1 sends **no server notifications**.
 - Every write request carries the **content hash** the client last read; a mismatch returns
-  `conflict` (optimistic concurrency), never an overwrite.
+  `file.conflict` (optimistic concurrency), never an overwrite.
 
 ### Configuration *(E-8…E-10; W4, spec §12)*
 
@@ -255,6 +264,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | The operation list | `mda-ops/src/ops_list.rs` (registered through `registry.rs`) |
 | Error codes | `mda-ops/src/error.rs` |
 | NDJSON framing | `mda/src/serve/` (shared with `mda-mcp` later) |
+| The wire protocol (methods, codes, transport) | `spec/PROTOCOL.md` (guarded by `crates/mda/tests/protocol_doc.rs`) |
 
 The on-disk format is specified by **`spec/ARTIFACT_FILE_FORMAT.md`** (ported from the extension;
 §9–§10, the YAML variables and directives, were ruled at the engine-port W1 Role A pass 1). **If the spec and the
@@ -284,7 +294,8 @@ its current services, its goldens and the real vault. `tests/conformance.rs` wal
 
 Every op is tested **once as data, three ways**. A case is a file,
 `crates/mda/tests/op_cases/<op>/<case>.toml`: the request, the fixture vault, and either the expected
-response JSON (`expect`) or the expected error code (`expect_error`). One harness (`tests/op_cases.rs` + `tests/op_harness/`)
+response JSON (`expect`) or the expected error code (`expect_error`, optionally with its exact params,
+`expect_error_params`). One harness (`tests/op_cases.rs` + `tests/op_harness/`)
 runs every case through `mda_ops::dispatch`, through `mda call <op> '<json>' --json` (exit code included), and
 through a `serve` NDJSON session (asserting every stdout line is JSON).
 
@@ -298,7 +309,10 @@ through a `serve` NDJSON session (asserting every stdout line is JSON).
   without passing `--vault`; `$VAULT` / `$CONFIG` / `$WORKSPACE` are substituted. `expect` is full-body equality.
 - **Shared test helpers:** `crates/mda/tests/common/mod.rs` (spawn the binary, NDJSON session, the
   every-stdout-line-is-JSON check), orchestrator-owned; test files import it with `mod common;`.
-- The case files double as the protocol's examples in `spec/PROTOCOL.md`.
+- The case files double as the protocol's examples in `spec/PROTOCOL.md` (§3 links each op's folder; §9 the grammar).
+- **Protocol tests:** `tests/serve.rs` + `tests/serve_ids.rs` (in-process framing, ids, 🔒 sinks), `tests/serve_e2e.rs` (real
+  binary: long session under trace, pipelined backpressure, EOF, kill during write — a characterization pin; atomicity is
+  `write.rs` `with_temp`). `// ponytail:` a SIGKILL leaves a hidden `.<name>.mda-tmp-*` temp (never listed); cleanup later.
 
 ## Debug mode *(W0)*
 

@@ -391,7 +391,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 70);
+    assert_eq!(ALL_CODES.len(), 75);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE

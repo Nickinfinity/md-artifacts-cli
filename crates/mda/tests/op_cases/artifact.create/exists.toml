@@ -1,4 +1,5 @@
 vault = "vault"
 params = { path = "Templates/edit.md", model = { artifactType = "Template", title = "x", blocks = [{ code = "y" }] } }
 expect_error = "file.exists"
+expect_error_params = { path = "Templates/edit.md", actual = "7ffb3461fc1962b281b676a111cfdeac6f9b332c5d05fb68bb5536710e3bd48c" }
 expect_files = { "Templates/edit.md" = "---\nartifactType: Template\ntitle: Edit me\nlanguage: ts\n---\n\n```ts\nexport const <VK-name> = 1;\n```\n\nvars:\n```vks\nVK-name=widget\n```\n" }

@@ -138,6 +138,18 @@ pub const MIGRATE_PENDING: &str = "migrate.pending";
 pub const VARS_FENCELESS_SECTION: &str = "vars.fenceless_section";
 /// Validate warning: a Variables fence sits before the first `## ` section (spec §13.1). No params.
 pub const VARS_MIXED_FILE: &str = "vars.mixed_file";
+/// Transport: a protocol line is not valid JSON (−32700, `id: null`; spec PROTOCOL §4, S-20). No params.
+pub const PROTOCOL_PARSE_ERROR: &str = "protocol.parse_error";
+/// Transport: a protocol line exceeds the frame cap (−32600, `id: null`; S-8, S-21). Param `max` (bytes).
+pub const PROTOCOL_LINE_TOO_LONG: &str = "protocol.line_too_long";
+/// Transport: `initialize` after a successful one (−32600; S-8). No params.
+pub const PROTOCOL_ALREADY_INITIALIZED: &str = "protocol.already_initialized";
+/// Transport: a method before a successful `initialize` (−32002; S-8). No params.
+pub const PROTOCOL_NOT_INITIALIZED: &str = "protocol.not_initialized";
+/// Transport: not a JSON-RPC request — not an object (batch, scalar), an invalid id, a missing or
+/// non-string method, a malformed id-less message (−32600, `id: null` when the id is invalid; S-8,
+/// S-18, S-22). No params.
+pub const PROTOCOL_INVALID_REQUEST: &str = "protocol.invalid_request";
 
 /// Every code, for exhaustive checks (English table, exit codes, op cases).
 pub const ALL_CODES: &[&str] = &[
@@ -211,6 +223,11 @@ pub const ALL_CODES: &[&str] = &[
     MIGRATE_PENDING,
     VARS_FENCELESS_SECTION,
     VARS_MIXED_FILE,
+    PROTOCOL_PARSE_ERROR,
+    PROTOCOL_LINE_TOO_LONG,
+    PROTOCOL_ALREADY_INITIALIZED,
+    PROTOCOL_NOT_INITIALIZED,
+    PROTOCOL_INVALID_REQUEST,
 ];
 
 /// Map a vault error from an op that holds `root`: every `path` param becomes vault-relative POSIX,

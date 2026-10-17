@@ -6,3 +6,4 @@ vaults = ["/nonexistent-mda-w4a"]
 '''
 params = { path = "Snippets/hello.md" }
 expect_error = "vault.unavailable"
+expect_error_params = { path = "/nonexistent-mda-w4a" }

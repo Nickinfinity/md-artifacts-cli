@@ -1,4 +1,5 @@
 vault = "vault"
 params = { path = "Templates/mb.md", model = { artifactType = "Template", blocks = [{ code = "a" }, { code = "b" }] } }
 expect_error = "artifact.unrepresentable"
+expect_error_params = { field = "blocks", reason = "multi_block" }
 expect_files = { "Templates/mb.md" = false }

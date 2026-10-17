@@ -143,6 +143,26 @@ fn expect_files_mismatch_fails_every_leg() {
 }
 
 #[test]
+fn error_params_mismatch_fails_every_leg() {
+    let d = tmp("eparams");
+    let case = |p: &str| {
+        format!(
+            "vault = \"vault\"\nparams = {{ path = \"x\" }}\nexpect_error = \"artifact.bad_path\"\n\
+             expect_error_params = {{ path = \"{p}\" }}\n"
+        )
+    };
+    put(&d, "artifact.read", "bad", &case("nope"));
+    let fails = run_dir(&d);
+    for leg in ["dispatch", "cli", "serve"] {
+        let tag = format!("artifact.read/bad [{leg}]");
+        assert!(fails.iter().any(|f| f.contains(&tag)), "{leg}: {fails:?}");
+    }
+    put(&d, "artifact.read", "bad", &case("x"));
+    assert_eq!(run_dir(&d), Vec::<String>::new());
+    let _ = fs::remove_dir_all(&d);
+}
+
+#[test]
 fn expect_workspace_files_mismatch_fails_every_leg() {
     let d = tmp("wsfiles");
     put(

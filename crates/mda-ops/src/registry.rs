@@ -143,7 +143,7 @@ pub fn dispatch_in(
 }
 
 /// Adapt a typed op `fn(&Ctx, Req) -> Result<Resp, OpError>` into a JSON handler. `null` params
-/// mean `{}`.
+/// mean `{}`; any other non-object is `op.bad_request`.
 ///
 /// # Examples
 ///
@@ -158,6 +158,10 @@ pub fn typed<Req: serde::de::DeserializeOwned, Resp: serde::Serialize>(
     f: fn(&Ctx, Req) -> Result<Resp, OpError>,
 ) -> Result<Value, OpError> {
     let params = if params.is_null() { json!({}) } else { params };
+    if !params.is_object() {
+        // Fixed literal: never format the value (could be 16 MiB, or a secret) into the reply.
+        return Err(OpError::new(error::OP_BAD_REQUEST).with("reason", "params must be an object"));
+    }
     let req = serde_json::from_value(params)
         .map_err(|e| OpError::new(error::OP_BAD_REQUEST).with("reason", e.to_string()))?;
     let resp = f(ctx, req)?;
