@@ -11,6 +11,7 @@ pub use guard::from_parsed;
 
 use crate::error::{FieldReason, Limit, Unrepresentable, VarsError};
 use crate::model::{ArtifactModel, ModelBlock, ParsedVar, PayloadKind};
+use crate::parse::DEFAULTS_INFO;
 use crate::parse::text::{js_trim, js_trim_end};
 use crate::registry::{ArtifactType, LanguageMode};
 use crate::vks::{self, VksValue};
@@ -221,7 +222,7 @@ fn block_list(key: &str, items: &[String]) -> String {
     format!("{key}:\n{lines}")
 }
 
-/// `\n```vks\n<body>```\n`; with no vars the empty fence a sub-set needs (`ts:181-210`).
+/// `\n```yaml VKs\n<body>```\n` ([`DEFAULTS_INFO`]); with no vars the empty fence a sub-set needs (`ts:181-210`).
 fn vks_fence(vars: &[ParsedVar]) -> Result<String, SerializeError> {
     let body = vks::emit_body(vars).map_err(SerializeError::Vks)?;
     // Per fence, where the reader applies the same bound (X-15): a larger body could not be re-read.
@@ -232,7 +233,7 @@ fn vks_fence(vars: &[ParsedVar]) -> Result<String, SerializeError> {
             0,
         )));
     }
-    Ok(format!("\n```vks\n{body}```\n"))
+    Ok(format!("\n```{DEFAULTS_INFO}\n{body}```\n"))
 }
 
 fn subset(b: &ModelBlock) -> Result<String, SerializeError> {

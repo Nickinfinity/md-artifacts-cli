@@ -28,7 +28,7 @@ pub const MAX_MAP_KEYS: usize = 255;
 /// receives every file default (TS parity), so output grows with the product (decision #26).
 pub const MAX_BLOCK_DEFAULTS: usize = 100_000;
 
-/// Read a ```` ```vks ```` fence body, either dialect.
+/// Read a ```` ```yaml VKs ```` fence body, either dialect.
 ///
 /// # Examples
 ///

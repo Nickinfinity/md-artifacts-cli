@@ -3,7 +3,7 @@ artifactType: Variables
 title: Quoting
 ---
 
-```vks
+```yaml VKs
 VK-n: '1'
 VK-t: 'True'
 VK-s: ' x'

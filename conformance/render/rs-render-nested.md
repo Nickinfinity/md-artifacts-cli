@@ -12,7 +12,7 @@ end
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-env:
   - dev
   - prod

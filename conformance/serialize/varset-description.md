@@ -4,6 +4,6 @@ title: Local Dev
 description: Dev machine settings
 ---
 
-```vks
+```yaml VKs
 VK-host: localhost
 ```

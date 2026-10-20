@@ -5,9 +5,9 @@ params = { type = "Template", dir = "Templates", paths = ["edit.ts"] }
 written = 0
 skipped = 2
 results = [
-  { relPath = "edit.ts", status = "skipped", code = "file.exists", params = { path = "Templates/edit.md", actual = "7ffb3461fc1962b281b676a111cfdeac6f9b332c5d05fb68bb5536710e3bd48c" } },
+  { relPath = "edit.ts", status = "skipped", code = "file.exists", params = { path = "Templates/edit.md", actual = "4e22e1f930876da611df557d0f9bdb4e610ae2439c8341fe6d7c97df1a5621ed" } },
   { relPath = "", status = "skipped", code = "file.exists", params = { path = "Templates/index.md", actual = "add0851994c05067c8eeaefc02891beb45ba331cd0ed86414b754a120bd50f51" } },
 ]
 [expect_files]
-"Templates/edit.md" = "---\nartifactType: Template\ntitle: Edit me\nlanguage: ts\n---\n\n```ts\nexport const <VK-name> = 1;\n```\n\nvars:\n```vks\nVK-name=widget\n```\n"
+"Templates/edit.md" = "---\nartifactType: Template\ntitle: Edit me\nlanguage: ts\n---\n\n```ts\nexport const <VK-name> = 1;\n```\n\nvars:\n```yaml VKs\nVK-name=widget\n```\n"
 "Templates/index.md" = "---\nartifactType: Template\ntitle: Index\nindex: true\npaths: [src/components, ../escape, src/components]\n---\n\n1. [[edit]]\n2. [Widget](sub/widget.md)\n3. [[edit#Usage|again]]\n4. ![[esc]]\n5. [[../x]]\n6. [[sub/snip]]\n7. [[sub/nested-index]]\n"

@@ -2,6 +2,6 @@
 artifactType: Variables
 ---
 
-```vks
+```yaml VKs
 VK-a: []
 ```

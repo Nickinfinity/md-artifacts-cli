@@ -2,7 +2,7 @@
 artifactType: Variables
 ---
 
-```vks
+```yaml VKs
 # lead
 VK-a: 1
 # mid

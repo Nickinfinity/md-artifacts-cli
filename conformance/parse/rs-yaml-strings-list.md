@@ -2,7 +2,7 @@
 artifactType: Variables
 ---
 
-```vks
+```yaml VKs
 VK-tags:
   - a
   - b

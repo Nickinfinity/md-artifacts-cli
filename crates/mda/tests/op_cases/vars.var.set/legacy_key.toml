@@ -1,4 +1,4 @@
 vault = "vault"
-params = { "path" = "Variables/legacy.md", "expectedHash" = "9fc6b16a2564d9284f8feeab8fca338f3ace59de653a88f958b0ed6740466cdc", "name" = "API_URL", "value" = "http://b" }
-expect = { "path" = "Variables/legacy.md", "hash" = "114f1c67cc27b221b821fe371b8b1928ab610a04865ad875176e43fcc522c5e3" }
-expect_files = { "Variables/legacy.md" = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```vks\nVK-host: localhost\nAPI_URL: http://b\n```\n" }
+params = { "path" = "Variables/legacy.md", "expectedHash" = "f3160e0d9bca1240506b4b735c20175ad271370d90262e5eb988897acc5a5148", "name" = "API_URL", "value" = "http://b" }
+expect = { "path" = "Variables/legacy.md", "hash" = "34ef1e02d5351adc9e228dd96cf8b9ac96edb8696671b8e70a3a63ebf0731487" }
+expect_files = { "Variables/legacy.md" = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```yaml VKs\nVK-host: localhost\nAPI_URL: http://b\n```\n" }

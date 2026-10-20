@@ -170,7 +170,7 @@ fn record_key_order_survives_serialisation() {
     let v = vault("order");
     v.put(
         "Variables/structured.md",
-        "---\nartifactType: Variables\n---\n\n```vks\nVK-db:\n  zeta: z\n  alpha: a\n```\n",
+        "---\nartifactType: Variables\n---\n\n```yaml VKs\nVK-db:\n  zeta: z\n  alpha: a\n```\n",
     );
     let r = dispatch(
         &v.ctx,

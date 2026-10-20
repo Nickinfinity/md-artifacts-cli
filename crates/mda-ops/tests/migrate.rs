@@ -295,7 +295,7 @@ fn plans_carry_no_values() {
     let (d, ctx) = vault("novalues");
     fs::write(
         d.join("vault/Variables/s.md"),
-        "---\nartifactType: Variables\ntitle: S\n---\n\n```vks\nVK-a=SECRET-mig-41\n```\n",
+        "---\nartifactType: Variables\ntitle: S\n---\n\n```yaml VKs\nVK-a=SECRET-mig-41\n```\n",
     )
     .unwrap();
     let p = vks_plan(&ctx, PlanRequest {}).unwrap();
@@ -309,7 +309,7 @@ fn plan_is_linear() {
     for i in 0..2000 {
         fs::write(
             d.join(format!("vault/Variables/f{i}.md")),
-            "---\nartifactType: Variables\ntitle: S\n---\n\n```vks\nVK-a=1\n```\n",
+            "---\nartifactType: Variables\ntitle: S\n---\n\n```yaml VKs\nVK-a=1\n```\n",
         )
         .unwrap();
     }

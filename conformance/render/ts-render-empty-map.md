@@ -8,7 +8,7 @@ const url = <VK-host>/<VK-path>
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-host=
 VK-path=
 ```

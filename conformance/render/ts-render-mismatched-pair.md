@@ -8,7 +8,7 @@ title: ts-render-mismatched-pair
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-repo=
 VK-branch=
 ```

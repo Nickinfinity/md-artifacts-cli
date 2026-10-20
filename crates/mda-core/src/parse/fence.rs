@@ -11,10 +11,34 @@ use crate::error::VarsError;
 use crate::model::ParsedVar;
 use crate::vks;
 
-// A fence closes on the first ``` even mid-line, and ```c++ never opens one: TS behaviour.
+// A fence closes on the first ``` even mid-line, and ```c++ never opens one: TS behaviour. The one
+// info string with a space is the defaults fence `yaml VKs` (W7d, spec §9): group 1. The pre-W7d
+// ```vks spelling is gone; it is now an ordinary code fence (`vault.validate` warns).
 static CODE_FENCE_RE: LazyLock<Regex> =
-    LazyLock::new(|| compile(r"```([A-Za-z0-9_]*)\r?\n((?s:.)*?)```"));
-static VKS_FENCE_RE: LazyLock<Regex> = LazyLock::new(|| compile(r"```vks\r?\n((?s:.)*?)```"));
+    LazyLock::new(|| compile(r"```(?:(yaml VKs)|([A-Za-z0-9_]*))\r?\n((?s:.)*?)```"));
+static VKS_FENCE_RE: LazyLock<Regex> = LazyLock::new(|| compile(r"```yaml VKs\r?\n((?s:.)*?)```"));
+// A ```yaml fence (any info after it but `VKs`) or a pre-W7d ```vks fence whose first significant
+// line is a `VK-` key: the author meant defaults (`vars.untagged_defaults`). Line-anchored with `m`.
+static UNTAGGED_RE: LazyLock<Regex> = LazyLock::new(|| {
+    compile(
+        r"(?m)^```(yaml(?:[ \t][^\r\n]*)?|vks)\r?\n(?:[ \t]*(?:#[^\n]*)?\r?\n)*VK-[A-Za-z0-9_-]*:",
+    )
+});
+
+/// The info string the emitter writes on a defaults fence (W7d): Obsidian highlights the body as
+/// YAML (first word), and `VKs` keeps it apart from a YAML code fence.
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(mda_core::parse::DEFAULTS_INFO, "yaml VKs");
+/// ```
+pub const DEFAULTS_INFO: &str = "yaml VKs";
+
+/// True when `line` (already trimmed) opens a defaults fence, ```` ```yaml VKs ````.
+pub(crate) fn is_defaults_opener(line: &str) -> bool {
+    line.strip_prefix("```") == Some(DEFAULTS_INFO)
+}
 // `\z`, not `$`: JS `$` without `m` is end of input. `(?-u:\b)`: ASCII word boundary like JS.
 static VARS_SECTION_RE: LazyLock<Regex> =
     LazyLock::new(|| compile(r"(?-u:\b)vars:?[ \t]*\r?\n((?s:.)+?)(?:\n\n|\z)"));
@@ -28,18 +52,40 @@ pub(super) fn is_js_terminator(c: char) -> bool {
 /// `None`. `None` when `s` has no fence.
 pub(super) fn code_block(s: &str) -> Option<(String, Option<String>)> {
     let c = CODE_FENCE_RE.captures(s)?;
-    let lang = c.get(1).map(|m| m.as_str()).filter(|l| !l.is_empty());
-    let code = c.get(2).map_or("", |m| js_trim_end(m.as_str()));
+    let lang = match c.get(1) {
+        Some(_) => Some(DEFAULTS_INFO),
+        None => c.get(2).map(|m| m.as_str()).filter(|l| !l.is_empty()),
+    };
+    let code = c.get(3).map_or("", |m| js_trim_end(m.as_str()));
     Some((code.to_owned(), lang.map(str::to_owned)))
 }
 
 /// Byte range of the first fence's code (CODE_FENCE_RE group 2) in `s`: the parser's own span, so
 /// a mid-line closing fence ends it exactly where the parser does.
 pub(crate) fn code_range(s: &str) -> Option<Range<usize>> {
-    CODE_FENCE_RE.captures(s)?.get(2).map(|m| m.range())
+    CODE_FENCE_RE.captures(s)?.get(3).map(|m| m.range())
 }
 
-/// The raw body of the first ```` ```vks ```` fence in `s`.
+/// The info strings of ```` ```yaml ```` fences in `s` that hold `VK-` keys but are not tagged
+/// `VKs`: defaults the parser does not read (`vars.untagged_defaults`, W7d).
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::parse::untagged_defaults;
+/// assert_eq!(untagged_defaults("vars:\n```yaml\nVK-a: 1\n```\n"), ["yaml"]);
+/// assert_eq!(untagged_defaults("```vks\nVK-a: 1\n```\n"), ["vks"]);
+/// assert!(untagged_defaults("```yaml VKs\nVK-a: 1\n```\n```yaml\nkey: v\n```\n").is_empty());
+/// ```
+pub fn untagged_defaults(s: &str) -> Vec<String> {
+    UNTAGGED_RE
+        .captures_iter(s)
+        .filter_map(|c| c.get(1).map(|m| m.as_str().trim_end().to_owned()))
+        .filter(|info| info != DEFAULTS_INFO)
+        .collect()
+}
+
+/// The raw body of the first defaults fence (```` ```yaml VKs ````) in `s`.
 pub(super) fn vks_fence(s: &str) -> Option<&str> {
     VKS_FENCE_RE.captures(s)?.get(1).map(|m| m.as_str())
 }
@@ -109,6 +155,7 @@ mod tests {
     #[test]
     fn statics_compile() {
         LazyLock::force(&CODE_FENCE_RE);
+        LazyLock::force(&UNTAGGED_RE);
         LazyLock::force(&VKS_FENCE_RE);
         LazyLock::force(&VARS_SECTION_RE);
     }

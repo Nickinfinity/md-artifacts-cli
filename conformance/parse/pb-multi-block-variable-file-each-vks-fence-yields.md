@@ -1,9 +1,9 @@
 ## Dev
-```vks
+```yaml VKs
 VK-host=localhost
 ```
 
 ## Prod
-```vks
+```yaml VKs
 VK-host=prod.example.com
 ```

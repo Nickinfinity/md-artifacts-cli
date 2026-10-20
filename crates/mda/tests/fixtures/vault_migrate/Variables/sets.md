@@ -5,12 +5,12 @@ title: Sets
 
 ## Dev
 
-```vks
+```yaml VKs
 VK-a=1
 ```
 
 ## Prod
 
-```vks
+```yaml VKs
 VK-a=2
 ```

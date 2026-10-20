@@ -5,11 +5,11 @@ title: Empty
 
 ## X
 
-```vks
+```yaml VKs
 ```
 
 ## Y
 
-```vks
+```yaml VKs
 VK-a: x
 ```

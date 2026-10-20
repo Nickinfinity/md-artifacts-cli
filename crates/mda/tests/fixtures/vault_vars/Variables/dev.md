@@ -4,7 +4,7 @@ title: Dev
 tags: [api]
 ---
 
-```vks
+```yaml VKs
 VK-host: localhost
 VK-port: '8080'
 ```

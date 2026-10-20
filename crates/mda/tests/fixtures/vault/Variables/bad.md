@@ -3,6 +3,6 @@ artifactType: Variables
 title: Bad
 ---
 
-```vks
+```yaml VKs
 VK-a: x # note
 ```

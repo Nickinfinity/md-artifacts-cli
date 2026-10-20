@@ -3,7 +3,7 @@ artifactType: Variables
 title: Flat
 ---
 
-```vks
+```yaml VKs
 VK-host: localhost
 VK-port: '3000'
 VK-debug: 'true'

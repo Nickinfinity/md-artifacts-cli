@@ -6,7 +6,7 @@
   "frontmatter": {
     "artifactType": "Variables",
     "description": "A single, heading-less variable set",
-    "language": "vks",
+    "language": "yaml VKs",
     "tags": [
       "solo"
     ],

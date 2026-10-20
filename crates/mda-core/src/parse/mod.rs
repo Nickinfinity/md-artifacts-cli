@@ -10,6 +10,7 @@ pub mod tokens;
 
 use std::collections::{HashMap, HashSet};
 
+pub use fence::{DEFAULTS_INFO, untagged_defaults};
 pub use text::decode;
 
 pub(crate) use blocks::{block_code_ranges, block_vks_ranges, fenceless_headings};
@@ -74,7 +75,7 @@ pub(crate) fn vks_body_ranges_of(
 /// # Examples
 ///
 /// ```
-/// let c = "## A\n```vks\nVK-a: 1\n```\n## B\n```vks\nVK-b: 2\n```\n";
+/// let c = "## A\n```yaml VKs\nVK-a: 1\n```\n## B\n```yaml VKs\nVK-b: 2\n```\n";
 /// assert_eq!(mda_core::parse::file_fence_block(c), Some(0));
 /// assert_eq!(mda_core::parse::file_fence_block("no fence"), None);
 /// ```
@@ -205,7 +206,8 @@ fn fenced(content: &str) -> Payload {
 /// body minus its `vars:` section. A `vks` fence is the defaults section, not content.
 fn unflagged(content: &str, ty: ArtifactType) -> Payload {
     let fenced = fenced(content);
-    let has_content_fence = !fenced.code.is_empty() && fenced.fence_lang.as_deref() != Some("vks");
+    let has_content_fence =
+        !fenced.code.is_empty() && fenced.fence_lang.as_deref() != Some(DEFAULTS_INFO);
     if has_content_fence || !ty.info().writes_file {
         return fenced;
     }
@@ -305,29 +307,30 @@ mod tests {
     #[test]
     fn ranges_are_what_the_parser_reads() {
         let v = "Variables/v.md";
-        let flat = "---\nartifactType: Variables\n---\n\n```vks\nVK-a=1\n```\n";
+        let flat = "---\nartifactType: Variables\n---\n\n```yaml VKs\nVK-a=1\n```\n";
         assert_eq!(
             vks_body_ranges(flat, v),
             vec![top_code_range(flat).unwrap()]
         );
-        let sets = "## D\n```vks\nVK-a=1\n```\n## P\n```vks\nVK-a=2\n```\n";
+        let sets = "## D\n```yaml VKs\nVK-a=1\n```\n## P\n```yaml VKs\nVK-a=2\n```\n";
         assert_eq!(spans(sets, v), ["VK-a=1\n", "VK-a=2\n"]);
-        let trail = "## A\n```sh\nx\n```\n```vks\nVK-a=1\n```\n```vks\nVK-b=2\n```\n";
+        let trail = "## A\n```sh\nx\n```\n```yaml VKs\nVK-a=1\n```\n```yaml VKs\nVK-b=2\n```\n";
         assert_eq!(spans(trail, "Snippets/t.md"), ["VK-a=1\n"]);
-        let late = "```vks\nVK-t=1\n```\n## \n```vks\nVK-a=1\n```\n";
+        let late = "```yaml VKs\nVK-t=1\n```\n## \n```yaml VKs\nVK-a=1\n```\n";
         assert_eq!(spans(late, v), ["VK-t=1\n"]);
         let (a, z) = (format!("%%oa:{}%%", "start"), format!("%%oa:{}%%", "end"));
-        let flagged =
-            format!("{a}\nx\n{z}\n## S\n```vks\nVK-a=1\n```\n## T\n```vks\nVK-b=1\n```\n");
+        let flagged = format!(
+            "{a}\nx\n{z}\n## S\n```yaml VKs\nVK-a=1\n```\n## T\n```yaml VKs\nVK-b=1\n```\n"
+        );
         assert_eq!(spans(&flagged, "AIPrompts/f.md"), ["VK-a=1\n"]);
-        let bare = "Intro\n```vks\nA=1\n```\n## S\n```sh\nx\n```\n";
+        let bare = "Intro\n```yaml VKs\nA=1\n```\n## S\n```sh\nx\n```\n";
         assert_eq!(spans(bare, "AIAgentsConf/b.md"), ["A=1\n"]);
     }
 
     #[test]
     fn unfenced_vars_reads_only_without_a_vks_fence() {
         assert!(unfenced_vars("```sh\nx\n```\n\nvars:\nVK-a=1\n").is_some());
-        assert!(unfenced_vars("```vks\nVK-a=1\n```\nvars:\nVK-b=1\n").is_none());
+        assert!(unfenced_vars("```yaml VKs\nVK-a=1\n```\nvars:\nVK-b=1\n").is_none());
         assert!(unfenced_vars("```sh\nx\n```\n").is_none());
     }
 
@@ -342,7 +345,7 @@ mod tests {
 
     #[test]
     fn two_flagged_regions_become_blocks_with_file_defaults_overlaid() {
-        let content = "```vks\nVK-a=1\nVK-b=2\n```\n";
+        let content = "```yaml VKs\nVK-a=1\nVK-b=2\n```\n";
         let p = flagged(scan(&[("one", "x <VK-a>"), ("two", "y <VK-c>")]), content);
         assert_eq!(p.blocks.len(), 2);
         assert_eq!(p.blocks[0].heading, "one");

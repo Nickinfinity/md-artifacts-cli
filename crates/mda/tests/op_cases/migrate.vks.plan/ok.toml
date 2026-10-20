@@ -1,11 +1,11 @@
 vault = "vault_migrate"
 params = {}
 expect = { changes = [
-  { path = "Variables/crlf.md", hash = "660938c5d2e5a182485b1d83e92208d1c3777f4ce205c67d26a4c668f274bca9", fences = 1, vars = 1, droppedLines = 0 },
-  { path = "Variables/legacy.md", hash = "24e43b3273d3d1c8e34d759bc9d4d5e7723edf987c2197669cbc06124a59659c", fences = 1, vars = 2, droppedLines = 1 },
-  { path = "Variables/old.md", hash = "b8411e195515b68d1305840d3bad1e1cafe9304c20140f328d6f07cd926627ae", fences = 1, vars = 1, droppedLines = 0 },
-  { path = "Variables/sets.md", hash = "a6cdb69b5b738b9904efeb12d94306b71f56818c1748d5b08c718e15d5a0e6ad", fences = 2, vars = 2, droppedLines = 0 },
-  { path = "AIPrompts/flagged.md", hash = "b4567299df80c0fabc548ba29484392596192ee02213b8642e59ab30ceadbc45", fences = 1, vars = 1, droppedLines = 0 },
+  { path = "Variables/crlf.md", hash = "0406921e378bfbb76daf96980758f275d27fcc77fd19ecbbe7011689ff2e7d27", fences = 1, vars = 1, droppedLines = 0 },
+  { path = "Variables/legacy.md", hash = "27e878dc8ffad841d7530f2f3cb42ad80fd1f4b3f22666e0edbd46ab87952680", fences = 1, vars = 2, droppedLines = 1 },
+  { path = "Variables/old.md", hash = "744ac4cccbd1eeaeea390752323d57d6952a353e169f06027548d51ce33360de", fences = 1, vars = 1, droppedLines = 0 },
+  { path = "Variables/sets.md", hash = "eb70af06e2bd0e0d69c8050d68b44c8b10cff14770875a022f326cd9d66f2dcc", fences = 2, vars = 2, droppedLines = 0 },
+  { path = "AIPrompts/flagged.md", hash = "6b35eff84315fc95f3339b344d79bae321a29d3be6f7ab5bd00b97d24dc10efc", fences = 1, vars = 1, droppedLines = 0 },
 ], skipped = [
   { path = "Snippets/unfenced.md", code = "migrate.unfenced_vars", params = {} },
   { path = "Variables/badkey.md", code = "vks.bad_key", params = { key = "VK-a.b", line = "0", var = "VK-a.b" } },
@@ -13,4 +13,4 @@ expect = { changes = [
   { path = "Variables/dup.md", code = "vks.duplicate_key", params = { key = "VK-a", line = "0", var = "VK-a" } },
   { path = "AIPrompts/inside.md", code = "artifact.unrepresentable", params = { field = "vars", reason = "round_trip" } },
 ] }
-expect_files = { "Variables/legacy.md" = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```vks\n# hosts\nVK-host=localhost\nVK-port=8080\n```\n" }
+expect_files = { "Variables/legacy.md" = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```yaml VKs\n# hosts\nVK-host=localhost\nVK-port=8080\n```\n" }

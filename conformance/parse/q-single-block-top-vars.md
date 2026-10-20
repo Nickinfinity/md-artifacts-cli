@@ -6,6 +6,6 @@ artifactType: Snippet
 echo <VK-a>
 ```
 
-```vks
+```yaml VKs
 VK-b=1
 ```

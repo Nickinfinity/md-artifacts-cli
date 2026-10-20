@@ -8,7 +8,7 @@ Bearer <VK-token> for <VK-user>
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-token=
 VK-user=
 ```

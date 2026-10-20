@@ -3,7 +3,7 @@ artifactType: Variables
 title: Bad key
 ---
 
-```vks
+```yaml VKs
 VK-a:b=c
 VK-ok=1
 ```

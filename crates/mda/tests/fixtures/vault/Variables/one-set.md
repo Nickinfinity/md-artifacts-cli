@@ -5,6 +5,6 @@ title: One
 
 ## Only
 
-```vks
+```yaml VKs
 VK-a: x
 ```

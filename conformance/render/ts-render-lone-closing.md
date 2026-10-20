@@ -8,6 +8,6 @@ Review </VK-repo> now.
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-repo=
 ```

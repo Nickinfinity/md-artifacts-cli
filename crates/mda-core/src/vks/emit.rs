@@ -157,7 +157,7 @@ fn record(out: &mut String, n: usize, r: &VksRecord) -> Result<(), EmitReason> {
     r.0.iter().try_for_each(|(k, v)| entry(out, n, k, v))
 }
 
-/// Emit a ```` ```vks ```` fence body (without the fences): one entry per var, key order kept,
+/// Emit a ```` ```yaml VKs ```` fence body (without the fences): one entry per var, key order kept,
 /// every line ending `\n`. Call [`check_vars`] first (the serializer does): this assumes valid
 /// keys and in-limit values.
 ///

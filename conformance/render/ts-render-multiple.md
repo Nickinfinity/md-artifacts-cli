@@ -8,7 +8,7 @@ Host: <VK-host>, Port: <VK-port>
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-host=
 VK-port=
 ```

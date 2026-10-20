@@ -133,11 +133,14 @@ pub const WALK_LIMIT: &str = "walk.limit";
 pub const MIGRATE_UP_TO_DATE: &str = "migrate.up_to_date";
 /// Validate warning: a migration is pending for this file. Param `kind` (`frontmatter` | `vks`).
 pub const MIGRATE_PENDING: &str = "migrate.pending";
-/// Validate warning: a `## ` section with no `vks` fence in a Variables file (dropped by every rewrite,
+/// Validate warning: a `## ` section with no defaults fence in a Variables file (dropped by every rewrite,
 /// #54). Param `heading`.
 pub const VARS_FENCELESS_SECTION: &str = "vars.fenceless_section";
 /// Validate warning: a Variables fence sits before the first `## ` section (spec §13.1). No params.
 pub const VARS_MIXED_FILE: &str = "vars.mixed_file";
+/// Validate warning: a fence holding `VK-` keys that is not a ```` ```yaml VKs ```` defaults fence, so
+/// its values are not read (W7d, spec §9). Param `info` (its info string, e.g. `yaml`, `vks`).
+pub const VARS_UNTAGGED_DEFAULTS: &str = "vars.untagged_defaults";
 /// Transport: a protocol line is not valid JSON (−32700, `id: null`; spec PROTOCOL §4, S-20). No params.
 pub const PROTOCOL_PARSE_ERROR: &str = "protocol.parse_error";
 /// Transport: a protocol line exceeds the frame cap (−32600, `id: null`; S-8, S-21). Param `max` (bytes).
@@ -223,6 +226,7 @@ pub const ALL_CODES: &[&str] = &[
     MIGRATE_PENDING,
     VARS_FENCELESS_SECTION,
     VARS_MIXED_FILE,
+    VARS_UNTAGGED_DEFAULTS,
     PROTOCOL_PARSE_ERROR,
     PROTOCOL_LINE_TOO_LONG,
     PROTOCOL_ALREADY_INITIALIZED,

@@ -6,7 +6,7 @@ const <VK-result> = <VK-array>.reduce(acc => acc, {});
 
 ### VKs:
 
-```vks
+```yaml VKs
 VK-result=grouped
 VK-array=items
 ```

@@ -1,4 +1,4 @@
 vault = "vault"
 params = { "path" = "Variables/blank.md", "expectedHash" = "0f73bf522876dd2005835327567c881a162f7c8b7fbc9ed0fab5e0a50aff57f0", "name" = "VK-new", "value" = "x" }
-expect = { "path" = "Variables/blank.md", "hash" = "64980851c621dc6fe0d19fa7c2991db7934c0beeac02dc047be1a1d8958aad74" }
-expect_files = { "Variables/blank.md" = "---\nartifactType: Variables\ntitle: Blank\n---\n\n```vks\nVK-new: x\n```\n" }
+expect = { "path" = "Variables/blank.md", "hash" = "2ea455d5a2048e91ad80b09c28d7c86ee21a539aee5802645994141eb172cc53" }
+expect_files = { "Variables/blank.md" = "---\nartifactType: Variables\ntitle: Blank\n---\n\n```yaml VKs\nVK-new: x\n```\n" }

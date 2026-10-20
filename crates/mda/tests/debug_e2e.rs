@@ -280,7 +280,7 @@ fn debug_vars_set_keeps_values_out_of_stderr() {
         &d,
     );
     let v = d.to_str().unwrap();
-    let h = "a56e89a491ff92348440f538849cd298827e12c81fda3f88b8e4e22f0c273bdd";
+    let h = "c42fac55361cbad76ff13f44e1429d039493ed1d46e60598e4774ba30b03b0cb";
     let args = |lvl: &'static str| {
         [
             "--vault",
@@ -372,7 +372,7 @@ fn debug_vault_run(tag: &str, args: &[&str], ops: &[&str], seen: Option<&str>) {
     common::copy_tree(&src, &v);
     std::fs::write(
         v.join("Variables/s.md"),
-        "---\nartifactType: Variables\ntitle: S\n---\n\n```vks\nVK-a=SECRET-mig-77\n```\n",
+        "---\nartifactType: Variables\ntitle: S\n---\n\n```yaml VKs\nVK-a=SECRET-mig-77\n```\n",
     )
     .unwrap();
     let mut a = vec!["--vault", v.to_str().unwrap(), "--debug"];
@@ -403,7 +403,9 @@ fn debug_migrate_keeps_values_out() {
         "migdbg",
         &["migrate", "vks", "apply"],
         &["migrate.vks.plan", "migrate.vks.apply"],
-        Some("---\nartifactType: Variables\ntitle: S\n---\n\n```vks\nVK-a: SECRET-mig-77\n```\n"),
+        Some(
+            "---\nartifactType: Variables\ntitle: S\n---\n\n```yaml VKs\nVK-a: SECRET-mig-77\n```\n",
+        ),
     );
 }
 

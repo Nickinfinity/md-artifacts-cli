@@ -5,9 +5,9 @@ mod common;
 use common::{copy_tree, json_lines, run};
 
 const FIX: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/vault");
-const FLAT: &str = "a56e89a491ff92348440f538849cd298827e12c81fda3f88b8e4e22f0c273bdd";
-const SETS: &str = "c947f0a5b355398e9f282a7d39c6c6da2b63c4c0f16d24b1d3ecbe6447fbfe4e";
-const HEAD: &str = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```vks\n";
+const FLAT: &str = "c42fac55361cbad76ff13f44e1429d039493ed1d46e60598e4774ba30b03b0cb";
+const SETS: &str = "48798dc21208b2106ef6cbe5a81d786d111485bec7733427bafdfef6cfe990af";
+const HEAD: &str = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```yaml VKs\n";
 
 fn vault(name: &str) -> String {
     let d = std::env::temp_dir().join(format!("mda-cli-vars-{}-{name}", std::process::id()));
@@ -256,7 +256,7 @@ fn json_flag_prints_the_response_line() {
     assert_eq!(lines.len(), 1);
     assert_eq!(
         lines[0],
-        serde_json::json!({"path": "Variables/flat.md", "hash": "0ea28deeaf6a8ead61e87931d145172a6446762abd6370f856e8ca9029356be6"})
+        serde_json::json!({"path": "Variables/flat.md", "hash": "6e365c142f3deac58dd990a74e8ff7a4834b96518cba7e7c560c90677a7086f3"})
     );
 }
 

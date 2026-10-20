@@ -3,7 +3,7 @@
     {
       "code": "VK-host=localhost\nVK-port=3000",
       "description": "",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Dev",
       "vars": [
         {
@@ -19,7 +19,7 @@
     {
       "code": "VK-host=prod.example.com\nVK-port=443",
       "description": "",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Prod",
       "vars": [
         {
@@ -40,7 +40,7 @@
     "artifactType": "Variables",
     "description": "Per-environment settings",
     "env": "staging",
-    "language": "vks",
+    "language": "yaml VKs",
     "tags": [
       "api",
       "dev"

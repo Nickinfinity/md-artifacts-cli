@@ -4,12 +4,12 @@ artifactType: Variables
 
 ## Good
 
-```vks
+```yaml VKs
 VK-a: 1
 ```
 
 ## Bad
 
-```vks
+```yaml VKs
 VK-b: [x, y]
 ```

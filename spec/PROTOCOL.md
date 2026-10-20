@@ -8,11 +8,11 @@ extension today; MCP later reuses the framing). `mda serve` implements it.
 > warning-code tables below are **guarded** by `crates/mda/tests/protocol_doc.rs`: they must stay
 > set-equal to `system.ops`, `ALL_CODES` and the render warning codes, or the gate fails.
 
-**Protocol version:** `1.1`
+**Protocol version:** `1.2`
 
 **Max line:** `16777216` bytes
 
-Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` added at engine W7c (2026-10-19, §7.1). Within major `1` every change is additive (§7).
+Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` added at engine W7c (2026-10-19), `1.2` at W7d (2026-10-20, §7.1). Within major `1` every change is additive (§7).
 
 ## 1. Transport
 
@@ -47,11 +47,11 @@ Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` added at engine W7c (2026-
 The first request must be `initialize`:
 
 ```json
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.1"}}
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.2"}}
 ```
 
 - `params.protocol` is `"MAJOR.MINOR"`; other keys (e.g. `clientInfo`) are tolerated and ignored.
-- Result: `{"protocol":"1.1","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
+- Result: `{"protocol":"1.2","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
   per type `type, dir, contexts, defaultEnabled, writesFile, outputNameKey?, multiBlock, language?`.
 - A missing or non-string `protocol` → −32000 `op.bad_request` (no `reason`).
 - The major is the text before the first `.`; a different major → −32000 `protocol.version_mismatch`
@@ -204,6 +204,7 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `vars.bad_title` | — |
 | `vars.fenceless_section` | `heading` |
 | `vars.mixed_file` | — |
+| `vars.untagged_defaults` | `info` |
 | `migrate.up_to_date` | — |
 | `migrate.leading_blank` | — |
 | `migrate.quoted_type` | `value` |
@@ -243,6 +244,7 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 |---|---|---|
 | `1.0` | 0.7.0 | the frozen surface |
 | `1.1` | 0.8.0 | Lossless rewrite (format spec §7.6). **Response:** `artifact.read` gains `layout` (absent = fenced). **Request:** the `artifact.create` / `artifact.update` model gains `layout` and `paths`. **Behaviour:** `artifact.update` rewrites a flagged file when the model's `layout.payload` is `flags`, and an index file when the model carries its `paths`; otherwise the 1.0 refusal `artifact.not_serializable{reason}` stands, so a 1.0 client can never erase notes or `paths`. A frontmatter `artifact.patch` on a flagged file now succeeds (byte-surgical). No method, code or param key was added or removed. Emitted bytes changed (tags and `paths` as block lists, `tags` last); the file format is versioned by the format spec, not here |
+| `1.2` | 0.9.0 | Defaults fence ```` ```yaml VKs ```` (format spec §9; ```` ```vks ```` no longer read). **Response:** a defaults fence's `fenceLang`, and a Variables file's hoisted `frontmatter.language`, are `"yaml VKs"` (were `"vks"`). **Code:** `vars.untagged_defaults{info}` (a `vault.validate` warning). Emitted bytes: every defaults fence opens ```` ```yaml VKs ```` |
 
 ## 8. Notifications
 

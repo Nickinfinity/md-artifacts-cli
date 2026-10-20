@@ -2,7 +2,7 @@
 artifactType: Variables
 ---
 
-```vks
+```yaml VKs
 VK-a: 'it''s'
 VK-b: "t\tq\"\n"
 ```

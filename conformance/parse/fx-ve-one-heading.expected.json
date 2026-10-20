@@ -3,7 +3,7 @@
     {
       "code": "VK-token=xyz",
       "description": "",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Only",
       "vars": [
         {
@@ -19,7 +19,7 @@
   "frontmatter": {
     "artifactType": "Variables",
     "description": "Exactly one heading, still a blocks-shaped file",
-    "language": "vks",
+    "language": "yaml VKs",
     "tags": [
       "edge"
     ],

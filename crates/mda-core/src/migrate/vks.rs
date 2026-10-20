@@ -36,9 +36,9 @@ pub struct VksRewrite {
 /// # Examples
 ///
 /// ```
-/// let c = "```vks\nVK-a=1\n```\n";
+/// let c = "```yaml VKs\nVK-a=1\n```\n";
 /// let r = mda_core::migrate::vks::rewrite(c, "Variables/a.md").unwrap().unwrap();
-/// assert_eq!(r.content, "```vks\nVK-a: '1'\n```\n");
+/// assert_eq!(r.content, "```yaml VKs\nVK-a: '1'\n```\n");
 /// assert!(mda_core::migrate::vks::rewrite("", "Variables/a.md").unwrap().is_none());
 /// ```
 pub fn rewrite(content: &str, path: &str) -> Result<Option<VksRewrite>, Skip> {

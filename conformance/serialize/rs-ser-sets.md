@@ -6,11 +6,11 @@ title: Sets
 ## Dev
 Dev machine.
 
-```vks
+```yaml VKs
 VK-host: localhost
 ```
 
 ## Empty
 
-```vks
+```yaml VKs
 ```

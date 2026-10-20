@@ -1,4 +1,4 @@
 vault = "vault"
 params = { "path" = "Variables/flat.md", "expectedHash" = "0000000000000000000000000000000000000000000000000000000000000000", "tags" = [] }
 expect_error = "file.conflict"
-expect_files = { "Variables/flat.md" = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```vks\nVK-host: localhost\nVK-port: '3000'\n```\n" }
+expect_files = { "Variables/flat.md" = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```yaml VKs\nVK-host: localhost\nVK-port: '3000'\n```\n" }

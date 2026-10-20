@@ -5,7 +5,7 @@
   "filePath": "Variables/rs-yaml-comments.md",
   "frontmatter": {
     "artifactType": "Variables",
-    "language": "vks"
+    "language": "yaml VKs"
   },
   "relativePath": "rs-yaml-comments.md",
   "vars": [

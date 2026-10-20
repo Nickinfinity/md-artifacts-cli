@@ -97,7 +97,7 @@ fn saved_file_reads_back() {
 
 #[test]
 fn ties_break_by_path_then_index() {
-    let body = "## One\n\n```vks\nVK-a: x\n```\n\n## Two\n\n```vks\nVK-a: y\n```\n";
+    let body = "## One\n\n```yaml VKs\nVK-a: x\n```\n\n## Two\n\n```yaml VKs\nVK-a: y\n```\n";
     let (c, _) = vault(
         "tie",
         &[
@@ -125,7 +125,7 @@ fn ties_break_by_path_then_index() {
 
 #[test]
 fn one_bad_block_skips_the_whole_file() {
-    let body = "## Ok\n\n```vks\nVK-a: x\n```\n\n## Bad\n\n```vks\nVK-a: x # note\n```\n";
+    let body = "## Ok\n\n```yaml VKs\nVK-a: x\n```\n\n## Bad\n\n```yaml VKs\nVK-a: x # note\n```\n";
     let (c, _) = vault(
         "bad",
         &[
@@ -145,7 +145,7 @@ fn block_list_tags_count() {
             ("Snippets/s.md", snippet("tags:\n  - api\n")),
             (
                 "Variables/t.md",
-                vars_file("T", "tags: [api]\n", "```vks\nVK-a: x\n```\n"),
+                vars_file("T", "tags: [api]\n", "```yaml VKs\nVK-a: x\n```\n"),
             ),
         ],
     );
@@ -156,7 +156,7 @@ fn block_list_tags_count() {
 #[test]
 fn profile_is_built_once_per_call() {
     let sets: String = (0..10_000)
-        .map(|i| format!("## S{i}\n\n```vks\nVK-v{i}: x\n```\n\n"))
+        .map(|i| format!("## S{i}\n\n```yaml VKs\nVK-v{i}: x\n```\n\n"))
         .collect();
     let tokens: String = (0..80_000).map(|i| format!("<VK-n{i}>")).collect();
     let snip = format!("---\nartifactType: Snippet\ntitle: S\n---\n\n```sh\n{tokens}\n```\n");

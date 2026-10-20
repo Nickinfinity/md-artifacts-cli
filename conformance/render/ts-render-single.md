@@ -8,6 +8,6 @@ title: ts-render-single
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-name=
 ```

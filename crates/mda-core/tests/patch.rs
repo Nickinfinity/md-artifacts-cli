@@ -247,7 +247,7 @@ fn multi_keeps_per_block_vks() {
         "",
         "### VKs:",
         "",
-        "```vks",
+        "```yaml VKs",
         "VK-PORT=3000",
         "```",
         "",
@@ -455,12 +455,12 @@ fn bare_body_template_is_no_fence() {
 
 #[test]
 fn vks_only_fence_is_no_fence() {
-    let c = "---\nartifactType: Template\n---\n```vks\na: 1\n```\n";
+    let c = "---\nartifactType: Template\n---\n```yaml VKs\na: 1\n```\n";
     assert_eq!(
         patch_code(c, "Templates/t.md", &CodeTarget::Single, "q"),
         Err(PatchError::Refused(NoFence))
     );
-    let b = "## A\n```vks\na: 1\n```\n";
+    let b = "## A\n```yaml VKs\na: 1\n```\n";
     assert_eq!(
         patch_code(b, P, &multi(0, "A"), "q"),
         Err(PatchError::Refused(NoFence))

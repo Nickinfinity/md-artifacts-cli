@@ -9,6 +9,6 @@ test('<VK-language> renders', () => {});
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-language=python
 ```

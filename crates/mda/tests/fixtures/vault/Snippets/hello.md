@@ -10,6 +10,6 @@ echo <VK-greeting> <VK-name>
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-greeting=marker-7f3a
 ```

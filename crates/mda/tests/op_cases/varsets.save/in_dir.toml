@@ -1,4 +1,4 @@
 vault = "vault"
 params = { title = "X", dir = "Variables/sub", values = { "VK-a" = "b" } }
-expect = { path = "Variables/sub/x.md", hash = "3df065a83266a59f45719c6631857de281355433e989a9312ebda962bd3e3904" }
-expect_files = { "Variables/sub/x.md" = "---\nartifactType: Variables\ntitle: X\n---\n\n```vks\nVK-a: b\n```\n" }
+expect = { path = "Variables/sub/x.md", hash = "6347c7b35d6c9dc5f495becbde24eb8c3e4602584820cd88c9d6508c2c1fca89" }
+expect_files = { "Variables/sub/x.md" = "---\nartifactType: Variables\ntitle: X\n---\n\n```yaml VKs\nVK-a: b\n```\n" }

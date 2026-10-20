@@ -8,6 +8,6 @@ title: ts-render-missing-falls-back
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-port=8080
 ```

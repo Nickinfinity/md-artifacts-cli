@@ -11,7 +11,7 @@ use mda_ops::vars::*;
 use mda_ops::{Ctx, OpError, Root};
 
 const FLAT: &str =
-    "---\nartifactType: Variables\ntitle: Flat\n---\n\n```vks\nVK-host: localhost\n```\n";
+    "---\nartifactType: Variables\ntitle: Flat\n---\n\n```yaml VKs\nVK-host: localhost\n```\n";
 
 struct V {
     dir: PathBuf,
@@ -112,7 +112,7 @@ fn symlinked_file_is_never_rewritten() {
 fn map_keys_limit_refuses_and_keeps_bytes() {
     let v = vault("keys");
     let body: String = (0..255).map(|i| format!("VK-k{i}: x\n")).collect();
-    let text = format!("---\nartifactType: Variables\ntitle: Big\n---\n\n```vks\n{body}```\n");
+    let text = format!("---\nartifactType: Variables\ntitle: Big\n---\n\n```yaml VKs\n{body}```\n");
     v.put("Variables/big.md", text.as_bytes());
     let req = VarAddRequest {
         path: "Variables/big.md".into(),
@@ -175,7 +175,7 @@ fn invalid_utf8_becomes_replacement_char() {
     let v = vault("lossy");
     let mut b = b"---\nartifactType: Variables\ntitle: A".to_vec();
     b.push(0xFF);
-    b.extend_from_slice(b"B\n---\n\n```vks\nVK-host: l\n```\n");
+    b.extend_from_slice(b"B\n---\n\n```yaml VKs\nVK-host: l\n```\n");
     v.put("Variables/f.md", &b);
     v.set("Variables/f.md", v.hash("Variables/f.md"), "x")
         .unwrap();
@@ -279,6 +279,6 @@ fn new_file_then_var_then_subset_then_set_agree_with_read() {
     assert_eq!(heads, ["Default", "Prod"]);
     assert_eq!(
         String::from_utf8(v.get(&r.path)).unwrap(),
-        "---\nartifactType: Variables\ntitle: Svc\n---\n\n## Default\n\n```vks\nVK-a: '1'\n```\n\n## Prod\n\n```vks\nVK-a: '2'\n```\n"
+        "---\nartifactType: Variables\ntitle: Svc\n---\n\n## Default\n\n```yaml VKs\nVK-a: '1'\n```\n\n## Prod\n\n```yaml VKs\nVK-a: '2'\n```\n"
     );
 }

@@ -8,6 +8,6 @@ title: ts-render-split-pair
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-repo=
 ```

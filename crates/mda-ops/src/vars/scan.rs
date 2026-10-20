@@ -73,7 +73,7 @@ mod tests {
             "---\nartifactType: Snippet\ntitle: N\n---\n\n```sh\necho\n```\n",
         )
         .unwrap();
-        fs::write(v.join("bare.md"), "```vks\nVK-x: 1\n```\n").unwrap();
+        fs::write(v.join("bare.md"), "```yaml VKs\nVK-x: 1\n```\n").unwrap();
         let got = scan(&root).unwrap();
         let paths: Vec<_> = got.iter().map(|s| s.path.as_str()).collect();
         assert_eq!(paths, ["Variables/a.md", "Variables/bare.md"]);

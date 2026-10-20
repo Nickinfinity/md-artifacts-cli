@@ -8,6 +8,6 @@ title: ts-render-empty-falls-back
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-host=localhost
 ```

@@ -3,12 +3,12 @@ artifactType: Variables
 title: Mixed
 ---
 
-```vks
+```yaml VKs
 VK-top: t
 ```
 
 ## A
 
-```vks
+```yaml VKs
 VK-a: a
 ```

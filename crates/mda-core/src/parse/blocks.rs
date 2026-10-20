@@ -108,7 +108,7 @@ fn parse_section(section: &str) -> Option<ParsedBlock> {
 
     // A leading `vks` fence is a pure sub-set (an error empties it); otherwise the section's first
     // `vks` fence, if any, overlays defaults on the tokens detected in the code.
-    let (vars, vars_error) = if fence_lang.as_deref() == Some("vks") {
+    let (vars, vars_error) = if fence_lang.as_deref() == Some(fence::DEFAULTS_INFO) {
         vks::read_fence(&code).map_or_else(|e| (vec![], Some(e)), |v| (v, None))
     } else {
         overlay(tokens::detect_vars(&code), trailing_defaults(section))
@@ -143,19 +143,19 @@ mod tests {
     #[test]
     fn file_fence_block_is_positional() {
         // Block 0 holds the file-level fence; a later identical block is a different fence.
-        let sets = "## A\n```vks\nVK-a=x\n```\n## B\n```vks\nVK-a=x\n```\n";
+        let sets = "## A\n```yaml VKs\nVK-a=x\n```\n## B\n```yaml VKs\nVK-a=x\n```\n";
         assert_eq!(file_fence_block(sets), Some(0));
         // A leading untitled fence is the file-level one: no block reads it.
-        let mixed = "```vks\nVK-t: 1\n```\n## A\n```vks\nVK-a: 1\n```\n";
+        let mixed = "```yaml VKs\nVK-t: 1\n```\n## A\n```yaml VKs\nVK-a: 1\n```\n";
         assert_eq!(file_fence_block(mixed), None);
         // Block 0 has no vks fence: the file-level fence is block 1's.
-        let later = "## A\n```sh\nx\n```\n## B\n```vks\nVK-b: 2\n```\n";
+        let later = "## A\n```sh\nx\n```\n## B\n```yaml VKs\nVK-b: 2\n```\n";
         assert_eq!(file_fence_block(later), Some(1));
     }
 
     #[test]
     fn fenceless_headings_list() {
-        let c = "## Empty\n\ntext\n## Full\n```vks\nVK-a: x\n```\n";
+        let c = "## Empty\n\ntext\n## Full\n```yaml VKs\nVK-a: x\n```\n";
         assert_eq!(fenceless_headings(c), ["Empty"]);
         assert!(fenceless_headings("## \n").is_empty());
         assert_eq!(fenceless_headings("##  \n"), [""]);

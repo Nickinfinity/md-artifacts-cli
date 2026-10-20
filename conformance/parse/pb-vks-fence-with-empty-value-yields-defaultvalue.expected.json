@@ -3,7 +3,7 @@
     {
       "code": "VK-token=",
       "description": "",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Empty Defaults",
       "vars": [
         {
@@ -18,7 +18,7 @@
   "filePath": "Variables/pb-vks-fence-with-empty-value-yields-defaultvalue.md",
   "frontmatter": {
     "artifactType": "Variables",
-    "language": "vks"
+    "language": "yaml VKs"
   },
   "relativePath": "pb-vks-fence-with-empty-value-yields-defaultvalue.md",
   "vars": [

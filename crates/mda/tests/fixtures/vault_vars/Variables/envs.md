@@ -7,13 +7,13 @@ description: Deploy targets
 ## Stage
 Staging box.
 
-```vks
+```yaml VKs
 VK-host: stage.example.com
 ```
 
 ## Prod
 
-```vks
+```yaml VKs
 VK-host: example.com
 VK-db:
   user: admin

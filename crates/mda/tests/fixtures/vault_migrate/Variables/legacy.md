@@ -3,7 +3,7 @@ artifactType: Variables
 title: Legacy
 ---
 
-```vks
+```yaml VKs
 # hosts
 VK-host=localhost
 VK-port=8080

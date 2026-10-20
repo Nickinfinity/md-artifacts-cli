@@ -9,6 +9,6 @@ export const <VK-name> = 1;
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-name=widget
 ```

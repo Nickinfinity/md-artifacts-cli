@@ -8,6 +8,6 @@ title: rs-render-rescan
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-y=Y
 ```

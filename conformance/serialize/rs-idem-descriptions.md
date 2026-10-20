@@ -7,7 +7,7 @@ title: Described
 Dev machine.
 Second line.
 
-```vks
+```yaml VKs
 VK-note: |-
   line one
   line two
@@ -16,6 +16,6 @@ VK-note: |-
 ## Prod
 Live box.
 
-```vks
+```yaml VKs
 VK-host: example.com
 ```

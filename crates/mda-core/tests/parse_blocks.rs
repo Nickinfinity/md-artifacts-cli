@@ -192,13 +192,13 @@ fn empty_string_returns_empty() {
 fn vks_fence_parses_key_value_pairs_into_block_vars() {
     let b = blocks(&j(&[
         "## Local Dev",
-        "```vks",
+        "```yaml VKs",
         "VK-host=localhost",
         "VK-port=3000",
         "```",
     ]));
     assert_eq!(b.len(), 1);
-    assert_eq!(b[0].fence_lang.as_deref(), Some("vks"));
+    assert_eq!(b[0].fence_lang.as_deref(), Some("yaml VKs"));
     assert_eq!(
         b[0].vars,
         vars(&[("VK-host", "localhost"), ("VK-port", "3000")])
@@ -207,7 +207,12 @@ fn vks_fence_parses_key_value_pairs_into_block_vars() {
 
 #[test]
 fn vks_fence_with_empty_value_yields_empty_default() {
-    let b = blocks(&j(&["## Empty Defaults", "```vks", "VK-token=", "```"]));
+    let b = blocks(&j(&[
+        "## Empty Defaults",
+        "```yaml VKs",
+        "VK-token=",
+        "```",
+    ]));
     assert_eq!(b[0].vars, vars(&[("VK-token", "")]));
 }
 
@@ -215,12 +220,12 @@ fn vks_fence_with_empty_value_yields_empty_default() {
 fn multi_block_variable_file_each_vks_fence_yields_its_own_vars() {
     let b = blocks(&j(&[
         "## Dev",
-        "```vks",
+        "```yaml VKs",
         "VK-host=localhost",
         "```",
         "",
         "## Prod",
-        "```vks",
+        "```yaml VKs",
         "VK-host=prod.example.com",
         "```",
     ]));
@@ -237,7 +242,7 @@ fn vks_fence_after_a_code_fence_applies_defaults_to_detected_vars() {
         "```javascript",
         code,
         "```",
-        "```vks",
+        "```yaml VKs",
         "VK-result=filtered",
         "VK-array=items",
         "VK-prop=status",
@@ -266,7 +271,7 @@ fn detected_var_with_no_matching_vks_line_keeps_empty_default() {
         "```javascript",
         "const <VK-a> = <VK-b>;",
         "```",
-        "```vks",
+        "```yaml VKs",
         "VK-a=1",
         "```",
     ]));
@@ -280,7 +285,7 @@ fn vks_line_with_no_matching_code_token_is_appended_after_detected_vars() {
         "```javascript",
         "const <VK-a> = 1;",
         "```",
-        "```vks",
+        "```yaml VKs",
         "VK-a=10",
         "VK-unused=99",
         "```",
@@ -295,7 +300,7 @@ fn code_plus_vars_fence_pairs_are_scoped_per_block() {
         "```javascript",
         "f(<VK-x>);",
         "```",
-        "```vks",
+        "```yaml VKs",
         "VK-x=alpha",
         "```",
         "",
@@ -303,7 +308,7 @@ fn code_plus_vars_fence_pairs_are_scoped_per_block() {
         "```javascript",
         "g(<VK-x>);",
         "```",
-        "```vks",
+        "```yaml VKs",
         "VK-x=beta",
         "```",
     ]));
@@ -324,7 +329,7 @@ fn arbitrary_marker_text_between_code_fence_and_vks_fence_is_ignored() {
         "",
         "### VKs:",
         "",
-        "```vks",
+        "```yaml VKs",
         "VK-result=grouped",
         "VK-array=items",
         "```",
@@ -350,7 +355,7 @@ fn marker_text_plus_vks_scoped_per_block_across_two_sections() {
         "f(<VK-x>);",
         "```",
         "whatever marker",
-        "```vks",
+        "```yaml VKs",
         "VK-x=alpha",
         "```",
         "",
@@ -359,7 +364,7 @@ fn marker_text_plus_vks_scoped_per_block_across_two_sections() {
         "g(<VK-x>);",
         "```",
         "--- notes ---",
-        "```vks",
+        "```yaml VKs",
         "VK-x=beta",
         "```",
     ]));

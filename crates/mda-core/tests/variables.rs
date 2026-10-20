@@ -10,18 +10,18 @@ use mda_core::variables::{EditError as E, SubsetRef, *};
 use mda_core::vks::{VksRecord, VksValue};
 
 const FM: &str = "---\nartifactType: Variables\ntitle: Flat\n---\n";
-const FLAT: &str = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```vks\nVK-host: localhost\nVK-port: '3000'\n```\n";
-const SETS: &str = "---\nartifactType: Variables\ntitle: Sets\ntags: [env, dev]\n---\n\n## Dev\nDev machine.\n\n```vks\nVK-host: localhost\n```\n\n## Prod\n\n```vks\nVK-host: example.com\n```\n";
+const FLAT: &str = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```yaml VKs\nVK-host: localhost\nVK-port: '3000'\n```\n";
+const SETS: &str = "---\nartifactType: Variables\ntitle: Sets\ntags: [env, dev]\n---\n\n## Dev\nDev machine.\n\n```yaml VKs\nVK-host: localhost\n```\n\n## Prod\n\n```yaml VKs\nVK-host: example.com\n```\n";
 const BLANK: &str = "---\nartifactType: Variables\ntitle: Blank\n---\n";
 const ONE_SET: &str =
-    "---\nartifactType: Variables\ntitle: One\n---\n\n## Only\n\n```vks\nVK-a: x\n```\n";
-const LEGACY: &str = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```vks\nVK-host=localhost\nAPI_URL=http://a\n```\n";
+    "---\nartifactType: Variables\ntitle: One\n---\n\n## Only\n\n```yaml VKs\nVK-a: x\n```\n";
+const LEGACY: &str = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```yaml VKs\nVK-host=localhost\nAPI_URL=http://a\n```\n";
 const BADKEY: &str =
-    "---\nartifactType: Variables\ntitle: Bad key\n---\n\n```vks\nVK-a:b=c\nVK-ok=1\n```\n";
-const MIXED: &str = "---\nartifactType: Variables\ntitle: Mixed\n---\n\n```vks\nVK-top: t\n```\n\n## A\n\n```vks\nVK-a: a\n```\n";
-const DUPS: &str = "---\nartifactType: Variables\ntitle: Dups\n---\n\n```vks\nA=1\nA=2\n```\n";
+    "---\nartifactType: Variables\ntitle: Bad key\n---\n\n```yaml VKs\nVK-a:b=c\nVK-ok=1\n```\n";
+const MIXED: &str = "---\nartifactType: Variables\ntitle: Mixed\n---\n\n```yaml VKs\nVK-top: t\n```\n\n## A\n\n```yaml VKs\nVK-a: a\n```\n";
+const DUPS: &str = "---\nartifactType: Variables\ntitle: Dups\n---\n\n```yaml VKs\nA=1\nA=2\n```\n";
 const FIRST_EMPTY: &str =
-    "---\nartifactType: Variables\ntitle: F\n---\n\n## A\n\n## B\n\n```vks\nVK-b: 1\n```\n";
+    "---\nartifactType: Variables\ntitle: F\n---\n\n## A\n\n## B\n\n```yaml VKs\nVK-b: 1\n```\n";
 
 fn m(src: &str) -> ArtifactModel {
     model_of(&parse_from_content(src, "Variables/x.md")).unwrap()
@@ -94,7 +94,7 @@ fn add_var_shapes() {
     assert_eq!(
         bytes(&b),
         format!(
-            "{}\n```vks\nVK-new: x\n```\n",
+            "{}\n```yaml VKs\nVK-new: x\n```\n",
             "---\nartifactType: Variables\ntitle: Blank\n---\n"
         )
     );
@@ -225,7 +225,7 @@ fn delete_var_cases() {
 
     let mut o = m(ONE_SET);
     delete_var(&mut o, Some(&at(0, "Only")), "VK-a").unwrap();
-    assert!(bytes(&o).ends_with("## Only\n\n```vks\n```\n"));
+    assert!(bytes(&o).ends_with("## Only\n\n```yaml VKs\n```\n"));
 }
 
 #[test]
@@ -237,7 +237,7 @@ fn add_subset_cases() {
     assert_eq!(
         bytes(&f),
         format!(
-            "{FM}\n## Default\n\n```vks\nVK-host: localhost\nVK-port: '3000'\n```\n\n## Prod\n\n```vks\n```\n"
+            "{FM}\n## Default\n\n```yaml VKs\nVK-host: localhost\nVK-port: '3000'\n```\n\n## Prod\n\n```yaml VKs\n```\n"
         )
     );
     let mut f = m(FLAT);

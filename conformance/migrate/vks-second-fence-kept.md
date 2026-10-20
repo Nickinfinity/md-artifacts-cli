@@ -2,9 +2,9 @@
 ```sh
 x
 ```
-```vks
+```yaml VKs
 VK-a=1
 ```
-```vks
+```yaml VKs
 VK-b=2
 ```

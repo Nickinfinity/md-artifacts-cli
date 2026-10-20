@@ -3,7 +3,7 @@
 f(<VK-x>);
 ```
 whatever marker
-```vks
+```yaml VKs
 VK-x=alpha
 ```
 
@@ -12,6 +12,6 @@ VK-x=alpha
 g(<VK-x>);
 ```
 --- notes ---
-```vks
+```yaml VKs
 VK-x=beta
 ```

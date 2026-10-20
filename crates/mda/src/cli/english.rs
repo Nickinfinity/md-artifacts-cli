@@ -45,10 +45,13 @@ pub fn english(code: &str) -> Option<&'static str> {
         MIGRATE_LEADING_BLANK => "blank line(s) precede the frontmatter; remove them to migrate",
         MIGRATE_QUOTED_TYPE => "the type: value is quoted; expected a bare legacy value",
         MIGRATE_UNFENCED_VARS => {
-            "variables are in an unfenced vars: section; move them into a ```vks fence"
+            "variables are in an unfenced vars: section; move them into a ```yaml VKs fence"
         }
         MIGRATE_PENDING => "a migration is pending for this file",
-        VARS_FENCELESS_SECTION => "a ## section with no vks fence is dropped by every rewrite",
+        VARS_FENCELESS_SECTION => "a ## section with no defaults fence is dropped by every rewrite",
+        VARS_UNTAGGED_DEFAULTS => {
+            "a fence holds VK- keys but is not tagged ```yaml VKs, so its values are not read"
+        }
         VARS_MIXED_FILE => {
             "a variables fence sits before the first ## section; edits refuse this file"
         }

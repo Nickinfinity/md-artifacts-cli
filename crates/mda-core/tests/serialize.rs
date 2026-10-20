@@ -97,7 +97,7 @@ fn quoted_default_emits_tags_and_a_vars_fence() {
             "vars":[{"name":"VK-x","value":"\"active\""}]}]}),
     );
     let want = format!(
-        "{}\n```vks\n{}```\n",
+        "{}\n```yaml VKs\n{}```\n",
         j(&[
             "---",
             "artifactType: Snippet",
@@ -127,7 +127,7 @@ fn command_locked_language_is_bash_regardless_of_the_block() {
         "blocks":[{"language":"","code":"./deploy.sh <VK-env> <VK-region>",
             "vars":[{"name":"VK-env","value":"staging"},{"name":"VK-region","value":"us-east-1"}]}]}));
     let want = format!(
-        "{}\n```vks\n{}```\n",
+        "{}\n```yaml VKs\n{}```\n",
         j(&[
             "---",
             "artifactType: Command",
@@ -176,11 +176,11 @@ fn multi_block_has_no_top_level_language_or_fence() {
         "```",
         "",
         "vars:",
-        "```vks",
+        "```yaml VKs",
         "",
     ]);
     let mid = format!(
-        "{}```\n\n## Production\nProduction API base URL.\n\n```javascript\nconst baseUrl = 'https://api.<VK-DOMAIN>';\n```\n\nvars:\n```vks\n",
+        "{}```\n\n## Production\nProduction API base URL.\n\n```javascript\nconst baseUrl = 'https://api.<VK-DOMAIN>';\n```\n\nvars:\n```yaml VKs\n",
         body(&m, 0)
     );
     let want = format!("{head}{mid}{}```\n", body(&m, 1));
@@ -195,7 +195,7 @@ fn orphan_default_is_emitted() {
             "vars":[{"name":"VK-extra","value":"hello"}]}]}),
     );
     let out = serialize(&m, MAX).unwrap();
-    assert!(out.ends_with(&format!("```\n\nvars:\n```vks\n{}```\n", body(&m, 0))));
+    assert!(out.ends_with(&format!("```\n\nvars:\n```yaml VKs\n{}```\n", body(&m, 0))));
 }
 
 #[test]
@@ -221,11 +221,11 @@ fn key_order_is_pinned() {
 // ── Group B ──────────────────────────────────────────────────────────────────
 
 const MINIMAL: &str = "---\nartifactType: Snippet\ntitle: Minimal Snippet\ndescription: Smallest valid snippet.\nlanguage: javascript\n---\n<!-- c -->\n\n```javascript\nconsole.log('hello');\n```\n";
-const QUOTED: &str = "---\nartifactType: Snippet\ntitle: Q\nlanguage: javascript\ntags: [ui, state]\n---\n\n```javascript\nelement.className = <VK-x>;\n```\n\nvars:\n```vks\nVK-x=\"active\"\n```\n";
+const QUOTED: &str = "---\nartifactType: Snippet\ntitle: Q\nlanguage: javascript\ntags: [ui, state]\n---\n\n```javascript\nelement.className = <VK-x>;\n```\n\nvars:\n```yaml VKs\nVK-x=\"active\"\n```\n";
 const PLAIN: &str = "---\nartifactType: Snippet\ntitle: P\n---\n\n```\nSome plain text content.\nNo language highlight.\n```\n";
-const COMMAND: &str = "---\nartifactType: Command\ntitle: Deploy Command\ntags: [deploy]\n---\n\n```\n./deploy.sh <VK-env> <VK-region>\n```\n\nvars:\n```vks\nVK-env=staging\nVK-region=us-east-1\n```\n";
-const MULTI: &str = "---\nartifactType: Snippet\ntitle: API URLs\ntags: [api, urls]\n---\n\n## Development\nLocal development server URL.\n\n```javascript\nconst baseUrl = 'http://localhost:<VK-PORT>';\n```\n\n### VKs:\n\n```vks\nVK-PORT=3000\n```\n\n## Production\nProduction API base URL.\n\n```javascript\nconst baseUrl = 'https://api.<VK-DOMAIN>';\n```\n\n### VKs:\n\n```vks\nVK-DOMAIN=example.com\n```\n";
-const ORPHAN: &str = "---\nartifactType: Snippet\ntitle: O\nlanguage: javascript\n---\n\n```javascript\nconsole.log('no tokens here');\n```\n\nvars:\n```vks\nVK-extra=hello\n```\n";
+const COMMAND: &str = "---\nartifactType: Command\ntitle: Deploy Command\ntags: [deploy]\n---\n\n```\n./deploy.sh <VK-env> <VK-region>\n```\n\nvars:\n```yaml VKs\nVK-env=staging\nVK-region=us-east-1\n```\n";
+const MULTI: &str = "---\nartifactType: Snippet\ntitle: API URLs\ntags: [api, urls]\n---\n\n## Development\nLocal development server URL.\n\n```javascript\nconst baseUrl = 'http://localhost:<VK-PORT>';\n```\n\n### VKs:\n\n```yaml VKs\nVK-PORT=3000\n```\n\n## Production\nProduction API base URL.\n\n```javascript\nconst baseUrl = 'https://api.<VK-DOMAIN>';\n```\n\n### VKs:\n\n```yaml VKs\nVK-DOMAIN=example.com\n```\n";
+const ORPHAN: &str = "---\nartifactType: Snippet\ntitle: O\nlanguage: javascript\n---\n\n```javascript\nconsole.log('no tokens here');\n```\n\nvars:\n```yaml VKs\nVK-extra=hello\n```\n";
 
 fn round_trip(src: &str, path: &str) -> (ParsedArtifact, ParsedArtifact, String) {
     let p1 = parse_from_content(src, path);

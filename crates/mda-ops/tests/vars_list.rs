@@ -142,7 +142,7 @@ fn search_keeps_the_subset_index_not_the_filtered_position() {
     let (d, ctx) = vault("index");
     fs::write(
         d.join("vault/Variables/s.md"),
-        "---\nartifactType: Variables\ntitle: S\n---\n\n## A\n\n```vks\nVK-a: 1\n```\n\n## B\n\n```vks\nVK-b: needle\n```\n",
+        "---\nartifactType: Variables\ntitle: S\n---\n\n## A\n\n```yaml VKs\nVK-a: 1\n```\n\n## B\n\n```yaml VKs\nVK-b: needle\n```\n",
     )
     .unwrap();
     let r = search(

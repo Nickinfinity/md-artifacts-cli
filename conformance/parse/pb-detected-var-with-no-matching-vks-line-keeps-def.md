@@ -2,6 +2,6 @@
 ```javascript
 const <VK-a> = <VK-b>;
 ```
-```vks
+```yaml VKs
 VK-a=1
 ```

@@ -3,6 +3,6 @@ type: variables
 title: Old
 ---
 
-```vks
+```yaml VKs
 VK-x=1
 ```

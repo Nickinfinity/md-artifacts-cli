@@ -3,7 +3,7 @@
     {
       "code": "VK-a: 1",
       "description": "",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Good",
       "vars": [
         {
@@ -15,7 +15,7 @@
     {
       "code": "VK-b: [x, y]",
       "description": "",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Bad",
       "vars": [],
       "varsError": {
@@ -32,7 +32,7 @@
   "filePath": "Variables/rs-err-subset.md",
   "frontmatter": {
     "artifactType": "Variables",
-    "language": "vks"
+    "language": "yaml VKs"
   },
   "relativePath": "rs-err-subset.md",
   "vars": [

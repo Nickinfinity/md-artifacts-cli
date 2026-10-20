@@ -3,7 +3,7 @@
     {
       "code": "VK-array=users\nVK-result=activeUsers\nVK-property=status\nVK-value=\"active\"",
       "description": "Active users keyed by `status`; works for filter, find, map, group and dedupe.",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Users",
       "vars": [
         {
@@ -27,7 +27,7 @@
     {
       "code": "VK-array=products\nVK-result=stationery\nVK-property=category\nVK-value=\"stationery\"",
       "description": "A product catalogue grouped or filtered by `category`.",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Products",
       "vars": [
         {
@@ -51,7 +51,7 @@
     {
       "code": "VK-array=orders\nVK-result=revenue\nVK-property=total\nVK-value=100",
       "description": "Orders summed or sorted by their numeric `total`.",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Orders",
       "vars": [
         {
@@ -75,7 +75,7 @@
     {
       "code": "VK-array=tasks\nVK-result=urgentTasks\nVK-property=priority\nVK-value=\"high\"",
       "description": "A to-do list filtered by `priority`.",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Tasks",
       "vars": [
         {
@@ -99,7 +99,7 @@
     {
       "code": "VK-array=response.data\nVK-result=pages\nVK-size=25",
       "description": "Chunk an API response into pages of 25.",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "API page",
       "vars": [
         {
@@ -119,7 +119,7 @@
     {
       "code": "VK-array=tags\nVK-result=uniqueTags",
       "description": "A flat array of strings — for Deduplicate primitives and Flatten one level.",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Tags",
       "vars": [
         {
@@ -139,7 +139,7 @@
   "frontmatter": {
     "artifactType": "Variables",
     "description": "Real-world collections for the JavaScript Array Utilities snippet — each sub-set names the array, the field to work on, a sample value and the result variable",
-    "language": "vks",
+    "language": "yaml VKs",
     "tags": [
       "javascript",
       "array",

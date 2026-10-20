@@ -320,7 +320,7 @@ fn block(m: &mut ArtifactModel, i: usize) -> Result<&mut ModelBlock, EditError> 
 ///
 /// ```
 /// use mda_core::{parse::parse_from_content, serialize::from_parsed, variables::target};
-/// let p = parse_from_content("---\nartifactType: Variables\n---\n\n```vks\nVK-a: x\n```\n", "Variables/f.md");
+/// let p = parse_from_content("---\nartifactType: Variables\n---\n\n```yaml VKs\nVK-a: x\n```\n", "Variables/f.md");
 /// assert_eq!(target(&from_parsed(&p), None), Ok(0));
 /// ```
 pub fn target(m: &ArtifactModel, at: Option<&SubsetRef>) -> Result<usize, EditError> {

@@ -1,4 +1,4 @@
 vault = "vault"
-params = { path = "Variables/structured.md", expectedHash = "fe47e0fa73cab4a397271c85cf822dfde724d680303c8e282ebccb1244aac4de", edit = { field = "code", code = "x" } }
+params = { path = "Variables/structured.md", expectedHash = "60c7e6b2ab3e63101d435cdb1b5020dfbcab59ac41da142cfdec679a36fa68ac", edit = { field = "code", code = "x" } }
 expect_error = "artifact.not_serializable"
-expect_files = { "Variables/structured.md" = "---\nartifactType: Variables\ntitle: Structured\n---\n\n```vks\nVK-db:\n  zeta: z\n  alpha: a\n```\n" }
+expect_files = { "Variables/structured.md" = "---\nartifactType: Variables\ntitle: Structured\n---\n\n```yaml VKs\nVK-db:\n  zeta: z\n  alpha: a\n```\n" }

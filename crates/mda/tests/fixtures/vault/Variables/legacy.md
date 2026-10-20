@@ -3,7 +3,7 @@ artifactType: Variables
 title: Legacy
 ---
 
-```vks
+```yaml VKs
 VK-host=localhost
 API_URL=http://a
 ```

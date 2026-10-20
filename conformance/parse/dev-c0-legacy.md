@@ -2,6 +2,6 @@
 echo <VK-a>
 ```
 
-```vks
+```yaml VKs
 VK-a=xy
 ```

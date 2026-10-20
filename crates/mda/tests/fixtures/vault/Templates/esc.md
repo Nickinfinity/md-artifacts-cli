@@ -9,6 +9,6 @@ printf '[31m<VK-msg>[0m'
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-msg: red
 ```

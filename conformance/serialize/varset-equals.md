@@ -3,6 +3,6 @@ artifactType: Variables
 title: Local Dev
 ---
 
-```vks
+```yaml VKs
 VK-query: a=b&c=d
 ```

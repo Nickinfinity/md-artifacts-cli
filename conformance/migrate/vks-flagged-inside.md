@@ -4,7 +4,7 @@ title: Inside
 ---
 
 %%oa:start%%
-```vks
+```yaml VKs
 VK-a=1
 ```
 %%oa:end%%

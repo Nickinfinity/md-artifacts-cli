@@ -4,6 +4,6 @@ title: Ops
 tags: [api, ops]
 ---
 
-```vks
+```yaml VKs
 VK-user: ops-bot
 ```

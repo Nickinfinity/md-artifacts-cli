@@ -8,7 +8,7 @@ deploy <VK-env>
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-env:
   - dev
   - prod

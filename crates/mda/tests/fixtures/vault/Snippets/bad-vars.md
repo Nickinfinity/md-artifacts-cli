@@ -8,6 +8,6 @@ echo <VK-a>
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-a: x # c
 ```

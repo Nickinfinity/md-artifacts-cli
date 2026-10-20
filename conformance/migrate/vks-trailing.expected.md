@@ -7,6 +7,6 @@ title: S
 echo <VK-a>
 ```
 
-```vks
+```yaml VKs
 VK-a: hi there
 ```

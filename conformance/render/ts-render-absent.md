@@ -8,6 +8,6 @@ title: ts-render-absent
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-unknown=
 ```

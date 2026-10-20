@@ -3,7 +3,7 @@ artifactType: Variables
 title: Blocks
 ---
 
-```vks
+```yaml VKs
 VK-a: |-
   line1
   line2

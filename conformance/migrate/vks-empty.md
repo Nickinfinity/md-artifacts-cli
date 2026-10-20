@@ -3,5 +3,5 @@ artifactType: Variables
 title: E
 ---
 
-```vks
+```yaml VKs
 ```

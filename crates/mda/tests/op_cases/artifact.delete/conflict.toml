@@ -1,5 +1,5 @@
 vault = "vault"
 params = { path = "Templates/edit.md", expectedHash = "0000000000000000000000000000000000000000000000000000000000000000" }
 expect_error = "file.conflict"
-expect_error_params = { path = "Templates/edit.md", expected = "0000000000000000000000000000000000000000000000000000000000000000", actual = "7ffb3461fc1962b281b676a111cfdeac6f9b332c5d05fb68bb5536710e3bd48c" }
-expect_files = { "Templates/edit.md" = "---\nartifactType: Template\ntitle: Edit me\nlanguage: ts\n---\n\n```ts\nexport const <VK-name> = 1;\n```\n\nvars:\n```vks\nVK-name=widget\n```\n" }
+expect_error_params = { path = "Templates/edit.md", expected = "0000000000000000000000000000000000000000000000000000000000000000", actual = "4e22e1f930876da611df557d0f9bdb4e610ae2439c8341fe6d7c97df1a5621ed" }
+expect_files = { "Templates/edit.md" = "---\nartifactType: Template\ntitle: Edit me\nlanguage: ts\n---\n\n```ts\nexport const <VK-name> = 1;\n```\n\nvars:\n```yaml VKs\nVK-name=widget\n```\n" }

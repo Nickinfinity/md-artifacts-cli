@@ -8,6 +8,6 @@ title: ts-render-repeated
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-env=
 ```

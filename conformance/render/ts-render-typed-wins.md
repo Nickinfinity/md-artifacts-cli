@@ -8,6 +8,6 @@ title: ts-render-typed-wins
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-host=localhost
 ```

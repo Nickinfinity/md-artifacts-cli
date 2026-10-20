@@ -7,6 +7,6 @@ tags:
   - dev
 ---
 
-```vks
+```yaml VKs
 VK-host: localhost
 ```

@@ -7,12 +7,12 @@ tags: [env, dev]
 ## Dev
 Dev machine.
 
-```vks
+```yaml VKs
 VK-host: localhost
 ```
 
 ## Prod
 
-```vks
+```yaml VKs
 VK-host: example.com
 ```

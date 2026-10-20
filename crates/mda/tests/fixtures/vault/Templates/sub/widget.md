@@ -9,6 +9,6 @@ export const <VK-label> = 2;
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-label: w
 ```

@@ -5,7 +5,7 @@ expect = { changes = [
   { path = "Snippets/legacy.md", hash = "a7abd74eb92db4e8f437c783fd5c48642e25c5fbcc95ba18beef5e7134102abb", oldLine = "type: snippet", newLine = "artifactType: Snippet", artifactType = "Snippet" },
   { path = "AIAgentsConf/agent.md", hash = "6a05e7ff2407fe586a3c51a685ff275f7f8a0fc19d50b1e939fe31c68c0cca9b", oldLine = "type: agent", newLine = "artifactType: AIAgentsConfig", artifactType = "AIAgentsConfig" },
   { path = "Commands/latin1.md", hash = "5c14d681b051518f4867510a22d050fb0f798f966da9f9b38c083edcd5adad86", oldLine = "type: command", newLine = "artifactType: Command", artifactType = "Command", normalises = ["encoding"] },
-  { path = "Variables/old.md", hash = "b8411e195515b68d1305840d3bad1e1cafe9304c20140f328d6f07cd926627ae", oldLine = "type: variables", newLine = "artifactType: Variables", artifactType = "Variables" },
+  { path = "Variables/old.md", hash = "744ac4cccbd1eeaeea390752323d57d6952a353e169f06027548d51ce33360de", oldLine = "type: variables", newLine = "artifactType: Variables", artifactType = "Variables" },
 ], skipped = [
   { path = "Commands/blank.md", code = "migrate.leading_blank", params = {} },
   { path = "Templates/quoted.md", code = "migrate.quoted_type", params = { value = "\"template\"" } },

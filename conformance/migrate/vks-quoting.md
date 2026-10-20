@@ -3,7 +3,7 @@ artifactType: Variables
 title: Q
 ---
 
-```vks
+```yaml VKs
 VK-a=x: y
 VK-b=true
 VK-c=

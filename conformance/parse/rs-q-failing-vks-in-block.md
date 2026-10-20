@@ -4,6 +4,6 @@
 echo <VK-x>
 ```
 
-```vks
+```yaml VKs
 VK-x: 'unclosed
 ```

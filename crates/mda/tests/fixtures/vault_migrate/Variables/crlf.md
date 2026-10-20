@@ -3,6 +3,6 @@ artifactType: Variables
 title: Crlf
 ---
 
-```vks
+```yaml VKs
 VK-a=x
 ```

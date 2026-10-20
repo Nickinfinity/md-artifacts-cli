@@ -3,6 +3,6 @@ artifactType: Variables
 title: Ctrl
 ---
 
-```vks
+```yaml VKs
 VK-a=ab
 ```

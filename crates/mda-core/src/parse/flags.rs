@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use super::fence::is_vars_label;
+use super::fence::{is_defaults_opener, is_vars_label};
 use super::text::{compile, js_lines, js_trim};
 use crate::model::RegionLayout;
 
@@ -154,7 +154,7 @@ impl<'a> Open<'a> {
 ///
 /// ```
 /// use mda_core::parse::flags::scan_flags;
-/// let s = scan_flags("note\n%%oa:start%%\n***\nx\n***\n%%oa:end%%\nafter\nvars:\n```vks\nVK-a: 1\n```\n");
+/// let s = scan_flags("note\n%%oa:start%%\n***\nx\n***\n%%oa:end%%\nafter\nvars:\n```yaml VKs\nVK-a: 1\n```\n");
 /// assert_eq!(s.regions[0].content, "x");
 /// assert_eq!((s.layouts[0].notes.as_str(), s.layouts[0].rule), ("note", true));
 /// assert_eq!(s.notes, "after");
@@ -177,7 +177,7 @@ pub fn scan_flags(body: &str) -> FlagScan {
             }
         } else if let Some(m) = fence_opener(line) {
             fence = Some(m);
-            if open.is_none() && defaults.is_none() && js_trim(line) == "```vks" {
+            if open.is_none() && defaults.is_none() && is_defaults_opener(js_trim(line)) {
                 defaults = Some(true);
                 drop_vars_label(&mut gap);
             }

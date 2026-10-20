@@ -4,11 +4,15 @@
 use std::collections::BTreeMap;
 
 use mda_core::migrate::{Skip, fenceless_sections, frontmatter, vks};
-use mda_core::parse::{decode, file_fence_block, is_flagged, parse_from_content};
+use mda_core::parse::{
+    decode, file_fence_block, is_flagged, parse_from_content, untagged_defaults,
+};
 use mda_core::registry::ArtifactType;
 use mda_core::variables::{EditError, model_of};
 
-use crate::error::{MIGRATE_PENDING, VARS_FENCELESS_SECTION, VARS_MIXED_FILE, vault_error};
+use crate::error::{
+    MIGRATE_PENDING, VARS_FENCELESS_SECTION, VARS_MIXED_FILE, VARS_UNTAGGED_DEFAULTS, vault_error,
+};
 use crate::{Ctx, OpError};
 
 /// Most issues returned; counts stay exact past it.
@@ -171,6 +175,9 @@ fn issues_of(path: &str, bytes: &[u8]) -> Vec<Issue> {
             v.push(warn(path, mda_core::error::MIGRATE_UNFENCED_VARS, "", ""));
         }
         _ => {}
+    }
+    for info in untagged_defaults(&content) {
+        v.push(warn(path, VARS_UNTAGGED_DEFAULTS, "info", &info));
     }
     if p.frontmatter.artifact_type == ArtifactType::Variables && !is_flagged(&content) {
         for h in fenceless_sections(&content) {

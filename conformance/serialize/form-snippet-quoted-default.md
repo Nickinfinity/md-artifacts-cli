@@ -13,6 +13,6 @@ element.className = <VK-x>;
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-x: '"active"'
 ```

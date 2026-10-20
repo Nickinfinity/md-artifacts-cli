@@ -3,6 +3,6 @@ artifactType: Variables
 title: B
 ---
 
-```vks
+```yaml VKs
 VK-a.b=1
 ```

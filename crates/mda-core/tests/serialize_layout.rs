@@ -48,7 +48,7 @@ git diff <VK-base>
 More notes, after.
 
 vars:
-```vks
+```yaml VKs
 VK-base: main
 ```
 ";
@@ -93,7 +93,7 @@ Plan for <VK-area>.
 %%oa:end%%
 
 vars:
-```vks
+```yaml VKs
 VK-area: src
 ```
 ";
@@ -117,11 +117,11 @@ fn single_region_keeps_its_name_and_an_explicit_language() {
 fn hand_written_layout_converges_in_one_rewrite() {
     // Unterminated region, no blank lines, defaults fence before the region: one canonical rewrite,
     // after which the file is a fixed point and nothing the reader saw is gone.
-    let src = "---\nartifactType: AIPrompt\n---\nnote\nvars:\n\n```vks\nVK-a: 1\n```\n%%oa:start%%\nhi <VK-a>";
+    let src = "---\nartifactType: AIPrompt\n---\nnote\nvars:\n\n```yaml VKs\nVK-a: 1\n```\n%%oa:start%%\nhi <VK-a>";
     let once = round_trip(src, "AIPrompts/h.md");
     assert_eq!(
         once,
-        "---\nartifactType: AIPrompt\n---\n\nnote\n\n%%oa:start%%\nhi <VK-a>\n%%oa:end%%\n\nvars:\n```vks\nVK-a: '1'\n```\n"
+        "---\nartifactType: AIPrompt\n---\n\nnote\n\n%%oa:start%%\nhi <VK-a>\n%%oa:end%%\n\nvars:\n```yaml VKs\nVK-a: '1'\n```\n"
     );
     assert_eq!(round_trip(&once, "AIPrompts/h.md"), once);
 }

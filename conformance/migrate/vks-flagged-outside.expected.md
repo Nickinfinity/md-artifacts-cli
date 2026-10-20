@@ -7,6 +7,6 @@ title: Flagged
 Review <VK-repo>.
 %%oa:end%%
 
-```vks
+```yaml VKs
 VK-repo: mda
 ```

@@ -6,6 +6,6 @@ Review <VK-repo> on <VK-branch>.
 %%oa:end%%
 
 vars:
-```vks
+```yaml VKs
 VK-repo=md-artifacts
 ```

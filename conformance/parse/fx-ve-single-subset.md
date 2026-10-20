@@ -5,7 +5,7 @@ description: A single, heading-less variable set
 tags: [solo]
 ---
 
-```vks
+```yaml VKs
 VK-api_key=abc123
 VK-region=us-east-1
 ```

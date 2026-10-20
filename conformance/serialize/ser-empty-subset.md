@@ -5,11 +5,11 @@ title: Dev
 
 ## Alpha
 
-```vks
+```yaml VKs
 VK-a: '1'
 ```
 
 ## Fresh
 
-```vks
+```yaml VKs
 ```

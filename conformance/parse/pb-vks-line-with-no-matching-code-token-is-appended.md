@@ -2,7 +2,7 @@
 ```javascript
 const <VK-a> = 1;
 ```
-```vks
+```yaml VKs
 VK-a=10
 VK-unused=99
 ```

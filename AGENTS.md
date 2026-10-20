@@ -3,7 +3,10 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-19): W7c landed** — lossless rewrite, protocol **1.1**, engine `0.8.0`: `artifact.read` reports `layout`
+> **Status (2026-10-20): W7d landed** — the defaults fence is ```` ```yaml VKs ```` (Obsidian highlights YAML; `VKs` keeps it
+> apart from YAML code fences); ```` ```vks ```` is no longer read; owner `mda-core/src/parse/fence.rs` (`DEFAULTS_INFO`,
+> `is_defaults_opener`, `untagged_defaults`); `vault.validate` warns `vars.untagged_defaults{info}`; protocol **1.2**, engine `0.9.0`.
+> **W7c landed (MAC-12)** — lossless rewrite, protocol **1.1**, engine `0.8.0`: `artifact.read` reports `layout`
 > (`fence`/`bare`/`flags`, region names, notes, `***` wrapping; `mda-core/src/model/layout.rs`, `parse/flags.rs` `scan_flags`), the
 > model carries `layout` + `paths`, the emitter writes flags and bare bodies back (`serialize/payload.rs`; guard `serialize/guard.rs`),
 > frontmatter lists are block lists with `tags` last (Obsidian style); update rewrites flagged/index files only when the model carries
@@ -250,6 +253,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | `.md` parsing | `mda-core/src/parse/` |
 | `.md` emission, frontmatter key order, the single-line rule, payload layout (W7c) | `mda-core/src/serialize/` |
 | `<VK-…>` token grammar | `mda-core/src/parse/tokens.rs` (`TOKEN_PATTERN`) |
+| The defaults fence info string (`yaml VKs`) | `mda-core/src/parse/fence.rs` (`DEFAULTS_INFO`) |
 | Token substitution, directives, expansion limits | `mda-core/src/render/` (tokenizes only through `TOKEN_PATTERN`) |
 | The vks codec | `mda-core/src/vks/` |
 | `vks.*` codes | `mda-core/src/error.rs` (listed in `mda-ops` `ALL_CODES`) |

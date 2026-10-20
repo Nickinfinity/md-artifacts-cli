@@ -8,6 +8,6 @@ title: ts-render-unknown-both-spellings
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-nope=
 ```

@@ -270,7 +270,7 @@ fn bare_markdown_agent_note_is_the_payload() {
 
 #[test]
 fn vars_section_is_not_written_into_the_payload() {
-    let c = "---\nartifactType: AIAgentsConfig\n---\nBe terse with <VK-repo_name>.\n\nvars:\n```vks\nVK-repo_name=my-app\n```\n";
+    let c = "---\nartifactType: AIAgentsConfig\n---\nBe terse with <VK-repo_name>.\n\nvars:\n```yaml VKs\nVK-repo_name=my-app\n```\n";
     let a = p(c, AGENT);
     assert_eq!(a.code, "Be terse with <VK-repo_name>.");
     assert_eq!(a.vars, vars(&[("VK-repo_name", "my-app")]));
@@ -351,7 +351,7 @@ fn quirk_single_block_top_vars_are_the_fence_only() {
 
 #[test]
 fn quirk_first_vks_fence_anywhere_even_inside_a_block_is_file_level() {
-    let c = "## A\n```js\nf(<VK-x>);\n```\n```vks\nVK-x=1\n```\n";
+    let c = "## A\n```js\nf(<VK-x>);\n```\n```yaml VKs\nVK-x=1\n```\n";
     let a = p(c, "Snippets/x.md");
     assert_eq!(a.vars, vars(&[("VK-x", "1")]));
     assert_eq!(a.blocks[0].vars, vars(&[("VK-x", "1")]));
@@ -359,7 +359,7 @@ fn quirk_first_vks_fence_anywhere_even_inside_a_block_is_file_level() {
 
 #[test]
 fn quirk_failing_first_vks_fence_inside_a_block_errors_file_and_block() {
-    let c = "## A\n```js\nf(<VK-x>);\n```\n```vks\nVK-x: 'unclosed\n```\n";
+    let c = "## A\n```js\nf(<VK-x>);\n```\n```yaml VKs\nVK-x: 'unclosed\n```\n";
     let a = p(c, "Snippets/x.md");
     for (what, e) in [("file", &a.vars_error), ("block", &a.blocks[0].vars_error)] {
         let e = e.as_ref().unwrap_or_else(|| panic!("{what} error missing"));
@@ -376,7 +376,7 @@ fn flagged_file(regions: usize, defaults: usize) -> String {
     for i in 0..regions {
         c.push_str(&format!("%%oa:start r{i}%%\nx <VK-a>\n%%oa:end%%\n"));
     }
-    c.push_str("```vks\n");
+    c.push_str("```yaml VKs\n");
     for i in 0..defaults {
         c.push_str(&format!("VK-d{i}=v\n"));
     }
@@ -410,13 +410,13 @@ fn sec_flagged_product_exactly_at_the_cap_keeps_the_overlay() {
 }
 
 #[test]
-fn quirk_variables_file_code_is_the_vks_body_and_language_vks() {
+fn quirk_variables_file_code_is_the_defaults_body_and_language_is_its_info() {
     let a = p(
-        "---\nartifactType: Variables\n---\n\n```vks\nVK-a=1\n```\n",
+        "---\nartifactType: Variables\n---\n\n```yaml VKs\nVK-a=1\n```\n",
         "Variables/v.md",
     );
     assert_eq!(a.code, "VK-a=1");
-    assert_eq!(a.frontmatter.language.as_deref(), Some("vks"));
+    assert_eq!(a.frontmatter.language.as_deref(), Some("yaml VKs"));
     assert_eq!(a.vars, vars(&[("VK-a", "1")]));
 }
 
@@ -454,7 +454,7 @@ fn quirk_crlf_code_keeps_inner_carriage_returns() {
 
 #[test]
 fn quirk_legacy_duplicates_are_appended_twice() {
-    let c = "## A\n```js\nf(<VK-x>);\n```\n```vks\nVK-z=1\nVK-z=2\nVK-x=9\n```\n";
+    let c = "## A\n```js\nf(<VK-x>);\n```\n```yaml VKs\nVK-z=1\nVK-z=2\nVK-x=9\n```\n";
     let b = &p(c, "Snippets/x.md").blocks[0];
     assert_eq!(b.vars, vars(&[("VK-x", "9"), ("VK-z", "1"), ("VK-z", "2")]));
 }

@@ -1,4 +1,4 @@
 vault = "vault"
-params = { "path" = "Variables/sets.md", "expectedHash" = "c947f0a5b355398e9f282a7d39c6c6da2b63c4c0f16d24b1d3ecbe6447fbfe4e", "subset" = { "index" = 1, "heading" = "Dev" }, "heading" = "Live" }
+params = { "path" = "Variables/sets.md", "expectedHash" = "48798dc21208b2106ef6cbe5a81d786d111485bec7733427bafdfef6cfe990af", "subset" = { "index" = 1, "heading" = "Dev" }, "heading" = "Live" }
 expect_error = "artifact.block_not_found"
-expect_files = { "Variables/sets.md" = "---\nartifactType: Variables\ntitle: Sets\ntags: [env, dev]\n---\n\n## Dev\nDev machine.\n\n```vks\nVK-host: localhost\n```\n\n## Prod\n\n```vks\nVK-host: example.com\n```\n" }
+expect_files = { "Variables/sets.md" = "---\nartifactType: Variables\ntitle: Sets\ntags: [env, dev]\n---\n\n## Dev\nDev machine.\n\n```yaml VKs\nVK-host: localhost\n```\n\n## Prod\n\n```yaml VKs\nVK-host: example.com\n```\n" }

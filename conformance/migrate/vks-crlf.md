@@ -3,7 +3,7 @@ artifactType: Variables
 title: L
 ---
 
-```vks
+```yaml VKs
 # c
 VK-host=localhost
 VK-port=8080

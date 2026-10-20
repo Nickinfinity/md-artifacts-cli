@@ -10,7 +10,7 @@ use mda_ops::write_file::{WriteFileRequest, write_file};
 use mda_ops::{Ctx, OpError, Root};
 use serde_json::json;
 
-const COMPONENT: &str = "---\nartifactType: Template\ntitle: Button\nextension: tsx\n---\n\n```tsx\nexport const <VK-name> = 1;\n```\n\nvars:\n```vks\nVK-name: Widget\n```\n";
+const COMPONENT: &str = "---\nartifactType: Template\ntitle: Button\nextension: tsx\n---\n\n```tsx\nexport const <VK-name> = 1;\n```\n\nvars:\n```yaml VKs\nVK-name: Widget\n```\n";
 
 struct Env {
     vault: PathBuf,
@@ -124,7 +124,7 @@ fn render_limit_creates_nothing() {
     let body = "<VK-a>".repeat(120_000);
     fs::write(
         e.vault.join("Templates/big.md"),
-        format!("---\nartifactType: Template\ntitle: Big\nextension: txt\n---\n\n```txt\n{body}\n```\n\nvars:\n```vks\nVK-a: 0123456789abcdef\n```\n"),
+        format!("---\nartifactType: Template\ntitle: Big\nextension: txt\n---\n\n```txt\n{body}\n```\n\nvars:\n```yaml VKs\nVK-a: 0123456789abcdef\n```\n"),
     )
     .unwrap();
     let mut req = e.req("out", json!({}));

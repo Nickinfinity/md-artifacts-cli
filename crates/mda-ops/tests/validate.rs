@@ -117,7 +117,7 @@ fn oversize_file_is_an_error_entry() {
 fn sets_file_with_two_bad_blocks_reports_file_once_and_block_one() {
     let (d, ctx) = vault("blocks");
     let body = format!(
-        "{FM}\n## A\n\n```vks\nVK-a=x\u{1}y\n```\n\n## B\n\n```vks\nVK-b=ok\nVK-c=x\u{1}y\n```\n"
+        "{FM}\n## A\n\n```yaml VKs\nVK-a=x\u{1}y\n```\n\n## B\n\n```yaml VKs\nVK-b=ok\nVK-c=x\u{1}y\n```\n"
     );
     fs::write(d.join("vault/Variables/s.md"), body).unwrap();
     let r = run(&ctx);
@@ -165,7 +165,7 @@ fn comment_only_body_is_not_pending() {
     let (d, ctx) = vault("comment");
     fs::write(
         d.join("vault/Variables/c.md"),
-        format!("{FM}\n```vks\n# todo\n```\n"),
+        format!("{FM}\n```yaml VKs\n# todo\n```\n"),
     )
     .unwrap();
     assert!(run(&ctx).issues.is_empty());
@@ -174,8 +174,9 @@ fn comment_only_body_is_not_pending() {
 #[test]
 fn identical_block_errors_are_each_reported() {
     let (d, ctx) = vault("identical");
-    let body =
-        format!("{FM}\n## A\n\n```vks\nVK-a=x\u{1}y\n```\n\n## B\n\n```vks\nVK-a=x\u{1}y\n```\n");
+    let body = format!(
+        "{FM}\n## A\n\n```yaml VKs\nVK-a=x\u{1}y\n```\n\n## B\n\n```yaml VKs\nVK-a=x\u{1}y\n```\n"
+    );
     fs::write(d.join("vault/Variables/s.md"), body).unwrap();
     let r = run(&ctx);
     let ours: Vec<_> = r

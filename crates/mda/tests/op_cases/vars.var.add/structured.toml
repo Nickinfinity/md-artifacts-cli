@@ -1,4 +1,4 @@
 vault = "vault"
-params = { "path" = "Variables/flat.md", "expectedHash" = "a56e89a491ff92348440f538849cd298827e12c81fda3f88b8e4e22f0c273bdd", "name" = "VK-db", "value" = { "host" = "h", "port" = "1" } }
-expect = { "path" = "Variables/flat.md", "hash" = "e69270b52f622952b87b1f8f99b3907ad580f169a93066425182080398d519f3" }
-expect_files = { "Variables/flat.md" = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```vks\nVK-host: localhost\nVK-port: '3000'\nVK-db:\n  host: h\n  port: '1'\n```\n" }
+params = { "path" = "Variables/flat.md", "expectedHash" = "c42fac55361cbad76ff13f44e1429d039493ed1d46e60598e4774ba30b03b0cb", "name" = "VK-db", "value" = { "host" = "h", "port" = "1" } }
+expect = { "path" = "Variables/flat.md", "hash" = "503cfe7c59094043062f659db4c6ac8c9f4f777a2d5ef0c45d492b91465acd24" }
+expect_files = { "Variables/flat.md" = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```yaml VKs\nVK-host: localhost\nVK-port: '3000'\nVK-db:\n  host: h\n  port: '1'\n```\n" }

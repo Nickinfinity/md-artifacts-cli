@@ -4,7 +4,7 @@
 echo <VK-a>
 ```
 
-```vks
+```yaml VKs
 VK-b=1
 VK-b=2
 ```

@@ -6,6 +6,7 @@
 use std::ops::Range;
 
 use crate::error::Refusal;
+use crate::parse::DEFAULTS_INFO;
 use crate::parse::text::js_trim_end;
 use crate::parse::{
     block_code_ranges, body_range, is_flagged, key_of, parse_from_content, top_code_range,
@@ -169,11 +170,13 @@ fn edit_lines(body: &str, key: &str, v: &str, eol: &str) -> String {
     lines.concat()
 }
 
-/// True when the fence whose code starts at `r.start` has the info string `vks` (variables, not code).
+/// True when the fence whose code starts at `r.start` is a defaults fence (variables, not code):
+/// its opener ends ```` ```yaml VKs ```` (fences may open mid-line, like the parser's).
 fn is_vks_fence(content: &str, r: &Range<usize>) -> bool {
-    content
-        .get(..r.start)
-        .is_some_and(|h| h.trim_end_matches(['\r', '\n']).ends_with("```vks"))
+    content.get(..r.start).is_some_and(|h| {
+        h.trim_end_matches(['\r', '\n'])
+            .ends_with(&format!("```{DEFAULTS_INFO}"))
+    })
 }
 
 /// Replace the code of `target` in `content`; `path` is vault-relative.

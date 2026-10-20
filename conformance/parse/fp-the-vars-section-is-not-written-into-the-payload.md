@@ -4,6 +4,6 @@ artifactType: AIAgentsConfig
 Be terse with <VK-repo_name>.
 
 vars:
-```vks
+```yaml VKs
 VK-repo_name=my-app
 ```

@@ -8,7 +8,7 @@ tags:
 
 ## Dev
 
-```vks
+```yaml VKs
 VK-host: localhost
 VK-hosts:
   - a.local
@@ -20,6 +20,6 @@ VK-db:
 
 ## Prod
 
-```vks
+```yaml VKs
 VK-host: example.com
 ```

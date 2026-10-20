@@ -7,6 +7,6 @@ tags:
   - env
 ---
 
-```vks
+```yaml VKs
 VK-api_url: http://localhost:3000
 ```

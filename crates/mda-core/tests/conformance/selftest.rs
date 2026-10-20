@@ -279,7 +279,7 @@ fn typo_field_is_rejected() {
     assert!(err_of(&d).contains("expectd"));
 }
 
-const FLAT_MD: &str = "---\nartifactType: Variables\ntitle: V\n---\n\n```vks\nVK-a: x\n```\n";
+const FLAT_MD: &str = "---\nartifactType: Variables\ntitle: V\n---\n\n```yaml VKs\nVK-a: x\n```\n";
 
 fn idem_case(md: &str, with_path: bool, name: &str) -> PathBuf {
     let path = if with_path {

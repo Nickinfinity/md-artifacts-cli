@@ -10,6 +10,6 @@ console.log('no tokens here');
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-extra: hello
 ```

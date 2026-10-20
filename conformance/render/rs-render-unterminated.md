@@ -9,7 +9,7 @@ language: js
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-env:
   - dev
   - prod

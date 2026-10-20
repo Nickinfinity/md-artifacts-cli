@@ -8,6 +8,6 @@ title: ts-render-no-value-no-default
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-host=
 ```

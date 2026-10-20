@@ -3,7 +3,7 @@ artifactType: Variables
 title: Structured
 ---
 
-```vks
+```yaml VKs
 VK-env:
   - dev
   - prod

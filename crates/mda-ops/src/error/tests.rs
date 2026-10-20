@@ -386,12 +386,16 @@ fn w6_codes_exact_json() {
             OpError::new(VARS_MIXED_FILE),
             serde_json::json!({"code": "vars.mixed_file", "params": {}}),
         ),
+        (
+            OpError::new(VARS_UNTAGGED_DEFAULTS).with("info", "yaml"),
+            serde_json::json!({"code": "vars.untagged_defaults", "params": {"info": "yaml"}}),
+        ),
     ];
     for (e, want) in cases {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 75);
+    assert_eq!(ALL_CODES.len(), 76);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE

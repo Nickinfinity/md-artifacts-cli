@@ -3,6 +3,6 @@ artifactType: Variables
 title: K
 ---
 
-```vks
+```yaml VKs
 # todo
 ```

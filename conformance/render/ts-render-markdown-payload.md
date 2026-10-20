@@ -8,7 +8,7 @@ You are working on <VK-repo></VK-repo>, branch </VK-branch>.
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-repo=
 VK-branch=
 ```

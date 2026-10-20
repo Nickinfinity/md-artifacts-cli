@@ -14,7 +14,7 @@ const users = [
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-env:
   - dev
   - prod

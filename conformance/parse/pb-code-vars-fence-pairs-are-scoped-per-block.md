@@ -2,7 +2,7 @@
 ```javascript
 f(<VK-x>);
 ```
-```vks
+```yaml VKs
 VK-x=alpha
 ```
 
@@ -10,6 +10,6 @@ VK-x=alpha
 ```javascript
 g(<VK-x>);
 ```
-```vks
+```yaml VKs
 VK-x=beta
 ```

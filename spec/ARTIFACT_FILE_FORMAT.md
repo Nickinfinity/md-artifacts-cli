@@ -18,6 +18,8 @@ client (CLI, VS Code extension, TUI, MCP) sees vault content only through the en
 > W7c (2026-10-19)**: `create(read(f))` loses nothing the format defines, and a file in canonical layout
 > is written back byte for byte. Recorded deviations from the extension: `deviates_from_ts` in
 > `conformance/manifest.toml`.
+> **The defaults fence is ```` ```yaml VKs ```` since engine W7d (2026-10-20, §9)**; ```` ```vks ```` is no
+> longer read.
 
 > Examples use `~~~` as the outer fence so inner ```` ``` ```` fences render literally. In a real file
 > every fence is a standard triple backtick.
@@ -57,7 +59,7 @@ const x = <VK-variableName>;
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-variableName: defaultValue
 ```
 ~~~
@@ -85,7 +87,7 @@ each line is split on its **first** `:`; the key and value are trimmed. Unknown 
 
 ### 1.2 Code block
 
-The **first fenced block** after the frontmatter that is not a ```` ```vks ```` fence. Its info string
+The **first fenced block** after the frontmatter that is not a ```` ```yaml VKs ```` fence. Its info string
 may be a language (`javascript`), `code`, or **empty** (plain text). Trailing whitespace is trimmed on
 parse; the emitter trims too. A file may instead delimit its payload with **flags** (§7).
 
@@ -93,7 +95,7 @@ parse; the emitter trims too. A file may instead delimit its payload with **flag
 
 Optional. Accepted forms, in priority order:
 
-1. A ```` ```vks ```` fence (preferred). It may be preceded by a decorative label line (`vars:`,
+1. A ```` ```yaml VKs ```` fence (preferred). It may be preceded by a decorative label line (`vars:`,
    `vars`, `### VKs:`, prose); the label is ignored and the fence binds. The fence body is **YAML**
    (§9) or, for files written before §9, **legacy `KEY=value`** (§9.6). The engine reads both and
    **emits only YAML**.
@@ -119,7 +121,7 @@ defaults section is kept, after the detected ones.
 - **Language in both places:** a single-block file emits `language:` in the frontmatter **and** on the
   fence; the parser hoists the fence language into the model when frontmatter lacks it.
 - **Plain text** (`language` empty): a bare ```` ``` ```` fence and **no** `language` key at all.
-- **Defaults:** a `vars:` label then a ```` ```vks ```` fence, emitted **only if** at least one var has
+- **Defaults:** a `vars:` label then a ```` ```yaml VKs ```` fence, emitted **only if** at least one var has
   a non-empty value or a structured value (§9.3). Body per §9.5.
 - **Empty whole-file body:** a `Template` / `AIAgentsConfig` model with empty code and no defaults to
   emit is written as **frontmatter only** (no fence), which reads back with empty code and **no** language
@@ -137,10 +139,10 @@ file**. Each section is a block.
 - Sections split on `## ` **only**; `###`+ stays inside a block. An emitter never writes `## ` inside code.
 - The text between a `## Heading` line and the section's code fence is that block's **description**.
   The frontmatter `description` is the file-level description; both may coexist.
-- A section may carry its own defaults: a ```` ```vks ```` fence **anywhere after** its code fence
+- A section may carry its own defaults: a ```` ```yaml VKs ```` fence **anywhere after** its code fence
   (blank lines, a `### VKs:` marker, prose in between are ignored). Per-block vars = tokens detected in
   that block's code, overlaid with that fence's values (code order kept; vks-only keys appended).
-- A section whose **first** fence is ```` ```vks ```` is a pure **sub-set** (Variables files, §3).
+- A section whose **first** fence is ```` ```yaml VKs ```` is a pure **sub-set** (Variables files, §3).
 - **The same token in two blocks is two separate vars** — block-scoped.
 
 ### 2.1 Emission rules (multi-block)
@@ -167,7 +169,7 @@ http://localhost:<VK-port>
 
 ### VKs:
 
-```vks
+```yaml VKs
 VK-port: "3000"
 ```
 
@@ -182,7 +184,7 @@ https://api.example.com
 
 ## 3. `artifactType: Variables` files
 
-The content **is** the ```` ```vks ```` fence; there is no code fence. Used for environment variables
+The content **is** the ```` ```yaml VKs ```` fence; there is no code fence. Used for environment variables
 and for **variable sets** (§6).
 
 ~~~md
@@ -192,7 +194,7 @@ title: Local services
 env: dev
 ---
 
-```vks
+```yaml VKs
 VK-api_url: http://localhost:3000
 VK-db_url: mongodb://localhost:27017
 ```
@@ -203,11 +205,11 @@ VK-db_url: mongodb://localhost:27017
 | Shape | On disk |
 |---|---|
 | `blank` | frontmatter only |
-| `flat` | one **untitled** ```` ```vks ```` fence |
+| `flat` | one **untitled** ```` ```yaml VKs ```` fence |
 | `sets` | one or more `## Title` + fence — **even one** titled section is `sets` |
 
 - In a Variables file, vars are emitted **unfiltered**: an empty value is a key the user asked to
-  record. A `## ` sub-set with no vars still gets an **empty** fence (```` ```vks ```` + ```` ``` ````),
+  record. A `## ` sub-set with no vars still gets an **empty** fence (```` ```yaml VKs ```` + ```` ``` ````),
   or the heading would be dropped on re-parse.
 - Top-level keys in a Variables file **may** omit the `VK-` prefix (legacy files do: `API_URL=…`);
   such a key cannot be referenced by a token and is kept as written.
@@ -392,7 +394,7 @@ npm test
 
 ### 7.3 Variables in flagged payloads
 
-Tokens in the payload are auto-detected. A ```` ```vks ```` defaults fence is **file-level** and goes
+Tokens in the payload are auto-detected. A ```` ```yaml VKs ```` defaults fence is **file-level** and goes
 **outside** the flags (anything between the flags is payload). Use a render-safe token spelling (§4.2).
 
 ### 7.4 Whole-file types
@@ -407,9 +409,9 @@ survives a rewrite.
 Payload precedence, strictly ordered:
 
 1. **Flags** — if any region exists, that is the payload.
-2. **Code fence** — a ```` ```vks ```` fence does not count (it is the defaults section).
+2. **Code fence** — a ```` ```yaml VKs ```` fence does not count (it is the defaults section).
 3. **Bare body** — **only for whole-file types** (`Template`, `AIAgentsConfig`): the whole body minus
-   its `vars:` label and ```` ```vks ```` fence, with `language: markdown`.
+   its `vars:` label and ```` ```yaml VKs ```` fence, with `language: markdown`.
    An **empty** bare body (after trimming) does not take this rule: the payload is the empty fenced
    reading — empty code, no language (W3b R-29; §1.4 relies on it).
 
@@ -435,7 +437,7 @@ the same object back. Absent (the default) means **fenced** (§1–§2).
 | `regions[i].name` | the flag name; with two or more regions it is block `i`'s heading |
 | `regions[i].notes` | the text between the previous region (or the frontmatter) and this start flag; omitted when empty |
 | `regions[i].rule` | the region's first and last lines are `***` visual rules (chrome); omitted when false |
-| `notes` | the text after the last region, **minus** the defaults section: the first ```` ```vks ```` fence outside the regions and the `vars:` label just above it |
+| `notes` | the text after the last region, **minus** the defaults section: the first ```` ```yaml VKs ```` fence outside the regions and the `vars:` label just above it |
 
 - **Notes** are verbatim text with whole blank lines trimmed at both ends; they are never payload.
 - **Canonical flagged layout**, written by the emitter:
@@ -458,7 +460,7 @@ the same object back. Absent (the default) means **fenced** (§1–§2).
 <notes>
 
 vars:
-```vks
+```yaml VKs
 <every valued default>
 ```
 ~~~
@@ -588,9 +590,18 @@ emitted right after `index` as a block list; `tags` follows (§1.4). `index.crea
 
 ## 9. The `vks` body *(ruled — engine-port W1 Role A pass 1, 2026-10-09)*
 
-The body of a ```` ```vks ```` fence. Decision references (D-n) point to the design record in the
-engine-port plan; the info string stays `vks` (a ```` ```yaml ```` fence would be mistaken for the code
-fence).
+The body of a ```` ```yaml VKs ```` fence. Decision references (D-n) point to the design record in the
+engine-port plan.
+
+**The info string is exactly `yaml VKs`** *(ruled — engine W7d, 2026-10-20; was `vks`)*. Markdown takes the
+first word as the language, so Obsidian and GitHub highlight the body as YAML; the second word `VKs`
+keeps a defaults fence apart from a YAML **code** fence (a docker-compose or Kubernetes snippet), which
+a bare ```` ```yaml ```` would collide with. It is case-sensitive and the only info string with a space
+that opens a fence (§1.2: any other ```` ```lang words ```` opener is not a fence). The pre-W7d
+```` ```vks ```` spelling is **no longer read**: such a fence is an ordinary code fence with language
+`vks`. `vault.validate` warns `vars.untagged_defaults{info}` on a ```` ```yaml ```` (any info but
+`VKs`) or ```` ```vks ```` fence whose first significant line is a `VK-` key. A read reports a
+defaults fence's `fenceLang` (and a Variables file's hoisted `language`) as `yaml VKs`.
 
 ### 9.1 Grammar — a strict YAML subset (D-1, closed: hand-rolled, no YAML library)
 
@@ -652,7 +663,7 @@ default is **derived** from it whenever it is emitted (so the two can never disa
 records or a record → `""`.
 
 ~~~md
-```vks
+```yaml VKs
 VK-env:
   - dev
   - prod
@@ -883,8 +894,9 @@ severity}]}`, listing only files with issues; at most 10 000 issues are listed (
 past that; the counts stay exact). A block's `varsError` carries `block` in its params and is not
 repeated when it equals the file-level one. **Errors:** a read failure (`file.too_large`,
 `file.not_regular`, `io.failed`, `path.outside_root`) or a file/block `varsError`. **Warnings:** a
-pending migration (`migrate.pending{kind}`), `migrate.unfenced_vars`, a `## ` section with no `vks`
-fence in a Variables file (dropped by every rewrite), a mixed Variables file (§13.1). `mda vault
+pending migration (`migrate.pending{kind}`), `migrate.unfenced_vars`, a `## ` section with no defaults
+fence in a Variables file (dropped by every rewrite), a mixed Variables file (§13.1), and a fence with
+`VK-` keys that is not ```` ```yaml VKs ```` (`vars.untagged_defaults{info}`, §9). `mda vault
 validate` exits 1 when `errors > 0`, else 0.
 
 ## 12. Engine configuration files *(ruled — engine-port W4 Role A pass 1, 2026-10-11)*

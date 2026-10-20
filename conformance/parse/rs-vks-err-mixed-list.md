@@ -2,7 +2,7 @@
 artifactType: Variables
 ---
 
-```vks
+```yaml VKs
 VK-a:
   - x
   - k: v

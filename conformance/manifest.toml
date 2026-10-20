@@ -104,7 +104,7 @@ input = "parse/fp-a-vks-fence-outside-the-flags-supplies-the-defau.md"
 expected = "parse/fp-a-vks-fence-outside-the-flags-supplies-the-defau.expected.json"
 path = "AIAgentsConf/reviewer.md"
 origin = "ts@b368c20"
-deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fp-an-existing-code-fence-still-wins-over-the-bare"
@@ -190,7 +190,7 @@ input = "parse/fp-the-vars-section-is-not-written-into-the-payload.md"
 expected = "parse/fp-the-vars-section-is-not-written-into-the-payload.expected.json"
 path = "AIAgentsConf/reviewer.md"
 origin = "ts@b368c20"
-deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fs-a-between-two-regions-belongs-to-neither-and-cha"
@@ -405,6 +405,7 @@ input = "parse/fx-command-with-defaults.md"
 expected = "parse/fx-command-with-defaults.expected.json"
 path = "Commands/artifact-form/command-with-defaults.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fx-mi-dir-1-barrel"
@@ -421,6 +422,7 @@ input = "parse/fx-mi-dir-2-subdir1-button.md"
 expected = "parse/fx-mi-dir-2-subdir1-button.expected.json"
 path = "Templates/multi-index/dir_2/subdir1/Button.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fx-mi-dir-2-subdir1-button-test"
@@ -429,6 +431,7 @@ input = "parse/fx-mi-dir-2-subdir1-button-test.md"
 expected = "parse/fx-mi-dir-2-subdir1-button-test.expected.json"
 path = "Templates/multi-index/dir_2/subdir1/Button.test.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fx-mi-hostile-index"
@@ -463,6 +466,7 @@ input = "parse/fx-snippet-multi-block.md"
 expected = "parse/fx-snippet-multi-block.expected.json"
 path = "Snippets/artifact-form/snippet-multi-block.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fx-snippet-orphan-default"
@@ -471,6 +475,7 @@ input = "parse/fx-snippet-orphan-default.md"
 expected = "parse/fx-snippet-orphan-default.expected.json"
 path = "Snippets/artifact-form/snippet-orphan-default.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fx-snippet-plain-text"
@@ -487,6 +492,7 @@ input = "parse/fx-snippet-quoted-default.md"
 expected = "parse/fx-snippet-quoted-default.expected.json"
 path = "Snippets/artifact-form/snippet-quoted-default.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fx-ve-one-heading"
@@ -495,6 +501,7 @@ input = "parse/fx-ve-one-heading.md"
 expected = "parse/fx-ve-one-heading.expected.json"
 path = "Variables/vars-edit/one-heading.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fx-ve-single-subset"
@@ -503,6 +510,7 @@ input = "parse/fx-ve-single-subset.md"
 expected = "parse/fx-ve-single-subset.expected.json"
 path = "Variables/vars-edit/single-subset.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fx-ve-with-descriptions"
@@ -511,6 +519,7 @@ input = "parse/fx-ve-with-descriptions.md"
 expected = "parse/fx-ve-with-descriptions.expected.json"
 path = "Variables/vars-edit/with-descriptions.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "fx-ve-with-env"
@@ -519,6 +528,7 @@ input = "parse/fx-ve-with-env.md"
 expected = "parse/fx-ve-with-env.expected.json"
 path = "Variables/vars-edit/with-env.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "pb-arbitrary-marker-text-between-code-fence-and-vks"
@@ -527,6 +537,7 @@ input = "parse/pb-arbitrary-marker-text-between-code-fence-and-vks.md"
 expected = "parse/pb-arbitrary-marker-text-between-code-fence-and-vks.expected.json"
 path = "Snippets/pb-arbitrary-marker-text-between-code-fence-and-vks.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "pb-block-with-no-vk-tokens-has-vars"
@@ -551,6 +562,7 @@ input = "parse/pb-code-vars-fence-pairs-are-scoped-per-block.md"
 expected = "parse/pb-code-vars-fence-pairs-are-scoped-per-block.expected.json"
 path = "Snippets/pb-code-vars-fence-pairs-are-scoped-per-block.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "pb-content-with-no-headings-returns-empty-array-sin"
@@ -575,6 +587,7 @@ input = "parse/pb-detected-var-with-no-matching-vks-line-keeps-def.md"
 expected = "parse/pb-detected-var-with-no-matching-vks-line-keeps-def.expected.json"
 path = "Snippets/pb-detected-var-with-no-matching-vks-line-keeps-def.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "pb-empty-string-returns-empty-array"
@@ -623,6 +636,7 @@ input = "parse/pb-marker-text-vks-scoped-per-block-across-two-sect.md"
 expected = "parse/pb-marker-text-vks-scoped-per-block-across-two-sect.expected.json"
 path = "Snippets/pb-marker-text-vks-scoped-per-block-across-two-sect.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "pb-multi-block-variable-file-each-vks-fence-yields"
@@ -631,6 +645,7 @@ input = "parse/pb-multi-block-variable-file-each-vks-fence-yields.md"
 expected = "parse/pb-multi-block-variable-file-each-vks-fence-yields.expected.json"
 path = "Variables/pb-multi-block-variable-file-each-vks-fence-yields.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "pb-multi-line-code-block-is-captured-in-full-with-i"
@@ -695,6 +710,7 @@ input = "parse/pb-vks-fence-after-a-code-fence-applies-defaults-to.md"
 expected = "parse/pb-vks-fence-after-a-code-fence-applies-defaults-to.expected.json"
 path = "Snippets/pb-vks-fence-after-a-code-fence-applies-defaults-to.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "pb-vks-fence-parses-key-value-pairs-into-block-vars"
@@ -703,6 +719,7 @@ input = "parse/pb-vks-fence-parses-key-value-pairs-into-block-vars.md"
 expected = "parse/pb-vks-fence-parses-key-value-pairs-into-block-vars.expected.json"
 path = "Variables/pb-vks-fence-parses-key-value-pairs-into-block-vars.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "pb-vks-fence-with-empty-value-yields-defaultvalue"
@@ -711,6 +728,7 @@ input = "parse/pb-vks-fence-with-empty-value-yields-defaultvalue.md"
 expected = "parse/pb-vks-fence-with-empty-value-yields-defaultvalue.expected.json"
 path = "Variables/pb-vks-fence-with-empty-value-yields-defaultvalue.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "pb-vks-line-with-no-matching-code-token-is-appended"
@@ -719,6 +737,7 @@ input = "parse/pb-vks-line-with-no-matching-code-token-is-appended.md"
 expected = "parse/pb-vks-line-with-no-matching-code-token-is-appended.expected.json"
 path = "Snippets/pb-vks-line-with-no-matching-code-token-is-appended.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "q-closing-dashes-suffix"
@@ -775,6 +794,7 @@ input = "parse/q-first-vks-in-block-is-file-level.md"
 expected = "parse/q-first-vks-in-block-is-file-level.expected.json"
 path = "Snippets/q-first-vks-in-block.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "q-legacy-dup-appended-twice"
@@ -783,6 +803,7 @@ input = "parse/q-legacy-dup-appended-twice.md"
 expected = "parse/q-legacy-dup-appended-twice.expected.json"
 path = "Snippets/q-legacy-dup.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "q-single-block-top-vars"
@@ -791,6 +812,7 @@ input = "parse/q-single-block-top-vars.md"
 expected = "parse/q-single-block-top-vars.expected.json"
 path = "Snippets/q-single-block-top-vars.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "q-type-key-ignored"
@@ -807,6 +829,7 @@ input = "parse/q-variables-code-is-vks-body.md"
 expected = "parse/q-variables-code-is-vks-body.expected.json"
 path = "Variables/q-variables-code.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "rs-dialect-per-fence"
@@ -1022,7 +1045,7 @@ kind = "serialize"
 input = "serialize/form-command-with-defaults.model.json"
 expected = "serialize/form-command-with-defaults.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style)"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "form-snippet-minimal"
@@ -1037,7 +1060,7 @@ kind = "serialize"
 input = "serialize/form-snippet-multi-block.model.json"
 expected = "serialize/form-snippet-multi-block.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style)"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "form-snippet-orphan-default"
@@ -1045,7 +1068,7 @@ kind = "serialize"
 input = "serialize/form-snippet-orphan-default.model.json"
 expected = "serialize/form-snippet-orphan-default.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "form-snippet-plain-text"
@@ -1060,7 +1083,7 @@ kind = "serialize"
 input = "serialize/form-snippet-quoted-default.model.json"
 expected = "serialize/form-snippet-quoted-default.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style)"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "varset-bare"
@@ -1068,7 +1091,7 @@ kind = "serialize"
 input = "serialize/varset-bare.model.json"
 expected = "serialize/varset-bare.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "varset-description"
@@ -1076,7 +1099,7 @@ kind = "serialize"
 input = "serialize/varset-description.model.json"
 expected = "serialize/varset-description.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "varset-tags"
@@ -1084,7 +1107,7 @@ kind = "serialize"
 input = "serialize/varset-tags.model.json"
 expected = "serialize/varset-tags.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style)"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "varset-full"
@@ -1092,7 +1115,7 @@ kind = "serialize"
 input = "serialize/varset-full.model.json"
 expected = "serialize/varset-full.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style)"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "varset-multi-var"
@@ -1100,7 +1123,7 @@ kind = "serialize"
 input = "serialize/varset-multi-var.model.json"
 expected = "serialize/varset-multi-var.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "varset-equals"
@@ -1108,7 +1131,7 @@ kind = "serialize"
 input = "serialize/varset-equals.model.json"
 expected = "serialize/varset-equals.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "varset-quotes"
@@ -1116,7 +1139,7 @@ kind = "serialize"
 input = "serialize/varset-quotes.model.json"
 expected = "serialize/varset-quotes.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ser-newline-title"
@@ -1145,7 +1168,7 @@ kind = "serialize"
 input = "serialize/ser-empty-subset.model.json"
 expected = "serialize/ser-empty-subset.md"
 origin = "ts@b368c20"
-deviates_from_ts = "vks YAML emission"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "agent-keys-order"
@@ -1219,6 +1242,7 @@ expected = "render/ts-render-pair-once.expected.json"
 values = "render/ts-render-pair-once.values.json"
 path = "Snippets/ts-render-pair-once.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-lone-closing"
@@ -1228,6 +1252,7 @@ expected = "render/ts-render-lone-closing.expected.json"
 values = "render/ts-render-lone-closing.values.json"
 path = "Snippets/ts-render-lone-closing.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-mismatched-pair"
@@ -1237,6 +1262,7 @@ expected = "render/ts-render-mismatched-pair.expected.json"
 values = "render/ts-render-mismatched-pair.values.json"
 path = "Snippets/ts-render-mismatched-pair.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-split-pair"
@@ -1246,6 +1272,7 @@ expected = "render/ts-render-split-pair.expected.json"
 values = "render/ts-render-split-pair.values.json"
 path = "Snippets/ts-render-split-pair.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-unknown-both-spellings"
@@ -1255,6 +1282,7 @@ expected = "render/ts-render-unknown-both-spellings.expected.json"
 values = "render/ts-render-unknown-both-spellings.values.json"
 path = "Snippets/ts-render-unknown-both-spellings.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-empty-value-pair"
@@ -1264,6 +1292,7 @@ expected = "render/ts-render-empty-value-pair.expected.json"
 values = "render/ts-render-empty-value-pair.values.json"
 path = "Snippets/ts-render-empty-value-pair.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-markdown-payload"
@@ -1273,6 +1302,7 @@ expected = "render/ts-render-markdown-payload.expected.json"
 values = "render/ts-render-markdown-payload.values.json"
 path = "Snippets/ts-render-markdown-payload.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-single"
@@ -1282,6 +1312,7 @@ expected = "render/ts-render-single.expected.json"
 values = "render/ts-render-single.values.json"
 path = "Snippets/ts-render-single.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-multiple"
@@ -1291,6 +1322,7 @@ expected = "render/ts-render-multiple.expected.json"
 values = "render/ts-render-multiple.values.json"
 path = "Snippets/ts-render-multiple.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-repeated"
@@ -1300,6 +1332,7 @@ expected = "render/ts-render-repeated.expected.json"
 values = "render/ts-render-repeated.values.json"
 path = "Snippets/ts-render-repeated.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-absent"
@@ -1308,6 +1341,7 @@ input = "render/ts-render-absent.md"
 expected = "render/ts-render-absent.expected.json"
 path = "Snippets/ts-render-absent.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-partial"
@@ -1317,6 +1351,7 @@ expected = "render/ts-render-partial.expected.json"
 values = "render/ts-render-partial.values.json"
 path = "Snippets/ts-render-partial.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-no-tokens"
@@ -1334,6 +1369,7 @@ input = "render/ts-render-empty-map.md"
 expected = "render/ts-render-empty-map.expected.json"
 path = "Snippets/ts-render-empty-map.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-typed-wins"
@@ -1343,6 +1379,7 @@ expected = "render/ts-render-typed-wins.expected.json"
 values = "render/ts-render-typed-wins.values.json"
 path = "Snippets/ts-render-typed-wins.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-empty-falls-back"
@@ -1352,6 +1389,7 @@ expected = "render/ts-render-empty-falls-back.expected.json"
 values = "render/ts-render-empty-falls-back.values.json"
 path = "Snippets/ts-render-empty-falls-back.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-no-value-no-default"
@@ -1360,6 +1398,7 @@ input = "render/ts-render-no-value-no-default.md"
 expected = "render/ts-render-no-value-no-default.expected.json"
 path = "Snippets/ts-render-no-value-no-default.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "ts-render-missing-falls-back"
@@ -1368,6 +1407,7 @@ input = "render/ts-render-missing-falls-back.md"
 expected = "render/ts-render-missing-falls-back.expected.json"
 path = "Snippets/ts-render-missing-falls-back.md"
 origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
 id = "rs-render-worked-example"

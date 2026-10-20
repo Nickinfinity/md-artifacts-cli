@@ -6,6 +6,6 @@ tags: [edge]
 ---
 
 ## Only
-```vks
+```yaml VKs
 VK-token=xyz
 ```

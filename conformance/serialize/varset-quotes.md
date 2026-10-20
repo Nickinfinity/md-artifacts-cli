@@ -3,6 +3,6 @@ artifactType: Variables
 title: Local Dev
 ---
 
-```vks
+```yaml VKs
 VK-flag: '"active"'
 ```

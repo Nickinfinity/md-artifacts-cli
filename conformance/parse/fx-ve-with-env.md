@@ -7,13 +7,13 @@ env: staging
 ---
 
 ## Dev
-```vks
+```yaml VKs
 VK-host=localhost
 VK-port=3000
 ```
 
 ## Prod
-```vks
+```yaml VKs
 VK-host=prod.example.com
 VK-port=443
 ```

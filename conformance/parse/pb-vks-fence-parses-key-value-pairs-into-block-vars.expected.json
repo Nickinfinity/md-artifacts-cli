@@ -3,7 +3,7 @@
     {
       "code": "VK-host=localhost\nVK-port=3000",
       "description": "",
-      "fenceLang": "vks",
+      "fenceLang": "yaml VKs",
       "heading": "Local Dev",
       "vars": [
         {
@@ -22,7 +22,7 @@
   "filePath": "Variables/pb-vks-fence-parses-key-value-pairs-into-block-vars.md",
   "frontmatter": {
     "artifactType": "Variables",
-    "language": "vks"
+    "language": "yaml VKs"
   },
   "relativePath": "pb-vks-fence-parses-key-value-pairs-into-block-vars.md",
   "vars": [

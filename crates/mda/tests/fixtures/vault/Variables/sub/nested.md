@@ -3,6 +3,6 @@ artifactType: Variables
 title: Nested
 ---
 
-```vks
+```yaml VKs
 VK-x: '1'
 ```

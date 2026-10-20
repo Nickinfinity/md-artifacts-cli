@@ -8,6 +8,6 @@ a<VK-x></VK-x>b
 ```
 
 vars:
-```vks
+```yaml VKs
 VK-x=
 ```
