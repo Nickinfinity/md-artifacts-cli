@@ -157,7 +157,7 @@ md-artifacts-cli/
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
-├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 1.0) — orchestrator-owned
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.0) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
 ├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
@@ -203,12 +203,12 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
-- **Authority: `spec/PROTOCOL.md`** (protocol `1.0` frozen in W7; `1.1` additive, W7c). Its method, error-code and warning-code
+- **Authority: `spec/PROTOCOL.md`** (protocol `2.0`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e). Its method, error-code and warning-code
   tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
   `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
-  the type registry. A major mismatch is refused. **Within major 1 every change is additive** (no rename,
-  removal or retype of a method, code, param key or response field). v1 sends **no server notifications**.
+  the type registry. A major mismatch is refused. **Within a major every change is additive** (no rename,
+  removal or retype of a method, code, param key or response field). The engine sends **no server notifications** yet (W7b).
 - Every write request carries the **content hash** the client last read; a mismatch returns
   `file.conflict` (optimistic concurrency), never an overwrite.
 
