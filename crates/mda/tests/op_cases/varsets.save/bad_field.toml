@@ -1,0 +1,3 @@
+vault = "vault_vars"
+params = { title = "T", x = 1 }
+expect_error = "op.bad_request"

@@ -1,0 +1,20 @@
+{
+  "blocks": [],
+  "code": "still writing",
+  "fileName": "fs-an-unterminated-region-runs-to-end-of-file-a-hal",
+  "filePath": "AIPrompts/fs-an-unterminated-region-runs-to-end-of-file-a-hal.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "Draft"
+      }
+    ]
+  },
+  "relativePath": "fs-an-unterminated-region-runs-to-end-of-file-a-hal.md",
+  "vars": []
+}

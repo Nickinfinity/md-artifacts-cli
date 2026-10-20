@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Snippets/hello.md", values = { "a.b" = "x" } }
+expect_error = "vks.bad_key"

@@ -1,0 +1,35 @@
+{
+  "artifactType": "Snippet",
+  "title": "API URLs",
+  "description": "Development and production API base URLs.",
+  "tags": [
+    "api",
+    "urls"
+  ],
+  "blocks": [
+    {
+      "heading": "Development",
+      "description": "Local development server URL.",
+      "language": "javascript",
+      "code": "const baseUrl = 'http://localhost:<VK-PORT>';",
+      "vars": [
+        {
+          "name": "VK-PORT",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "heading": "Production",
+      "description": "Production API base URL.",
+      "language": "javascript",
+      "code": "const baseUrl = 'https://api.<VK-DOMAIN>';",
+      "vars": [
+        {
+          "name": "VK-DOMAIN",
+          "value": "example.com"
+        }
+      ]
+    }
+  ]
+}

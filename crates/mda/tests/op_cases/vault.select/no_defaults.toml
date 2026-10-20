@@ -1,0 +1,11 @@
+vault = "vault_bare"
+vault_flag = false
+params = { path = "$VAULT", createDefaults = false }
+[expect]
+path = "$VAULT"
+created = []
+[expect_config_files]
+"config.toml" = '''
+default = "$VAULT"
+vaults = ["$VAULT"]
+'''

@@ -1,0 +1,5 @@
+# W7c: a 1.1 client sends the layout it read, so a flagged file is rewritten with its notes.
+vault = "vault"
+params = { "path" = "AIPrompts/flagged.md", "expectedHash" = "d0b0c50ea34243b69921d8cc06916326dddfc9b74e15ab30f252248b1cde4324", "model" = { "artifactType" = "AIPrompt", "title" = "Flagged v2", "blocks" = [{ "code" = "# Prompt\n\nReview <VK-repo>." }], "layout" = { "payload" = "flags", "regions" = [{ "name" = "", "notes" = "Scratch notes." }] } } }
+expect = { path = "AIPrompts/flagged.md", hash = "35aad46ccc855ca59505eda84c6e213c6d22decc4cf80d8171b84334e2294d0a" }
+expect_files = { "AIPrompts/flagged.md" = "---\nartifactType: AIPrompt\ntitle: Flagged v2\n---\n\nScratch notes.\n\n%%oa:start%%\n# Prompt\n\nReview <VK-repo>.\n%%oa:end%%\n" }

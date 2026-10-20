@@ -1,0 +1,22 @@
+{
+  "blocks": [],
+  "code": "payload",
+  "fileName": "fs-text-outside-the-flags-is-dropped-that-is-what-t",
+  "filePath": "AIPrompts/fs-text-outside-the-flags-is-dropped-that-is-what-t.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "layout": {
+    "notes": "trailing notes",
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "",
+        "notes": "Private vault notes."
+      }
+    ]
+  },
+  "relativePath": "fs-text-outside-the-flags-is-dropped-that-is-what-t.md",
+  "vars": []
+}

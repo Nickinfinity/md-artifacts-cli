@@ -1,0 +1,5 @@
+# A block index past the single block is refused, not ignored; nothing is written.
+vault = "vault"
+params = { path = "Templates/component.md", block = 3, workspaceRoot = "$WORKSPACE", destDir = "out" }
+expect_error = "artifact.block_not_found"
+expect_workspace_files = { "out/Button.tsx" = false }

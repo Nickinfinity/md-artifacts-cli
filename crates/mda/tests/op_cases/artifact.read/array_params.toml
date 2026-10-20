@@ -1,0 +1,3 @@
+vault = "vault"
+params = ["Snippets/hello.md"]
+expect_error = "op.bad_request"

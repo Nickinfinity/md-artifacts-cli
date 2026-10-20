@@ -1,0 +1,4 @@
+vault = "vault"
+params = { type = "Command", enabled = true }
+expect = { type = "Command", enabled = true, created = true }
+expect_files = { ".mda/config.toml" = "[types.Command]\nenabled = true\n" }

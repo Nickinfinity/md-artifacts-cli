@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/component.md", workspaceRoot = "rel", destDir = "" }
+expect_error = "op.bad_request"
+expect_workspace_files = { "out" = false, "x" = false, "Btn" = false, "CON.txt" = false }

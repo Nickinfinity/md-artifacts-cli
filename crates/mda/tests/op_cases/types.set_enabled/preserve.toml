@@ -1,0 +1,4 @@
+vault = "vault_cfg"
+params = { type = "Template", enabled = true }
+expect = { type = "Template", enabled = true, created = true }
+expect_files = { ".mda/config.toml" = "[future]\nkeep = 1\n\n[types.Command]\nenabled = true\n\n[types.Snippet]\nenabled = false\n\n[types.Template]\nenabled = true\n" }

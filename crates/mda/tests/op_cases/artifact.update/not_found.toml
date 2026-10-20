@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/none.md", expectedHash = "0000000000000000000000000000000000000000000000000000000000000000", model = { artifactType = "Template" } }
+expect_error = "path.not_found"
+expect_files = { "Templates/none.md" = false }

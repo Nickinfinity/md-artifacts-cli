@@ -1,10 +1,1770 @@
 # Conformance manifest: every case the harness (crates/mda-core/tests/conformance.rs) runs.
-# A file under parse/, serialize/ or render/ that no case lists fails the suite.
+# A file under parse/, serialize/, render/ or migrate/ that no case lists fails the suite.
 #
 # [[cases]]
 # id = "unique-id"                 # unique
-# kind = "parse"                   # parse | serialize | render
+# kind = "parse"                   # parse | serialize | render | idempotent | migrate
 # input = "parse/x.md"             # path relative to conformance/
 # expected = "parse/x.expected.json"
 # values = "render/x.values.json"  # render only; path relative to conformance/
+# path = "<TypeDir>/<rel>.md"      # parse, render and idempotent: drives the type, filePath, fileName, relativePath
+# block = 0                        # render only: the block index (spec block-selection rules)
+# origin = "ts@b368c20"            # or "rust" (hand-derived from the spec, never run through TS)
 # deviates_from_ts = "reason"      # optional: a recorded, deliberate difference from the TS extension
+
+[[cases]]
+id = "ap-leaves-the-keys-undefined-when-the-file-omits-th"
+kind = "parse"
+input = "parse/ap-leaves-the-keys-undefined-when-the-file-omits-th.md"
+expected = "parse/ap-leaves-the-keys-undefined-when-the-file-omits-th.expected.json"
+path = "AIAgentsConf/bare.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ap-reads-provider-model-version-off-an-agent-file"
+kind = "parse"
+input = "parse/ap-reads-provider-model-version-off-an-agent-file.md"
+expected = "parse/ap-reads-provider-model-version-off-an-agent-file.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "dev-bom"
+kind = "parse"
+input = "parse/dev-bom.md"
+expected = "parse/dev-bom.expected.json"
+path = "Snippets/dev-bom.md"
+origin = "ts@b368c20"
+deviates_from_ts = "Q-B: one leading BOM stripped"
+
+[[cases]]
+id = "dev-c0-legacy"
+kind = "parse"
+input = "parse/dev-c0-legacy.md"
+expected = "parse/dev-c0-legacy.expected.json"
+path = "Snippets/dev-c0-legacy.md"
+origin = "rust"
+deviates_from_ts = "spec §9.6: C0 rejected"
+
+[[cases]]
+id = "fp-a-bare-markdown-agent-note-with-no-flags-and-no"
+kind = "parse"
+input = "parse/fp-a-bare-markdown-agent-note-with-no-flags-and-no.md"
+expected = "parse/fp-a-bare-markdown-agent-note-with-no-flags-and-no.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fp-a-classic-fenced-single-block-file-parses-exactl"
+kind = "parse"
+input = "parse/fp-a-classic-fenced-single-block-file-parses-exactl.md"
+expected = "parse/fp-a-classic-fenced-single-block-file-parses-exactl.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-a-classic-heading-multi-block-file-still-splits"
+kind = "parse"
+input = "parse/fp-a-classic-heading-multi-block-file-still-splits.md"
+expected = "parse/fp-a-classic-heading-multi-block-file-still-splits.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-a-flag-less-note-keeps-its-the-rule-is-only-igno"
+kind = "parse"
+input = "parse/fp-a-flag-less-note-keeps-its-the-rule-is-only-igno.md"
+expected = "parse/fp-a-flag-less-note-keeps-its-the-rule-is-only-igno.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fp-a-snippet-with-no-fence-does-not-take-the-bare-b"
+kind = "parse"
+input = "parse/fp-a-snippet-with-no-fence-does-not-take-the-bare-b.md"
+expected = "parse/fp-a-snippet-with-no-fence-does-not-take-the-bare-b.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-a-template-with-no-fence-takes-the-whole-body-to"
+kind = "parse"
+input = "parse/fp-a-template-with-no-fence-takes-the-whole-body-to.md"
+expected = "parse/fp-a-template-with-no-fence-takes-the-whole-body-to.expected.json"
+path = "Templates/readme.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fp-a-vks-fence-outside-the-flags-supplies-the-defau"
+kind = "parse"
+input = "parse/fp-a-vks-fence-outside-the-flags-supplies-the-defau.md"
+expected = "parse/fp-a-vks-fence-outside-the-flags-supplies-the-defau.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fp-an-existing-code-fence-still-wins-over-the-bare"
+kind = "parse"
+input = "parse/fp-an-existing-code-fence-still-wins-over-the-bare.md"
+expected = "parse/fp-an-existing-code-fence-still-wins-over-the-bare.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fp-an-explicit-frontmatter-language-still-wins"
+kind = "parse"
+input = "parse/fp-an-explicit-frontmatter-language-still-wins.md"
+expected = "parse/fp-an-explicit-frontmatter-language-still-wins.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fp-each-region-becomes-a-block-keyed-by-its-flag-na"
+kind = "parse"
+input = "parse/fp-each-region-becomes-a-block-keyed-by-its-flag-na.md"
+expected = "parse/fp-each-region-becomes-a-block-keyed-by-its-flag-na.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fp-flags-still-win-when-present"
+kind = "parse"
+input = "parse/fp-flags-still-win-when-present.md"
+expected = "parse/fp-flags-still-win-when-present.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fp-headings-inside-a-flagged-region-stay-payload-no"
+kind = "parse"
+input = "parse/fp-headings-inside-a-flagged-region-stay-payload-no.md"
+expected = "parse/fp-headings-inside-a-flagged-region-stay-payload-no.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fp-the-payload-is-the-region-not-the-first-code-fen"
+kind = "parse"
+input = "parse/fp-the-payload-is-the-region-not-the-first-code-fen.md"
+expected = "parse/fp-the-payload-is-the-region-not-the-first-code-fen.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fp-the-vars-section-is-not-written-into-the-payload"
+kind = "parse"
+input = "parse/fp-the-vars-section-is-not-written-into-the-payload.md"
+expected = "parse/fp-the-vars-section-is-not-written-into-the-payload.expected.json"
+path = "AIAgentsConf/reviewer.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fs-a-between-two-regions-belongs-to-neither-and-cha"
+kind = "parse"
+input = "parse/fs-a-between-two-regions-belongs-to-neither-and-cha.md"
+expected = "parse/fs-a-between-two-regions-belongs-to-neither-and-cha.expected.json"
+path = "AIPrompts/fs-a-between-two-regions-belongs-to-neither-and-cha.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-a-file-with-no-flags-yields-no-regions-classic-f"
+kind = "parse"
+input = "parse/fs-a-file-with-no-flags-yields-no-regions-classic-f.md"
+expected = "parse/fs-a-file-with-no-flags-yields-no-regions-classic-f.expected.json"
+path = "AIPrompts/fs-a-file-with-no-flags-yields-no-regions-classic-f.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fs-a-inside-a-fenced-block-is-untouched-content"
+kind = "parse"
+input = "parse/fs-a-inside-a-fenced-block-is-untouched-content.md"
+expected = "parse/fs-a-inside-a-fenced-block-is-untouched-content.expected.json"
+path = "AIPrompts/fs-a-inside-a-fenced-block-is-untouched-content.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-a-is-dropped-wherever-it-appears-not-only-at-the"
+kind = "parse"
+input = "parse/fs-a-is-dropped-wherever-it-appears-not-only-at-the.md"
+expected = "parse/fs-a-is-dropped-wherever-it-appears-not-only-at-the.expected.json"
+path = "AIPrompts/fs-a-is-dropped-wherever-it-appears-not-only-at-the.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-a-named-start-flag-carries-its-name-becomes-the"
+kind = "parse"
+input = "parse/fs-a-named-start-flag-carries-its-name-becomes-the.md"
+expected = "parse/fs-a-named-start-flag-carries-its-name-becomes-the.expected.json"
+path = "AIPrompts/fs-a-named-start-flag-carries-its-name-becomes-the.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-a-rule-only-region-collapses-to-empty-rather-tha"
+kind = "parse"
+input = "parse/fs-a-rule-only-region-collapses-to-empty-rather-tha.md"
+expected = "parse/fs-a-rule-only-region-collapses-to-empty-rather-tha.expected.json"
+path = "AIPrompts/fs-a-rule-only-region-collapses-to-empty-rather-tha.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-a-second-start-flag-while-a-region-is-open-is-co"
+kind = "parse"
+input = "parse/fs-a-second-start-flag-while-a-region-is-open-is-co.md"
+expected = "parse/fs-a-second-start-flag-while-a-region-is-open-is-co.expected.json"
+path = "AIPrompts/fs-a-second-start-flag-while-a-region-is-open-is-co.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-a-tilde-fence-is-not-closed-by-a-backtick-fence"
+kind = "parse"
+input = "parse/fs-a-tilde-fence-is-not-closed-by-a-backtick-fence.md"
+expected = "parse/fs-a-tilde-fence-is-not-closed-by-a-backtick-fence.expected.json"
+path = "AIPrompts/fs-a-tilde-fence-is-not-closed-by-a-backtick-fence.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-an-end-flag-inside-a-fenced-block-does-not-close"
+kind = "parse"
+input = "parse/fs-an-end-flag-inside-a-fenced-block-does-not-close.md"
+expected = "parse/fs-an-end-flag-inside-a-fenced-block-does-not-close.expected.json"
+path = "AIPrompts/fs-an-end-flag-inside-a-fenced-block-does-not-close.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-an-unnamed-region-returns-its-content-with-the-f"
+kind = "parse"
+input = "parse/fs-an-unnamed-region-returns-its-content-with-the-f.md"
+expected = "parse/fs-an-unnamed-region-returns-its-content-with-the-f.expected.json"
+path = "AIPrompts/fs-an-unnamed-region-returns-its-content-with-the-f.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-an-unterminated-region-runs-to-end-of-file-a-hal"
+kind = "parse"
+input = "parse/fs-an-unterminated-region-runs-to-end-of-file-a-hal.md"
+expected = "parse/fs-an-unterminated-region-runs-to-end-of-file-a-hal.expected.json"
+path = "AIPrompts/fs-an-unterminated-region-runs-to-end-of-file-a-hal.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-blank-lines-are-trimmed-from-the-ends-but-never"
+kind = "parse"
+input = "parse/fs-blank-lines-are-trimmed-from-the-ends-but-never.md"
+expected = "parse/fs-blank-lines-are-trimmed-from-the-ends-but-never.expected.json"
+path = "AIPrompts/fs-blank-lines-are-trimmed-from-the-ends-but-never.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-bold-italic-text-is-not-a-rule"
+kind = "parse"
+input = "parse/fs-bold-italic-text-is-not-a-rule.md"
+expected = "parse/fs-bold-italic-text-is-not-a-rule.expected.json"
+path = "AIPrompts/fs-bold-italic-text-is-not-a-rule.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-crlf-files-parse-identically-to-lf-files"
+kind = "parse"
+input = "parse/fs-crlf-files-parse-identically-to-lf-files.md"
+expected = "parse/fs-crlf-files-parse-identically-to-lf-files.expected.json"
+path = "AIPrompts/fs-crlf-files-parse-identically-to-lf-files.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-is-ordinary-content-now-only-is-the-marker-rule"
+kind = "parse"
+input = "parse/fs-is-ordinary-content-now-only-is-the-marker-rule.md"
+expected = "parse/fs-is-ordinary-content-now-only-is-the-marker-rule.expected.json"
+path = "AIPrompts/fs-is-ordinary-content-now-only-is-the-marker-rule.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-longer-asterisk-runs-count-as-a-rule-two-do-not"
+kind = "parse"
+input = "parse/fs-longer-asterisk-runs-count-as-a-rule-two-do-not.md"
+expected = "parse/fs-longer-asterisk-runs-count-as-a-rule-two-do-not.expected.json"
+path = "AIPrompts/fs-longer-asterisk-runs-count-as-a-rule-two-do-not.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-longer-asterisk-runs-count-as-a-rule-two-do-not-2"
+kind = "parse"
+input = "parse/fs-longer-asterisk-runs-count-as-a-rule-two-do-not-2.md"
+expected = "parse/fs-longer-asterisk-runs-count-as-a-rule-two-do-not-2.expected.json"
+path = "AIPrompts/fs-longer-asterisk-runs-count-as-a-rule-two-do-not.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-markdown-inside-the-region-is-kept-verbatim-code"
+kind = "parse"
+input = "parse/fs-markdown-inside-the-region-is-kept-verbatim-code.md"
+expected = "parse/fs-markdown-inside-the-region-is-kept-verbatim-code.expected.json"
+path = "AIPrompts/fs-markdown-inside-the-region-is-kept-verbatim-code.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-rules-are-dropped-even-with-blank-lines-around-t"
+kind = "parse"
+input = "parse/fs-rules-are-dropped-even-with-blank-lines-around-t.md"
+expected = "parse/fs-rules-are-dropped-even-with-blank-lines-around-t.expected.json"
+path = "AIPrompts/fs-rules-are-dropped-even-with-blank-lines-around-t.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-several-named-regions-are-returned-in-document-o"
+kind = "parse"
+input = "parse/fs-several-named-regions-are-returned-in-document-o.md"
+expected = "parse/fs-several-named-regions-are-returned-in-document-o.expected.json"
+path = "AIPrompts/fs-several-named-regions-are-returned-in-document-o.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-surrounding-whitespace-inside-the-marker-is-tole"
+kind = "parse"
+input = "parse/fs-surrounding-whitespace-inside-the-marker-is-tole.md"
+expected = "parse/fs-surrounding-whitespace-inside-the-marker-is-tole.expected.json"
+path = "AIPrompts/fs-surrounding-whitespace-inside-the-marker-is-tole.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-text-outside-the-flags-is-dropped-that-is-what-t"
+kind = "parse"
+input = "parse/fs-text-outside-the-flags-is-dropped-that-is-what-t.md"
+expected = "parse/fs-text-outside-the-flags-is-dropped-that-is-what-t.expected.json"
+path = "AIPrompts/fs-text-outside-the-flags-is-dropped-that-is-what-t.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fs-the-bracket-around-a-region-is-dropped"
+kind = "parse"
+input = "parse/fs-the-bracket-around-a-region-is-dropped.md"
+expected = "parse/fs-the-bracket-around-a-region-is-dropped.expected.json"
+path = "AIPrompts/fs-the-bracket-around-a-region-is-dropped.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fx-command-with-defaults"
+kind = "parse"
+input = "parse/fx-command-with-defaults.md"
+expected = "parse/fx-command-with-defaults.expected.json"
+path = "Commands/artifact-form/command-with-defaults.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fx-mi-dir-1-barrel"
+kind = "parse"
+input = "parse/fx-mi-dir-1-barrel.md"
+expected = "parse/fx-mi-dir-1-barrel.expected.json"
+path = "Templates/multi-index/dir_1/barrel.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-mi-dir-2-subdir1-button"
+kind = "parse"
+input = "parse/fx-mi-dir-2-subdir1-button.md"
+expected = "parse/fx-mi-dir-2-subdir1-button.expected.json"
+path = "Templates/multi-index/dir_2/subdir1/Button.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fx-mi-dir-2-subdir1-button-test"
+kind = "parse"
+input = "parse/fx-mi-dir-2-subdir1-button-test.md"
+expected = "parse/fx-mi-dir-2-subdir1-button-test.expected.json"
+path = "Templates/multi-index/dir_2/subdir1/Button.test.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fx-mi-hostile-index"
+kind = "parse"
+input = "parse/fx-mi-hostile-index.md"
+expected = "parse/fx-mi-hostile-index.expected.json"
+path = "Templates/multi-index/hostile-index.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fx-mi-index"
+kind = "parse"
+input = "parse/fx-mi-index.md"
+expected = "parse/fx-mi-index.expected.json"
+path = "Templates/multi-index/index.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
+
+[[cases]]
+id = "fx-snippet-minimal"
+kind = "parse"
+input = "parse/fx-snippet-minimal.md"
+expected = "parse/fx-snippet-minimal.expected.json"
+path = "Snippets/artifact-form/snippet-minimal.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-snippet-multi-block"
+kind = "parse"
+input = "parse/fx-snippet-multi-block.md"
+expected = "parse/fx-snippet-multi-block.expected.json"
+path = "Snippets/artifact-form/snippet-multi-block.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fx-snippet-orphan-default"
+kind = "parse"
+input = "parse/fx-snippet-orphan-default.md"
+expected = "parse/fx-snippet-orphan-default.expected.json"
+path = "Snippets/artifact-form/snippet-orphan-default.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fx-snippet-plain-text"
+kind = "parse"
+input = "parse/fx-snippet-plain-text.md"
+expected = "parse/fx-snippet-plain-text.expected.json"
+path = "Snippets/artifact-form/snippet-plain-text.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fx-snippet-quoted-default"
+kind = "parse"
+input = "parse/fx-snippet-quoted-default.md"
+expected = "parse/fx-snippet-quoted-default.expected.json"
+path = "Snippets/artifact-form/snippet-quoted-default.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fx-ve-one-heading"
+kind = "parse"
+input = "parse/fx-ve-one-heading.md"
+expected = "parse/fx-ve-one-heading.expected.json"
+path = "Variables/vars-edit/one-heading.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fx-ve-single-subset"
+kind = "parse"
+input = "parse/fx-ve-single-subset.md"
+expected = "parse/fx-ve-single-subset.expected.json"
+path = "Variables/vars-edit/single-subset.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fx-ve-with-descriptions"
+kind = "parse"
+input = "parse/fx-ve-with-descriptions.md"
+expected = "parse/fx-ve-with-descriptions.expected.json"
+path = "Variables/vars-edit/with-descriptions.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "fx-ve-with-env"
+kind = "parse"
+input = "parse/fx-ve-with-env.md"
+expected = "parse/fx-ve-with-env.expected.json"
+path = "Variables/vars-edit/with-env.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "pb-arbitrary-marker-text-between-code-fence-and-vks"
+kind = "parse"
+input = "parse/pb-arbitrary-marker-text-between-code-fence-and-vks.md"
+expected = "parse/pb-arbitrary-marker-text-between-code-fence-and-vks.expected.json"
+path = "Snippets/pb-arbitrary-marker-text-between-code-fence-and-vks.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "pb-block-with-no-vk-tokens-has-vars"
+kind = "parse"
+input = "parse/pb-block-with-no-vk-tokens-has-vars.md"
+expected = "parse/pb-block-with-no-vk-tokens-has-vars.expected.json"
+path = "Snippets/pb-block-with-no-vk-tokens-has-vars.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-code-fence-with-no-trailing-vks-fence-still-yiel"
+kind = "parse"
+input = "parse/pb-code-fence-with-no-trailing-vks-fence-still-yiel.md"
+expected = "parse/pb-code-fence-with-no-trailing-vks-fence-still-yiel.expected.json"
+path = "Snippets/pb-code-fence-with-no-trailing-vks-fence-still-yiel.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-code-vars-fence-pairs-are-scoped-per-block"
+kind = "parse"
+input = "parse/pb-code-vars-fence-pairs-are-scoped-per-block.md"
+expected = "parse/pb-code-vars-fence-pairs-are-scoped-per-block.expected.json"
+path = "Snippets/pb-code-vars-fence-pairs-are-scoped-per-block.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "pb-content-with-no-headings-returns-empty-array-sin"
+kind = "parse"
+input = "parse/pb-content-with-no-headings-returns-empty-array-sin.md"
+expected = "parse/pb-content-with-no-headings-returns-empty-array-sin.expected.json"
+path = "Snippets/pb-content-with-no-headings-returns-empty-array-sin.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-description-is-the-text-between-the-heading-line"
+kind = "parse"
+input = "parse/pb-description-is-the-text-between-the-heading-line.md"
+expected = "parse/pb-description-is-the-text-between-the-heading-line.expected.json"
+path = "Snippets/pb-description-is-the-text-between-the-heading-line.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-detected-var-with-no-matching-vks-line-keeps-def"
+kind = "parse"
+input = "parse/pb-detected-var-with-no-matching-vks-line-keeps-def.md"
+expected = "parse/pb-detected-var-with-no-matching-vks-line-keeps-def.expected.json"
+path = "Snippets/pb-detected-var-with-no-matching-vks-line-keeps-def.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "pb-empty-string-returns-empty-array"
+kind = "parse"
+input = "parse/pb-empty-string-returns-empty-array.md"
+expected = "parse/pb-empty-string-returns-empty-array.expected.json"
+path = "Snippets/pb-empty-string-returns-empty-array.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-fence-language-tag-is-captured-in-fencelang"
+kind = "parse"
+input = "parse/pb-fence-language-tag-is-captured-in-fencelang.md"
+expected = "parse/pb-fence-language-tag-is-captured-in-fencelang.expected.json"
+path = "Snippets/pb-fence-language-tag-is-captured-in-fencelang.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-fence-with-no-language-tag-leaves-fencelang-unde"
+kind = "parse"
+input = "parse/pb-fence-with-no-language-tag-leaves-fencelang-unde.md"
+expected = "parse/pb-fence-with-no-language-tag-leaves-fencelang-unde.expected.json"
+path = "Snippets/pb-fence-with-no-language-tag-leaves-fencelang-unde.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc"
+kind = "parse"
+input = "parse/pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc.md"
+expected = "parse/pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc.expected.json"
+path = "Snippets/pb-frontmatter-is-stripped-and-not-parsed-as-a-bloc.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-heading-immediately-followed-by-a-fence-has-an-e"
+kind = "parse"
+input = "parse/pb-heading-immediately-followed-by-a-fence-has-an-e.md"
+expected = "parse/pb-heading-immediately-followed-by-a-fence-has-an-e.expected.json"
+path = "Snippets/pb-heading-immediately-followed-by-a-fence-has-an-e.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-marker-text-vks-scoped-per-block-across-two-sect"
+kind = "parse"
+input = "parse/pb-marker-text-vks-scoped-per-block-across-two-sect.md"
+expected = "parse/pb-marker-text-vks-scoped-per-block-across-two-sect.expected.json"
+path = "Snippets/pb-marker-text-vks-scoped-per-block-across-two-sect.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "pb-multi-block-variable-file-each-vks-fence-yields"
+kind = "parse"
+input = "parse/pb-multi-block-variable-file-each-vks-fence-yields.md"
+expected = "parse/pb-multi-block-variable-file-each-vks-fence-yields.expected.json"
+path = "Variables/pb-multi-block-variable-file-each-vks-fence-yields.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "pb-multi-line-code-block-is-captured-in-full-with-i"
+kind = "parse"
+input = "parse/pb-multi-line-code-block-is-captured-in-full-with-i.md"
+expected = "parse/pb-multi-line-code-block-is-captured-in-full-with-i.expected.json"
+path = "Snippets/pb-multi-line-code-block-is-captured-in-full-with-i.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-multiple-headings-are-returned-in-document-order"
+kind = "parse"
+input = "parse/pb-multiple-headings-are-returned-in-document-order.md"
+expected = "parse/pb-multiple-headings-are-returned-in-document-order.expected.json"
+path = "Snippets/pb-multiple-headings-are-returned-in-document-order.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-repeated-vk-token-within-one-block-is-deduplicat"
+kind = "parse"
+input = "parse/pb-repeated-vk-token-within-one-block-is-deduplicat.md"
+expected = "parse/pb-repeated-vk-token-within-one-block-is-deduplicat.expected.json"
+path = "Snippets/pb-repeated-vk-token-within-one-block-is-deduplicat.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-same-var-name-in-two-blocks-is-listed-independen"
+kind = "parse"
+input = "parse/pb-same-var-name-in-two-blocks-is-listed-independen.md"
+expected = "parse/pb-same-var-name-in-two-blocks-is-listed-independen.expected.json"
+path = "Snippets/pb-same-var-name-in-two-blocks-is-listed-independen.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-single-heading-and-fence-returns-a-one-element-a"
+kind = "parse"
+input = "parse/pb-single-heading-and-fence-returns-a-one-element-a.md"
+expected = "parse/pb-single-heading-and-fence-returns-a-one-element-a.expected.json"
+path = "Snippets/pb-single-heading-and-fence-returns-a-one-element-a.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-vars-are-scoped-to-their-block-adjacent-blocks-d"
+kind = "parse"
+input = "parse/pb-vars-are-scoped-to-their-block-adjacent-blocks-d.md"
+expected = "parse/pb-vars-are-scoped-to-their-block-adjacent-blocks-d.expected.json"
+path = "Snippets/pb-vars-are-scoped-to-their-block-adjacent-blocks-d.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-vk-tokens-in-block-code-are-extracted-as-vars-in"
+kind = "parse"
+input = "parse/pb-vk-tokens-in-block-code-are-extracted-as-vars-in.md"
+expected = "parse/pb-vk-tokens-in-block-code-are-extracted-as-vars-in.expected.json"
+path = "Snippets/pb-vk-tokens-in-block-code-are-extracted-as-vars-in.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "pb-vks-fence-after-a-code-fence-applies-defaults-to"
+kind = "parse"
+input = "parse/pb-vks-fence-after-a-code-fence-applies-defaults-to.md"
+expected = "parse/pb-vks-fence-after-a-code-fence-applies-defaults-to.expected.json"
+path = "Snippets/pb-vks-fence-after-a-code-fence-applies-defaults-to.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "pb-vks-fence-parses-key-value-pairs-into-block-vars"
+kind = "parse"
+input = "parse/pb-vks-fence-parses-key-value-pairs-into-block-vars.md"
+expected = "parse/pb-vks-fence-parses-key-value-pairs-into-block-vars.expected.json"
+path = "Variables/pb-vks-fence-parses-key-value-pairs-into-block-vars.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "pb-vks-fence-with-empty-value-yields-defaultvalue"
+kind = "parse"
+input = "parse/pb-vks-fence-with-empty-value-yields-defaultvalue.md"
+expected = "parse/pb-vks-fence-with-empty-value-yields-defaultvalue.expected.json"
+path = "Variables/pb-vks-fence-with-empty-value-yields-defaultvalue.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "pb-vks-line-with-no-matching-code-token-is-appended"
+kind = "parse"
+input = "parse/pb-vks-line-with-no-matching-code-token-is-appended.md"
+expected = "parse/pb-vks-line-with-no-matching-code-token-is-appended.expected.json"
+path = "Snippets/pb-vks-line-with-no-matching-code-token-is-appended.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "q-closing-dashes-suffix"
+kind = "parse"
+input = "parse/q-closing-dashes-suffix.md"
+expected = "parse/q-closing-dashes-suffix.expected.json"
+path = "Commands/q-closing-dashes.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-cpp-info-skipped"
+kind = "parse"
+input = "parse/q-cpp-info-skipped.md"
+expected = "parse/q-cpp-info-skipped.expected.json"
+path = "Snippets/q-cpp-info.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-crlf-code-keeps-cr"
+kind = "parse"
+input = "parse/q-crlf-code-keeps-cr.md"
+expected = "parse/q-crlf-code-keeps-cr.expected.json"
+path = "Snippets/q-crlf.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-empty-frontmatter-is-not"
+kind = "parse"
+input = "parse/q-empty-frontmatter-is-not.md"
+expected = "parse/q-empty-frontmatter-is-not.expected.json"
+path = "Snippets/q-empty-frontmatter.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-empty-heading-dropped"
+kind = "parse"
+input = "parse/q-empty-heading-dropped.md"
+expected = "parse/q-empty-heading-dropped.expected.json"
+path = "Snippets/q-empty-heading.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-fence-closes-mid-line"
+kind = "parse"
+input = "parse/q-fence-closes-mid-line.md"
+expected = "parse/q-fence-closes-mid-line.expected.json"
+path = "Snippets/q-fence-mid-line.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-first-vks-in-block-is-file-level"
+kind = "parse"
+input = "parse/q-first-vks-in-block-is-file-level.md"
+expected = "parse/q-first-vks-in-block-is-file-level.expected.json"
+path = "Snippets/q-first-vks-in-block.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "q-single-block-top-vars"
+kind = "parse"
+input = "parse/q-single-block-top-vars.md"
+expected = "parse/q-single-block-top-vars.expected.json"
+path = "Snippets/q-single-block-top-vars.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "q-type-key-ignored"
+kind = "parse"
+input = "parse/q-type-key-ignored.md"
+expected = "parse/q-type-key-ignored.expected.json"
+path = "Commands/q-type-key.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "q-variables-code-is-vks-body"
+kind = "parse"
+input = "parse/q-variables-code-is-vks-body.md"
+expected = "parse/q-variables-code-is-vks-body.expected.json"
+path = "Variables/q-variables-code.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "rs-directive-detect"
+kind = "parse"
+input = "parse/rs-directive-detect.md"
+expected = "parse/rs-directive-detect.expected.json"
+path = "Templates/rs-directive-detect.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-err-block-fence"
+kind = "parse"
+input = "parse/rs-err-block-fence.md"
+expected = "parse/rs-err-block-fence.expected.json"
+path = "Snippets/rs-err-block-fence.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-err-subset"
+kind = "parse"
+input = "parse/rs-err-subset.md"
+expected = "parse/rs-err-subset.expected.json"
+path = "Variables/rs-err-subset.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-q-failing-vks-in-block"
+kind = "parse"
+input = "parse/rs-q-failing-vks-in-block.md"
+expected = "parse/rs-q-failing-vks-in-block.expected.json"
+path = "Snippets/rs-q-failing-vks-in-block.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-bad-key"
+kind = "parse"
+input = "parse/rs-vks-err-bad-key.md"
+expected = "parse/rs-vks-err-bad-key.expected.json"
+path = "Variables/rs-vks-err-bad-key.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-control-char"
+kind = "parse"
+input = "parse/rs-vks-err-control-char.md"
+expected = "parse/rs-vks-err-control-char.expected.json"
+path = "Variables/rs-vks-err-control-char.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-duplicate-key"
+kind = "parse"
+input = "parse/rs-vks-err-duplicate-key.md"
+expected = "parse/rs-vks-err-duplicate-key.expected.json"
+path = "Variables/rs-vks-err-duplicate-key.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-indent"
+kind = "parse"
+input = "parse/rs-vks-err-indent.md"
+expected = "parse/rs-vks-err-indent.expected.json"
+path = "Variables/rs-vks-err-indent.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-inline-comment"
+kind = "parse"
+input = "parse/rs-vks-err-inline-comment.md"
+expected = "parse/rs-vks-err-inline-comment.expected.json"
+path = "Variables/rs-vks-err-inline-comment.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-limit"
+kind = "parse"
+input = "parse/rs-vks-err-limit.md"
+expected = "parse/rs-vks-err-limit.expected.json"
+path = "Variables/rs-vks-err-limit.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-mixed-dialect"
+kind = "parse"
+input = "parse/rs-vks-err-mixed-dialect.md"
+expected = "parse/rs-vks-err-mixed-dialect.expected.json"
+path = "Variables/rs-vks-err-mixed-dialect.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-mixed-list"
+kind = "parse"
+input = "parse/rs-vks-err-mixed-list.md"
+expected = "parse/rs-vks-err-mixed-list.expected.json"
+path = "Variables/rs-vks-err-mixed-list.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-syntax"
+kind = "parse"
+input = "parse/rs-vks-err-syntax.md"
+expected = "parse/rs-vks-err-syntax.expected.json"
+path = "Variables/rs-vks-err-syntax.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-vks-err-unsupported"
+kind = "parse"
+input = "parse/rs-vks-err-unsupported.md"
+expected = "parse/rs-vks-err-unsupported.expected.json"
+path = "Variables/rs-vks-err-unsupported.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-block-scalars"
+kind = "parse"
+input = "parse/rs-yaml-block-scalars.md"
+expected = "parse/rs-yaml-block-scalars.expected.json"
+path = "Variables/rs-yaml-block-scalars.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-comments"
+kind = "parse"
+input = "parse/rs-yaml-comments.md"
+expected = "parse/rs-yaml-comments.expected.json"
+path = "Variables/rs-yaml-comments.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-empty-list"
+kind = "parse"
+input = "parse/rs-yaml-empty-list.md"
+expected = "parse/rs-yaml-empty-list.expected.json"
+path = "Variables/rs-yaml-empty-list.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-flat"
+kind = "parse"
+input = "parse/rs-yaml-flat.md"
+expected = "parse/rs-yaml-flat.expected.json"
+path = "Variables/rs-yaml-flat.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-quoted"
+kind = "parse"
+input = "parse/rs-yaml-quoted.md"
+expected = "parse/rs-yaml-quoted.expected.json"
+path = "Variables/rs-yaml-quoted.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-spec-example"
+kind = "parse"
+input = "parse/rs-yaml-spec-example.md"
+expected = "parse/rs-yaml-spec-example.expected.json"
+path = "Variables/rs-yaml-spec-example.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-yaml-strings-list"
+kind = "parse"
+input = "parse/rs-yaml-strings-list.md"
+expected = "parse/rs-yaml-strings-list.expected.json"
+path = "Variables/rs-yaml-strings-list.md"
+origin = "rust"
+
+[[cases]]
+id = "tfd-a-commands-file-with-no-frontmatter-parses-as-ar"
+kind = "parse"
+input = "parse/tfd-a-commands-file-with-no-frontmatter-parses-as-ar.md"
+expected = "parse/tfd-a-commands-file-with-no-frontmatter-parses-as-ar.expected.json"
+path = "Commands/GIT/Remote.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "tfd-a-snippets-file-with-no-frontmatter-still-parses"
+kind = "parse"
+input = "parse/tfd-a-snippets-file-with-no-frontmatter-still-parses.md"
+expected = "parse/tfd-a-snippets-file-with-no-frontmatter-still-parses.expected.json"
+path = "Snippets/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "tfd-an-unrecognised-directory-falls-back-to-snippet"
+kind = "parse"
+input = "parse/tfd-an-unrecognised-directory-falls-back-to-snippet.md"
+expected = "parse/tfd-an-unrecognised-directory-falls-back-to-snippet.expected.json"
+path = "Whatever/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "tfd-explicit-frontmatter-always-wins-over-the-direct"
+kind = "parse"
+input = "parse/tfd-explicit-frontmatter-always-wins-over-the-direct.md"
+expected = "parse/tfd-explicit-frontmatter-always-wins-over-the-direct.expected.json"
+path = "Commands/x.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "form-command-with-defaults"
+kind = "serialize"
+input = "serialize/form-command-with-defaults.model.json"
+expected = "serialize/form-command-with-defaults.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "form-snippet-minimal"
+kind = "serialize"
+input = "serialize/form-snippet-minimal.model.json"
+expected = "serialize/form-snippet-minimal.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "form-snippet-multi-block"
+kind = "serialize"
+input = "serialize/form-snippet-multi-block.model.json"
+expected = "serialize/form-snippet-multi-block.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "form-snippet-orphan-default"
+kind = "serialize"
+input = "serialize/form-snippet-orphan-default.model.json"
+expected = "serialize/form-snippet-orphan-default.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "form-snippet-plain-text"
+kind = "serialize"
+input = "serialize/form-snippet-plain-text.model.json"
+expected = "serialize/form-snippet-plain-text.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "form-snippet-quoted-default"
+kind = "serialize"
+input = "serialize/form-snippet-quoted-default.model.json"
+expected = "serialize/form-snippet-quoted-default.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "varset-bare"
+kind = "serialize"
+input = "serialize/varset-bare.model.json"
+expected = "serialize/varset-bare.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "varset-description"
+kind = "serialize"
+input = "serialize/varset-description.model.json"
+expected = "serialize/varset-description.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "varset-tags"
+kind = "serialize"
+input = "serialize/varset-tags.model.json"
+expected = "serialize/varset-tags.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "varset-full"
+kind = "serialize"
+input = "serialize/varset-full.model.json"
+expected = "serialize/varset-full.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7c: tags as a YAML block list (Obsidian style); W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "varset-multi-var"
+kind = "serialize"
+input = "serialize/varset-multi-var.model.json"
+expected = "serialize/varset-multi-var.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "varset-equals"
+kind = "serialize"
+input = "serialize/varset-equals.model.json"
+expected = "serialize/varset-equals.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "varset-quotes"
+kind = "serialize"
+input = "serialize/varset-quotes.model.json"
+expected = "serialize/varset-quotes.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ser-newline-title"
+kind = "serialize"
+input = "serialize/ser-newline-title.model.json"
+expected = "serialize/ser-newline-title.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ser-crlf-title"
+kind = "serialize"
+input = "serialize/ser-crlf-title.model.json"
+expected = "serialize/ser-crlf-title.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ser-empty-default"
+kind = "serialize"
+input = "serialize/ser-empty-default.model.json"
+expected = "serialize/ser-empty-default.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ser-empty-subset"
+kind = "serialize"
+input = "serialize/ser-empty-subset.model.json"
+expected = "serialize/ser-empty-subset.md"
+origin = "ts@b368c20"
+deviates_from_ts = "vks YAML emission; W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "agent-keys-order"
+kind = "serialize"
+input = "serialize/agent-keys-order.model.json"
+expected = "serialize/agent-keys-order.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7c: tags as a YAML block list (Obsidian style)"
+
+[[cases]]
+id = "agent-empty-keys"
+kind = "serialize"
+input = "serialize/agent-empty-keys.model.json"
+expected = "serialize/agent-empty-keys.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "agent-injection"
+kind = "serialize"
+input = "serialize/agent-injection.model.json"
+expected = "serialize/agent-injection.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "rs-ser-structured"
+kind = "serialize"
+input = "serialize/rs-ser-structured.model.json"
+expected = "serialize/rs-ser-structured.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-block-scalars"
+kind = "serialize"
+input = "serialize/rs-ser-block-scalars.model.json"
+expected = "serialize/rs-ser-block-scalars.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-quoting"
+kind = "serialize"
+input = "serialize/rs-ser-quoting.model.json"
+expected = "serialize/rs-ser-quoting.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-sets"
+kind = "serialize"
+input = "serialize/rs-ser-sets.model.json"
+expected = "serialize/rs-ser-sets.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-blank"
+kind = "serialize"
+input = "serialize/rs-ser-blank.model.json"
+expected = "serialize/rs-ser-blank.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-ser-snippet-structured"
+kind = "serialize"
+input = "serialize/rs-ser-snippet-structured.model.json"
+expected = "serialize/rs-ser-snippet-structured.md"
+origin = "rust"
+
+[[cases]]
+id = "ts-render-pair-once"
+kind = "render"
+input = "render/ts-render-pair-once.md"
+expected = "render/ts-render-pair-once.expected.json"
+values = "render/ts-render-pair-once.values.json"
+path = "Snippets/ts-render-pair-once.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-lone-closing"
+kind = "render"
+input = "render/ts-render-lone-closing.md"
+expected = "render/ts-render-lone-closing.expected.json"
+values = "render/ts-render-lone-closing.values.json"
+path = "Snippets/ts-render-lone-closing.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-mismatched-pair"
+kind = "render"
+input = "render/ts-render-mismatched-pair.md"
+expected = "render/ts-render-mismatched-pair.expected.json"
+values = "render/ts-render-mismatched-pair.values.json"
+path = "Snippets/ts-render-mismatched-pair.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-split-pair"
+kind = "render"
+input = "render/ts-render-split-pair.md"
+expected = "render/ts-render-split-pair.expected.json"
+values = "render/ts-render-split-pair.values.json"
+path = "Snippets/ts-render-split-pair.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-unknown-both-spellings"
+kind = "render"
+input = "render/ts-render-unknown-both-spellings.md"
+expected = "render/ts-render-unknown-both-spellings.expected.json"
+values = "render/ts-render-unknown-both-spellings.values.json"
+path = "Snippets/ts-render-unknown-both-spellings.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-empty-value-pair"
+kind = "render"
+input = "render/ts-render-empty-value-pair.md"
+expected = "render/ts-render-empty-value-pair.expected.json"
+values = "render/ts-render-empty-value-pair.values.json"
+path = "Snippets/ts-render-empty-value-pair.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-markdown-payload"
+kind = "render"
+input = "render/ts-render-markdown-payload.md"
+expected = "render/ts-render-markdown-payload.expected.json"
+values = "render/ts-render-markdown-payload.values.json"
+path = "Snippets/ts-render-markdown-payload.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-single"
+kind = "render"
+input = "render/ts-render-single.md"
+expected = "render/ts-render-single.expected.json"
+values = "render/ts-render-single.values.json"
+path = "Snippets/ts-render-single.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-multiple"
+kind = "render"
+input = "render/ts-render-multiple.md"
+expected = "render/ts-render-multiple.expected.json"
+values = "render/ts-render-multiple.values.json"
+path = "Snippets/ts-render-multiple.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-repeated"
+kind = "render"
+input = "render/ts-render-repeated.md"
+expected = "render/ts-render-repeated.expected.json"
+values = "render/ts-render-repeated.values.json"
+path = "Snippets/ts-render-repeated.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-absent"
+kind = "render"
+input = "render/ts-render-absent.md"
+expected = "render/ts-render-absent.expected.json"
+path = "Snippets/ts-render-absent.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-partial"
+kind = "render"
+input = "render/ts-render-partial.md"
+expected = "render/ts-render-partial.expected.json"
+values = "render/ts-render-partial.values.json"
+path = "Snippets/ts-render-partial.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-no-tokens"
+kind = "render"
+input = "render/ts-render-no-tokens.md"
+expected = "render/ts-render-no-tokens.expected.json"
+values = "render/ts-render-no-tokens.values.json"
+path = "Snippets/ts-render-no-tokens.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "ts-render-empty-map"
+kind = "render"
+input = "render/ts-render-empty-map.md"
+expected = "render/ts-render-empty-map.expected.json"
+path = "Snippets/ts-render-empty-map.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-typed-wins"
+kind = "render"
+input = "render/ts-render-typed-wins.md"
+expected = "render/ts-render-typed-wins.expected.json"
+values = "render/ts-render-typed-wins.values.json"
+path = "Snippets/ts-render-typed-wins.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-empty-falls-back"
+kind = "render"
+input = "render/ts-render-empty-falls-back.md"
+expected = "render/ts-render-empty-falls-back.expected.json"
+values = "render/ts-render-empty-falls-back.values.json"
+path = "Snippets/ts-render-empty-falls-back.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-no-value-no-default"
+kind = "render"
+input = "render/ts-render-no-value-no-default.md"
+expected = "render/ts-render-no-value-no-default.expected.json"
+path = "Snippets/ts-render-no-value-no-default.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "ts-render-missing-falls-back"
+kind = "render"
+input = "render/ts-render-missing-falls-back.md"
+expected = "render/ts-render-missing-falls-back.expected.json"
+path = "Snippets/ts-render-missing-falls-back.md"
+origin = "ts@b368c20"
+deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
+
+[[cases]]
+id = "rs-render-worked-example"
+kind = "render"
+input = "render/rs-render-worked-example.md"
+expected = "render/rs-render-worked-example.expected.json"
+path = "Templates/rs-render-worked-example.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-rescan"
+kind = "render"
+input = "render/rs-render-rescan.md"
+expected = "render/rs-render-rescan.expected.json"
+values = "render/rs-render-rescan.values.json"
+path = "Snippets/rs-render-rescan.md"
+origin = "rust"
+deviates_from_ts = "R-11: values never re-scanned"
+
+[[cases]]
+id = "rs-render-path"
+kind = "render"
+input = "render/rs-render-path.md"
+expected = "render/rs-render-path.expected.json"
+path = "Templates/rs-render-path.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-inline-sep"
+kind = "render"
+input = "render/rs-render-inline-sep.md"
+expected = "render/rs-render-inline-sep.expected.json"
+path = "Templates/rs-render-inline-sep.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-block-sep"
+kind = "render"
+input = "render/rs-render-block-sep.md"
+expected = "render/rs-render-block-sep.expected.json"
+path = "Templates/rs-render-block-sep.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-block-nosep"
+kind = "render"
+input = "render/rs-render-block-nosep.md"
+expected = "render/rs-render-block-nosep.expected.json"
+path = "Templates/rs-render-block-nosep.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-block-crlf"
+kind = "render"
+input = "render/rs-render-block-crlf.md"
+expected = "render/rs-render-block-crlf.expected.json"
+path = "Templates/rs-render-block-crlf.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-empty-inline"
+kind = "render"
+input = "render/rs-render-empty-inline.md"
+expected = "render/rs-render-empty-inline.expected.json"
+path = "Templates/rs-render-empty-inline.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-empty-block"
+kind = "render"
+input = "render/rs-render-empty-block.md"
+expected = "render/rs-render-empty-block.expected.json"
+path = "Templates/rs-render-empty-block.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-nested"
+kind = "render"
+input = "render/rs-render-nested.md"
+expected = "render/rs-render-nested.expected.json"
+path = "Templates/rs-render-nested.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-default"
+kind = "render"
+input = "render/rs-render-join-default.md"
+expected = "render/rs-render-join-default.expected.json"
+path = "Templates/rs-render-join-default.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-custom"
+kind = "render"
+input = "render/rs-render-join-custom.md"
+expected = "render/rs-render-join-custom.expected.json"
+path = "Templates/rs-render-join-custom.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-in-loop"
+kind = "render"
+input = "render/rs-render-join-in-loop.md"
+expected = "render/rs-render-join-in-loop.expected.json"
+path = "Templates/rs-render-join-in-loop.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-choice-default"
+kind = "render"
+input = "render/rs-render-choice-default.md"
+expected = "render/rs-render-choice-default.expected.json"
+path = "Templates/rs-render-choice-default.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-choice-client"
+kind = "render"
+input = "render/rs-render-choice-client.md"
+expected = "render/rs-render-choice-client.expected.json"
+values = "render/rs-render-choice-client.values.json"
+path = "Templates/rs-render-choice-client.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-sep-gt-not-a-token"
+kind = "render"
+input = "render/rs-render-sep-gt-not-a-token.md"
+expected = "render/rs-render-sep-gt-not-a-token.expected.json"
+path = "Templates/rs-render-sep-gt-not-a-token.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-unterminated"
+kind = "render"
+input = "render/rs-render-unterminated.md"
+expected = "render/rs-render-unterminated.expected.json"
+path = "Templates/rs-render-unterminated.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-crossing"
+kind = "render"
+input = "render/rs-render-crossing.md"
+expected = "render/rs-render-crossing.expected.json"
+path = "Templates/rs-render-crossing.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-self-nested"
+kind = "render"
+input = "render/rs-render-self-nested.md"
+expected = "render/rs-render-self-nested.expected.json"
+path = "Templates/rs-render-self-nested.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-each-not-list"
+kind = "render"
+input = "render/rs-render-each-not-list.md"
+expected = "render/rs-render-each-not-list.expected.json"
+path = "Templates/rs-render-each-not-list.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-record"
+kind = "render"
+input = "render/rs-render-join-record.md"
+expected = "render/rs-render-join-record.expected.json"
+path = "Templates/rs-render-join-record.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-render-join-empty"
+kind = "render"
+input = "render/rs-render-join-empty.md"
+expected = "render/rs-render-join-empty.expected.json"
+path = "Templates/rs-render-join-empty.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-index-key-last"
+kind = "serialize"
+input = "serialize/rs-index-key-last.model.json"
+expected = "serialize/rs-index-key-last.md"
+origin = "rust"
+
+[[cases]]
+id = "rs-empty-whole-file"
+kind = "serialize"
+input = "serialize/rs-empty-whole-file.model.json"
+expected = "serialize/rs-empty-whole-file.md"
+origin = "rust"
+deviates_from_ts = "W3b B-RISK 1: an empty whole-file body is written as frontmatter only (TS writes an empty fence its own parser reads back as the body)"
+
+[[cases]]
+id = "rs-idem-flat"
+kind = "idempotent"
+input = "serialize/rs-idem-flat.md"
+path = "Variables/flat.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-idem-sets"
+kind = "idempotent"
+input = "serialize/rs-idem-sets.md"
+path = "Variables/sets.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-idem-empty-subset"
+kind = "idempotent"
+input = "serialize/rs-idem-empty-subset.md"
+path = "Variables/empty-subset.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-idem-descriptions"
+kind = "idempotent"
+input = "serialize/rs-idem-descriptions.md"
+path = "Variables/descriptions.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-idem-env"
+kind = "idempotent"
+input = "serialize/rs-idem-env.md"
+path = "Variables/env.md"
+origin = "rust"
+deviates_from_ts = "Rust-only idempotence (X-22)"
+
+[[cases]]
+id = "rs-fm-block-list"
+kind = "parse"
+input = "parse/rs-fm-block-list.md"
+expected = "parse/rs-fm-block-list.expected.json"
+path = "Commands/artifact-form/command-with-defaults.md"
+origin = "rust"
+deviates_from_ts = "frontmatter block-list tags/paths (Obsidian's property form, #56); TS reads inline arrays only"
+
+# migrate (W6, spec §11): input decoded, core rewrite run; `expected` = exact output bytes, `skip` = the
+# expected skip code, neither = no change. `migration` = frontmatter | vks; vks needs `path`.
+
+[[cases]]
+id = "fm-snippet"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-snippet.md"
+expected = "migrate/fm-snippet.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-agent"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-agent.md"
+expected = "migrate/fm-agent.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-command"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-command.md"
+expected = "migrate/fm-command.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-template"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-template.md"
+expected = "migrate/fm-template.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-variables"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-variables.md"
+expected = "migrate/fm-variables.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-no-frontmatter"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-no-frontmatter.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-body-fence-only"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-body-fence-only.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-body-fence-kept"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-body-fence-kept.md"
+expected = "migrate/fm-body-fence-kept.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-has-artifacttype"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-has-artifacttype.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-stray-type"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-stray-type.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-bogus"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-bogus.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-aiprompt"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-aiprompt.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-index-paths"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-index-paths.md"
+expected = "migrate/fm-index-paths.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-crlf"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-crlf.md"
+expected = "migrate/fm-crlf.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-no-trailing-newline"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-no-trailing-newline.md"
+expected = "migrate/fm-no-trailing-newline.expected.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-bom"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-bom.md"
+expected = "migrate/fm-bom.expected.md"
+origin = "ts@b368c20"
+deviates_from_ts = "Q-B: BOM stripped on read; TS skips with a BOM reason"
+
+[[cases]]
+id = "fm-leading-blank"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leading-blank.md"
+skip = "migrate.leading_blank"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-quoted"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-quoted.md"
+skip = "migrate.quoted_type"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-plain"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-plain.md"
+origin = "ts@b368c20"
+
+[[cases]]
+id = "fm-block-list"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-block-list.md"
+expected = "migrate/fm-block-list.expected.md"
+origin = "rust"
+deviates_from_ts = "Rust-only: block-list tags (#57) left as they are"

@@ -1,0 +1,3 @@
+# No --vault: the op needs one.
+params = { type = "Template", dir = "Templates/gen", paths = ["a.ts"] }
+expect_error = "vault.not_selected"

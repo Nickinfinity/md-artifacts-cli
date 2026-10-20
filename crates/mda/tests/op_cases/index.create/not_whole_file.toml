@@ -1,0 +1,4 @@
+vault = "vault"
+params = { type = "Snippet", dir = "Snippets", paths = ["a.ts"] }
+expect_error = "artifact.not_whole_file"
+expect_files = { "Snippets/a.md" = false }

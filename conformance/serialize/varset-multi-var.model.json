@@ -1,0 +1,26 @@
+{
+  "artifactType": "Variables",
+  "title": "Local Dev",
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "",
+      "code": "",
+      "vars": [
+        {
+          "name": "VK-host",
+          "value": "localhost"
+        },
+        {
+          "name": "VK-port",
+          "value": "3000"
+        },
+        {
+          "name": "VK-user",
+          "value": "admin"
+        }
+      ]
+    }
+  ]
+}

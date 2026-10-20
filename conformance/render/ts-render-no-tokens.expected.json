@@ -1,0 +1,5 @@
+{
+  "output": "console.log(\"hello world\");",
+  "warnings": [],
+  "containsEscape": false
+}

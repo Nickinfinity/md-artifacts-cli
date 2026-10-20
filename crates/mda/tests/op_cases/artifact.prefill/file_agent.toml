@@ -1,0 +1,3 @@
+# file_agent
+params = { source = "file", type = "AIAgentsConfig", text = "rules", fileName = "CLAUDE.md", languageId = "markdown" }
+expect = { artifactType = "AIAgentsConfig", title = "", description = "", tags = [], extension = "", provider = "", model = "", version = "", env = "", target = "CLAUDE.md", blocks = [{ heading = "", description = "", language = "markdown", code = "rules", vars = [] }] }

@@ -1,0 +1,25 @@
+{
+  "artifactType": "Variables",
+  "title": "Dev",
+  "blocks": [
+    {
+      "heading": "Alpha",
+      "description": "",
+      "language": "",
+      "code": "",
+      "vars": [
+        {
+          "name": "VK-a",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "heading": "Fresh",
+      "description": "",
+      "language": "",
+      "code": "",
+      "vars": []
+    }
+  ]
+}

@@ -7,9 +7,11 @@ rust-version.workspace = true
 
 [dependencies]
 serde.workspace = true
+regex.workspace = true
 
 [dev-dependencies]
 toml.workspace = true
+serde_json.workspace = true
 
 [lints]
 workspace = true

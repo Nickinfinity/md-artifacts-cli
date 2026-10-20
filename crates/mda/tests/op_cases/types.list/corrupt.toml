@@ -1,0 +1,3 @@
+vault = "vault_badcfg"
+params = {}
+expect_error = "config.invalid"

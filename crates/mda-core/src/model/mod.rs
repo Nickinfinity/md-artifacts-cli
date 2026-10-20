@@ -1,0 +1,242 @@
+//! The parsed-artifact model: what `artifact.read` returns. Serialized camelCase; `None` omitted.
+
+use serde::ser::SerializeMap;
+
+mod layout;
+pub use layout::{Layout, PayloadKind, RegionLayout};
+
+use crate::error::VarsError;
+use crate::registry::ArtifactType;
+use crate::vks::VksValue;
+
+/// Frontmatter keys the parser recognises; every other key is ignored.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::{model::Frontmatter, registry::ArtifactType};
+/// let f = Frontmatter::new(ArtifactType::Snippet);
+/// assert_eq!(serde_json::to_string(&f).unwrap(), r#"{"artifactType":"Snippet"}"#);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Frontmatter {
+    pub artifact_type: ArtifactType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub env: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extension: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub paths: Option<Vec<String>>,
+}
+
+impl Frontmatter {
+    /// Frontmatter of type `t` with every optional key absent.
+    pub fn new(t: ArtifactType) -> Self {
+        Self {
+            artifact_type: t,
+            title: None,
+            description: None,
+            language: None,
+            tags: None,
+            env: None,
+            target: None,
+            extension: None,
+            provider: None,
+            model: None,
+            version: None,
+            index: None,
+            paths: None,
+        }
+    }
+}
+
+/// One variable and its default. Serialized as `{name, defaultValue}` plus `value` only when the
+/// value is structured (clients read `value ?? defaultValue`); `defaultValue` is derived, so the
+/// two can never disagree (D-3).
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::model::ParsedVar;
+/// let v = ParsedVar::text("VK-a", "1");
+/// assert!(serde_json::to_string(&v).unwrap().starts_with(r#"{"name":"VK-a","defaultValue":"#));
+/// ```
+///
+/// Deserializes from `{name, value}` (the model's input side; asymmetric on purpose: input carries
+/// `value`, output derives `defaultValue`).
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ParsedVar {
+    pub name: String,
+    pub value: VksValue,
+}
+
+impl ParsedVar {
+    /// A variable with a plain string value.
+    pub fn text(name: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            value: VksValue::Str(value.into()),
+        }
+    }
+}
+
+impl serde::Serialize for ParsedVar {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let structured = !matches!(self.value, VksValue::Str(_));
+        let mut m = s.serialize_map(Some(if structured { 3 } else { 2 }))?;
+        m.serialize_entry("name", &self.name)?;
+        m.serialize_entry("defaultValue", self.value.default_value())?;
+        if structured {
+            m.serialize_entry("value", &self.value)?;
+        }
+        m.end()
+    }
+}
+
+/// One `## heading` block of a multi-block artifact (or one sub-set of a Variables file).
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::model::ParsedBlock;
+/// let b = ParsedBlock { heading: "H".into(), description: String::new(), code: "x".into(),
+///     fence_lang: None, vars: vec![], vars_error: None };
+/// assert!(serde_json::to_string(&b).unwrap().contains(r#""heading":"H""#));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParsedBlock {
+    pub heading: String,
+    pub description: String,
+    pub code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fence_lang: Option<String>,
+    pub vars: Vec<ParsedVar>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vars_error: Option<VarsError>,
+}
+
+/// A parsed artifact file. `file_path` is vault-relative POSIX; `relative_path` is relative to the
+/// type directory.
+///
+/// # Examples
+///
+/// ```
+/// let a = mda_core::parse::parse_from_content("", "Snippets/a.md");
+/// assert!(serde_json::to_value(&a).unwrap().get("filePath").is_some());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParsedArtifact {
+    pub file_path: String,
+    pub file_name: String,
+    pub relative_path: String,
+    pub frontmatter: Frontmatter,
+    pub code: String,
+    pub vars: Vec<ParsedVar>,
+    pub blocks: Vec<ParsedBlock>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vars_error: Option<VarsError>,
+    /// Bare body or flags, with the notes and chrome around them (W7c). Omitted when fenced.
+    #[serde(skip_serializing_if = "Layout::is_default")]
+    pub layout: Layout,
+}
+
+/// The serializer's input and the `artifact.create`/`artifact.update` request body (W-10). Shape
+/// errors are serde errors; the semantic vks checks run in [`crate::vks::check_vars`].
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::model::ArtifactModel;
+/// let m: ArtifactModel = serde_json::from_str(r#"{"artifactType":"Snippet","title":"T"}"#).unwrap();
+/// assert_eq!(m.title, "T");
+/// assert!(serde_json::from_str::<ArtifactModel>(r#"{"artifactType":"Snippet","x":1}"#).is_err());
+/// assert!(!m.index);
+/// ```
+// Serialize (the `artifact.prefill` response): every field written except `index`, `paths` and
+// `layout`, which are written only when set (so prefill responses never carry them), and `create(prefill(x))` round-trips. `ParsedVar` keeps its read-shape Serialize; prefill always emits
+// `vars: []`, so the asymmetry never reaches a client.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ArtifactModel {
+    pub artifact_type: ArtifactType,
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    #[serde(default)]
+    pub extension: String,
+    #[serde(default)]
+    pub provider: String,
+    #[serde(default)]
+    pub model: String,
+    #[serde(default)]
+    pub version: String,
+    #[serde(default)]
+    pub env: String,
+    #[serde(default)]
+    pub target: String,
+    /// `index: true` (spec §8.7): an ordinary property, emitted last and only when true.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub index: bool,
+    /// An index's extra destination folders (spec §8.1), emitted after `index` (W7c).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub paths: Vec<String>,
+    #[serde(default)]
+    pub blocks: Vec<ModelBlock>,
+    /// How the payload is written: fenced (default), bare body or flags (W7c, spec §7.6).
+    #[serde(default, skip_serializing_if = "Layout::is_default")]
+    pub layout: Layout,
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
+/// One block of an [`ArtifactModel`]: a `##` section, a Variables sub-set, or the single body.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::model::ModelBlock;
+/// let b: ModelBlock = serde_json::from_str(r#"{"code":"x"}"#).unwrap();
+/// assert_eq!(b.code, "x");
+/// assert!(b.heading.is_empty());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ModelBlock {
+    #[serde(default)]
+    pub heading: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub language: String,
+    #[serde(default)]
+    pub code: String,
+    #[serde(default)]
+    pub vars: Vec<ParsedVar>,
+}

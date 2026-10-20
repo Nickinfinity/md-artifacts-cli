@@ -1,0 +1,7 @@
+vault = "not_vault"
+vault_flag = false
+params = { path = "$VAULT" }
+expect_error = "vault.not_obsidian"
+expect_error_params = { path = "$VAULT" }
+[expect_config_files]
+"config.toml" = false

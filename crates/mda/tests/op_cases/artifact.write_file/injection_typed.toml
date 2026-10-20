@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/component.md", workspaceRoot = "$WORKSPACE", destDir = "", fileName = "../x" }
+expect_error = "naming.path_injection"
+expect_workspace_files = { "out" = false, "x" = false, "Btn" = false, "CON.txt" = false }

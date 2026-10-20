@@ -1,0 +1,10 @@
+vault_flag = false
+machine_config = "default = ["
+[expect]
+source = "none"
+configDir = "$CONFIG"
+[expect.defaultError]
+code = "config.invalid"
+params = { path = "$CONFIG/config.toml" }
+[expect_config_files]
+"config.toml" = "default = ["

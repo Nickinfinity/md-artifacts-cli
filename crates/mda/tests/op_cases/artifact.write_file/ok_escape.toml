@@ -1,0 +1,5 @@
+# ESC is written as is; the flag tells the client.
+vault = "vault"
+params = { path = "Templates/esc.md", workspaceRoot = "$WORKSPACE", destDir = "" }
+expect = { path = "Esc.sh", hash = "5437f05392afe9b679232673067855757eabe708b81bc9156ab659832c0d44ba", warnings = [], containsEscape = true }
+expect_workspace_files = { "Esc.sh" = "printf '\u001b[31mred\u001b[0m'" }

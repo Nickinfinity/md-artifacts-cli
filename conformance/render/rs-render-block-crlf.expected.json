@@ -1,0 +1,5 @@
+{
+  "output": "items:\r\n- dev\r\n- prod\r\ndone",
+  "warnings": [],
+  "containsEscape": false
+}

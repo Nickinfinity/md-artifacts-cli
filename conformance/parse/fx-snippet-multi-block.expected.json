@@ -1,0 +1,48 @@
+{
+  "blocks": [
+    {
+      "code": "const baseUrl = 'http://localhost:<VK-PORT>';",
+      "description": "Local development server URL.",
+      "fenceLang": "javascript",
+      "heading": "Development",
+      "vars": [
+        {
+          "defaultValue": "3000",
+          "name": "VK-PORT"
+        }
+      ]
+    },
+    {
+      "code": "const baseUrl = 'https://api.<VK-DOMAIN>';",
+      "description": "Production API base URL.",
+      "fenceLang": "javascript",
+      "heading": "Production",
+      "vars": [
+        {
+          "defaultValue": "example.com",
+          "name": "VK-DOMAIN"
+        }
+      ]
+    }
+  ],
+  "code": "const baseUrl = 'http://localhost:<VK-PORT>';",
+  "fileName": "snippet-multi-block",
+  "filePath": "Snippets/artifact-form/snippet-multi-block.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "description": "Development and production API base URLs.",
+    "language": "javascript",
+    "tags": [
+      "api",
+      "urls"
+    ],
+    "title": "API URLs"
+  },
+  "relativePath": "artifact-form/snippet-multi-block.md",
+  "vars": [
+    {
+      "defaultValue": "3000",
+      "name": "VK-PORT"
+    }
+  ]
+}

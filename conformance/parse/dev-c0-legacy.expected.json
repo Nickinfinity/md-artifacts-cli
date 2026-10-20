@@ -1,0 +1,18 @@
+{
+  "blocks": [],
+  "code": "echo <VK-a>",
+  "fileName": "dev-c0-legacy",
+  "filePath": "Snippets/dev-c0-legacy.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "dev-c0-legacy.md",
+  "vars": [],
+  "varsError": {
+    "code": "vks.control_char",
+    "params": {
+      "line": "1"
+    }
+  }
+}

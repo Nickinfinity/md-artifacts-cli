@@ -1,0 +1,42 @@
+{
+  "blocks": [
+    {
+      "code": "f(<VK-x>);",
+      "description": "",
+      "fenceLang": "javascript",
+      "heading": "One",
+      "vars": [
+        {
+          "defaultValue": "alpha",
+          "name": "VK-x"
+        }
+      ]
+    },
+    {
+      "code": "g(<VK-x>);",
+      "description": "",
+      "fenceLang": "javascript",
+      "heading": "Two",
+      "vars": [
+        {
+          "defaultValue": "beta",
+          "name": "VK-x"
+        }
+      ]
+    }
+  ],
+  "code": "f(<VK-x>);",
+  "fileName": "pb-marker-text-vks-scoped-per-block-across-two-sect",
+  "filePath": "Snippets/pb-marker-text-vks-scoped-per-block-across-two-sect.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "javascript"
+  },
+  "relativePath": "pb-marker-text-vks-scoped-per-block-across-two-sect.md",
+  "vars": [
+    {
+      "defaultValue": "alpha",
+      "name": "VK-x"
+    }
+  ]
+}

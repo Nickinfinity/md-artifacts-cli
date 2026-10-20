@@ -1,7 +1,159 @@
 [[expect.ops]]
+name = "artifact.create"
+summary = "Create an artifact file from a model"
+
+[[expect.ops]]
+name = "artifact.delete"
+summary = "Delete an artifact file"
+
+[[expect.ops]]
+name = "artifact.patch"
+summary = "Edit a title, description or block code in place"
+
+[[expect.ops]]
+name = "artifact.prefill"
+summary = "Build an artifact model from editor, file or terminal text"
+
+[[expect.ops]]
+name = "artifact.read"
+summary = "Parse one artifact file"
+
+[[expect.ops]]
+name = "artifact.render"
+summary = "Render a block with variable values"
+
+[[expect.ops]]
+name = "artifact.tree"
+summary = "List one level of a type directory"
+
+[[expect.ops]]
+name = "artifact.update"
+summary = "Rewrite an artifact file from a model"
+
+[[expect.ops]]
+name = "artifact.write_file"
+summary = "Render a whole-file artifact into a workspace file"
+
+[[expect.ops]]
+name = "config.get"
+summary = "The session vault, its source and the config dir"
+
+[[expect.ops]]
+name = "index.create"
+summary = "Scaffold sibling artifacts and an index linking them"
+
+[[expect.ops]]
+name = "index.plan"
+summary = "Resolve a template index into steps"
+
+[[expect.ops]]
+name = "index.run"
+summary = "Write every step of a template index into a workspace"
+
+[[expect.ops]]
+name = "migrate.frontmatter.apply"
+summary = "Rewrite planned files: type: → artifactType:"
+
+[[expect.ops]]
+name = "migrate.frontmatter.plan"
+summary = "List files whose frontmatter type: needs migrating"
+
+[[expect.ops]]
+name = "render.text"
+summary = "Fill tokens in text with values (no artifact)"
+
+[[expect.ops]]
 name = "system.ops"
 summary = "List every registered operation"
 
 [[expect.ops]]
 name = "system.version"
 summary = "Engine and protocol versions"
+
+[[expect.ops]]
+name = "types.list"
+summary = "Each artifact type: dir, enabled, dir exists"
+
+[[expect.ops]]
+name = "types.set_enabled"
+summary = "Enable or disable a type in the current vault"
+
+[[expect.ops]]
+name = "vars.file.new"
+summary = "Create a blank Variables file"
+
+[[expect.ops]]
+name = "vars.list"
+summary = "List Variables files with their sub-sets and variables"
+
+[[expect.ops]]
+name = "vars.meta.tags"
+summary = "Replace a Variables file's tags"
+
+[[expect.ops]]
+name = "vars.search"
+summary = "Search Variables files, sub-sets and variables"
+
+[[expect.ops]]
+name = "vars.subset.add"
+summary = "Add an empty sub-set"
+
+[[expect.ops]]
+name = "vars.subset.delete"
+summary = "Delete a sub-set"
+
+[[expect.ops]]
+name = "vars.subset.describe"
+summary = "Set a sub-set's description"
+
+[[expect.ops]]
+name = "vars.subset.rename"
+summary = "Rename a sub-set"
+
+[[expect.ops]]
+name = "vars.var.add"
+summary = "Add a variable"
+
+[[expect.ops]]
+name = "vars.var.delete"
+summary = "Delete a variable"
+
+[[expect.ops]]
+name = "vars.var.rename"
+summary = "Rename a variable"
+
+[[expect.ops]]
+name = "vars.var.set"
+summary = "Set a variable's value"
+
+[[expect.ops]]
+name = "varsets.apply"
+summary = "Merge a sub-set's values over the client's"
+
+[[expect.ops]]
+name = "varsets.match"
+summary = "Rank variable sub-sets against an artifact"
+
+[[expect.ops]]
+name = "varsets.save"
+summary = "Save values as a new Variables file"
+
+[[expect.ops]]
+name = "vault.inspect"
+summary = "Inspect a folder as a vault (reads only)"
+
+[[expect.ops]]
+name = "vault.list"
+summary = "Known vaults and the default"
+
+[[expect.ops]]
+name = "vault.select"
+summary = "Validate, prepare, remember and use a vault"
+
+[[expect.ops]]
+name = "vault.use"
+summary = "Make a known vault the default and use it"
+
+[[expect.ops]]
+name = "vault.validate"
+summary = "Check every artifact file; report errors and pending migrations"

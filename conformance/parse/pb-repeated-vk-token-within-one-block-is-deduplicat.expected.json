@@ -1,0 +1,25 @@
+{
+  "blocks": [
+    {
+      "code": "echo <VK-env> && echo <VK-env>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Repeated",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-env"
+        }
+      ]
+    }
+  ],
+  "code": "echo <VK-env> && echo <VK-env>",
+  "fileName": "pb-repeated-vk-token-within-one-block-is-deduplicat",
+  "filePath": "Snippets/pb-repeated-vk-token-within-one-block-is-deduplicat.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-repeated-vk-token-within-one-block-is-deduplicat.md",
+  "vars": []
+}

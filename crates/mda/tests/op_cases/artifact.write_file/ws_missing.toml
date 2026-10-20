@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/component.md", workspaceRoot = "/nonexistent-mda-ws-7c1f", destDir = "" }
+expect_error = "path.not_found"
+expect_workspace_files = { "out" = false, "x" = false, "Btn" = false, "CON.txt" = false }

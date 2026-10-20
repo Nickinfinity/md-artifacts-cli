@@ -1,0 +1,9 @@
+vault = "vault"
+params = { path = "Variables/flat.md" }
+expect_files = { "Variables/flat.md" = "---\nartifactType: Variables\ntitle: Flat\n---\n\n```yaml VKs\nVK-host: localhost\nVK-port: '3000'\n```\n" }
+[expect]
+values = { "VK-host" = "localhost", "VK-port" = "3000" }
+changes = [
+  { name = "VK-host", oldValue = "", newValue = "localhost", action = "filled" },
+  { name = "VK-port", oldValue = "", newValue = "3000", action = "filled" },
+]

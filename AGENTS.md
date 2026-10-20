@@ -3,12 +3,48 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-09): W0 landed.** The workspace exists: `mda-core` (empty), `mda-vault` (containment +
-> bounded reads), `mda-ops` (registry, `system.version`, `system.ops`), `mda` (CLI incl. `mda call`, `serve`,
-> debug mode), the conformance harness (0 cases) and the op-case harness. Sections marked *(W0)* describe
-> the tree; everything else (parse, write, render, vault config, variables, migration) is the **target**,
-> built by the engine-port plan's W1–W7 (`docs/plans/engine-port/`).
-
+> **Status (2026-10-20): W7e landed** — the legacy `KEY=value` dialect is gone: defaults bodies are YAML only (a `K=v` line is
+> `vks.mixed_dialect`), no unfenced `vars:` section, `migrate.vks.*` / `mda migrate vks` / `migrate.unfenced_vars` removed; protocol
+> **2.0** (first major, PROTOCOL §7.2), engine `0.10.0`.
+> **W7d landed (MAC-13)** — the defaults fence is ```` ```yaml VKs ```` (Obsidian highlights YAML; `VKs` keeps it
+> apart from YAML code fences); ```` ```vks ```` is no longer read; owner `mda-core/src/parse/fence.rs` (`DEFAULTS_INFO`,
+> `is_defaults_opener`, `untagged_defaults`); `vault.validate` warns `vars.untagged_defaults{info}`; protocol **1.2**, engine `0.9.0`.
+> **W7c landed (MAC-12)** — lossless rewrite, protocol **1.1**, engine `0.8.0`: `artifact.read` reports `layout`
+> (`fence`/`bare`/`flags`, region names, notes, `***` wrapping; `mda-core/src/model/layout.rs`, `parse/flags.rs` `scan_flags`), the
+> model carries `layout` + `paths`, the emitter writes flags and bare bodies back (`serialize/payload.rs`; guard `serialize/guard.rs`),
+> frontmatter lists are block lists with `tags` last (Obsidian style); update rewrites flagged/index files only when the model carries
+> the layout/`paths` (a 1.0 client still gets `not_serializable`); spec §7.6, PROTOCOL §7.1; `scripts/vault_parity.py`.
+> **W7 landed (MAC-11)** — protocol **1.0 frozen**, engine `0.7.0` (tag `v0.7.0`): `spec/PROTOCOL.md` (methods,
+> error/warning codes with params, transport, compatibility, client notes) guarded by `crates/mda/tests/protocol_doc.rs`; `serve`
+> hardened (five `protocol.*` codes, `message` = code, ids string or i64/u64 integer and never echoed when invalid, no batch, malformed
+> id-less → −32600, notifications ignored); `typed` refuses non-object params; op cases pin `expect_error_params`; real-binary e2e
+> (`tests/serve_e2e.rs`). Push notifications = W7b.
+> **W6 landed (MAC-10)** — migrate + validate: `mda-core/src/migrate/` (frontmatter `type:` → `artifactType:`,
+> legacy vks → YAML, surgical and idempotent), `migrate.frontmatter|vks.plan|apply` + `vault.validate` (`mda-ops/src/{migrate,validate}.rs`),
+> `mda migrate …`, `mda vault validate` (exit 1 on errors); `walk_md` takes several starts with one budget; `vars.limit` renamed
+> `walk.limit`; conformance kind `migrate` (35 cases); fixture `vault_migrate/`.
+> **W5 landed (MAC-8)** — Variables-file edits: `mda-core/src/variables.rs` (sub-set addressing, shape
+> transitions, the name rule), ten `vars.*` ops (`mda-ops/src/vars.rs` + `vars/requests.rs`, through the shared
+> `artifact_write::rewrite`), `mda vars …` (`cli/vars.rs`), the emitter's 64 KiB vks body cap, conformance kind `idempotent`
+> (5 cases). **W5b landed (MAC-9)** — the bounded `Variables/` walk (`mda_vault::walk_md`: never follows symlinked dirs, caps depth 32 /
+> 10 000 entries / 64 MiB), `vars.list|search`, `varsets.match|apply|save` (`mda-core/src/varset/`), `render.text`; `mda vars list|search`,
+> `mda varsets …`, `mda render text`. **W4 landed (MAC-7).** The workspace exists: `mda-core` (model, type registry, parse incl.
+> flags and `<VK-…>` detection, the vks codec reading legacy and YAML bodies and emitting YAML, the `.md`
+> serializer with its re-parse guard (`index: true` emitted last; empty whole-file bodies frontmatter-only), the
+> byte-surgical patcher, the render engine `render/` with the directive engine and its four expansion limits,
+> `language.rs`, `naming.rs` (incl. `slugify`), `multi_index.rs` (`safe_rel_path`, index links)), `mda-vault`
+> (containment, bounded reads, directory listing, atomic writes with the SHA-256 content hash, vault validation +
+> create-only type dirs `vault.rs`, the two config files `config.rs`), `mda-ops`
+> (`system.version`, `system.ops`, `artifact.read` (+ `hash`), `artifact.tree`, `artifact.create|update|patch|delete`,
+> `artifact.render|write_file|prefill`, `index.plan|run|create`, `vault.inspect|select|list|use`, `config.get`,
+> `types.list|set_enabled`, the session resolver), `mda` (CLI incl. `mda call`,
+> `mda artifact show|ls|new|update|patch|rm|render|write-file|prefill`, `mda index plan|run|create`, `mda vault
+> inspect|select|list|use`, `mda config get`, `mda types list|set-enabled`, `serve` with
+> `initialize.types`, debug mode), the conformance harness (121 `parse` + 28 `serialize` + 40 `render` cases) and the
+> op-case harness (per-leg fixture copies, `expect_files`, per-leg workspace + `expect_workspace_files`, per-leg
+> machine config dir + `machine_config`/`expect_config_files`/`vault_flag`).
+> Sections marked *(W0)* describe the tree; everything else (variables, migration) is the **target**,
+> built by the engine-port plan's W4–W7 (`docs/plans/engine-port/`).
 ---
 
 ## What this project is
@@ -79,43 +115,51 @@ md-artifacts-cli/
 │   │       ├── registry.rs    # THE artifact-type table (dir, contexts, writes_file, multi_block …)
 │   │       ├── language.rs    # language alias / fence / extension tables
 │   │       ├── parse/         # frontmatter · code fence · ## blocks · vars · tokens · flags
-│   │       ├── serialize.rs   # THE .md emitter
+│   │       │   └── text.rs    # JS string semantics (trim, line split) + decode
+│   │       ├── vks/           # {mod, control, yaml, value, emit}.rs — the vks codec (YAML only, read and emit; W7e)
+│   │       ├── serialize/     # THE .md emitter: mod.rs · payload.rs (flags, bare bodies; W7c) · guard.rs (round-trip guard, from_parsed)
 │   │       ├── patch.rs       # surgical in-place edits
-│   │       ├── render.rs      # token resolution (plain tokens; vks template engine later)
+│   │       ├── render/        # token substitution + the directive engine (paths, each/end, join, limits)
 │   │       ├── naming.rs      # slugify, file names, whole-file output names
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
-│   │       ├── varset.rs      # scoring, sub-sets, apply, build
-│   │       ├── variables.rs   # Variables-file mutations + validators
-│   │       ├── migrate/       # frontmatter rewrite (vks rewrite later)
-│   │       └── error.rs       # CoreError → stable codes
+│   │       ├── varset/        # shapes, sub-sets, search text; score.rs: scoring, order, apply (W5b)
+│   │       ├── variables.rs   # Variables-file edits: sub-sets, vars, name rule, shapes (W5)
+│   │       ├── migrate/       # {mod, frontmatter}.rs — the pure frontmatter migration rewrite (W6, spec §11; vks removed W7e)
+│   │       └── error.rs       # vks.* code constants + VarsError
 │   ├── mda-vault/             # ALL filesystem access
 │   │   └── src/
 │   │       ├── lib.rs
 │   │       ├── error.rs       # VaultError (mapped to OpError codes in mda-ops)
 │   │       ├── contain.rs     # THE containment rule (canonicalize + component compare)
 │   │       ├── write.rs       # atomic write (same-dir temp → fsync → rename) + content hash check
-│   │       ├── read.rs        # bounded reads (size limit before reading)
+│   │       ├── read.rs        # bounded reads (size limit before reading); `file_len` (W6)
 │   │       ├── config.rs      # machine config (known vaults, default) + <vault>/.mda/config.toml
 │   │       ├── vault.rs       # inspect / select / create default dirs (create only, never delete)
-│   │       ├── listing.rs     # per-type tree, Variables files, the pane search (today's needs only)
-│   │       └── migrate.rs     # plan/apply walkers (symlink-aware)
+│   │       └── listing.rs     # per-type tree (`list_dir`); the bounded walk (`walk_md`: W5b, several starts W6)
 │   ├── mda-ops/               # THE command list — one typed request → response per operation
 │   │   └── src/
 │   │       ├── lib.rs         # PROTOCOL constant, re-exports (Ctx, OpSpec, OpError, dispatch, Root)
 │   │       ├── registry.rs    # Ctx, OpSpec, dispatch, the typed adapter
 │   │       ├── ops_list.rs    # THE registration list: one line per op
 │   │       ├── error.rs       # OpError { code, params } — the ONLY error shape clients see
-│   │       └── <group>.rs     # vault · types · artifact · render · index · vars · varsets · migrate · validate
+│   │       ├── render.rs · write_file.rs · prefill.rs  # artifact.render / write_file / prefill (W3)
+│   │       ├── index.rs · index_create.rs  # index.plan / run / create (W3b)
+│   │       ├── vars.rs        # vars.file/meta/subset/var edits (W5); vars/{requests,list,scan}.rs (W5b: list, search, the walk collector)
+│   │       ├── varsets.rs     # varsets.match / apply / save (W5b)
+│   │       ├── migrate.rs     # migrate.frontmatter.plan|apply over the shared walk (W6)
+│   │       └── validate.rs    # vault.validate (W6)
 │   ├── mda/                   # lib + bin: `mda`
 │   │   └── src/
 │   │       ├── main.rs        # 3 lines: `mda::cli::run()`
 │   │       ├── lib.rs         # pub mod cli · serve · debug
-│   │       ├── cli/           # clap derive, one enum per ops group, `mda call`; human printer + --json; exit codes
+│   │       ├── cli/           # clap derive, one enum per ops group (`artifact.rs`, `index.rs`, `vault.rs`, `vars.rs`, `varsets.rs`, `migrate.rs`; English table `english.rs`), `mda call`; human printer + --json; exit codes
 │   │       ├── serve/         # NDJSON JSON-RPC server: framing, handshake, dispatch via the op registry
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.0) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
+├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
 ├── AGENTS.md
 └── CREATING_A_PLAN.md         # how plans are written here
@@ -159,20 +203,39 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
+- **Authority: `spec/PROTOCOL.md`** (protocol `2.0`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e). Its method, error-code and warning-code
+  tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
+  `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
-  the type registry (the registry is added in W1; W0 answers `{ protocol, engine }`). A major
-  mismatch is refused.
+  the type registry. A major mismatch is refused. **Within a major every change is additive** (no rename,
+  removal or retype of a method, code, param key or response field). The engine sends **no server notifications** yet (W7b).
 - Every write request carries the **content hash** the client last read; a mismatch returns
-  `conflict` (optimistic concurrency), never an overwrite.
+  `file.conflict` (optimistic concurrency), never an overwrite.
 
-### Configuration *(E-8…E-10)*
+### Configuration *(E-8…E-10; W4, spec §12)*
 
-Two engine-owned scopes, written only through ops: the **machine file** in the OS config dir
-(known vaults and the default) and **`<vault>/.mda/config.toml`** (enabled types; travels with the
-vault). Clients pick folders (the engine has no GUI); the engine validates (`.obsidian/` present)
-and persists. `--vault <path>` overrides for one process without persisting. Artifact directory
-names are fixed (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`, `AIPrompts/`,
-`Variables/`).
+Two engine-owned scopes, written only through ops: the **machine file** `<config dir>/config.toml`
+(known vaults ≤ 64 and the default) and **`<vault>/.mda/config.toml`** (`[types.<Type>] enabled`;
+travels with the vault). `<config dir>` = absolute `MDA_CONFIG_DIR`, else the OS dir (macOS
+`~/Library/Application Support/mda`, Windows `%APPDATA%\mda`, else `$XDG_CONFIG_HOME/mda` or
+`~/.config/mda`); a relative override never falls back. Clients pick folders (the engine has no GUI);
+the engine validates (`validate_vault`: exists, a directory, `.obsidian/` a directory) and persists.
+
+- **One resolver** (`mda_ops::vault::resolve`), used by the CLI and `serve`: `--vault` (one process,
+  never persisted, fatal if invalid) > a valid stored default > none. A stale or corrupt default
+  **never aborts startup**: vault-needing ops return `vault.unavailable` / `config.invalid`.
+  `vault.select` / `vault.use` switch the session's vault (`Ctx.root` is a `RefCell`).
+- **Directories are create-only** (`create_type_dir`): enabling a type or selecting a vault creates
+  missing type dirs; nothing ever deletes one (a deliberate deviation from the extension's toggle).
+  Whether a type is enabled changes no op — it is client UI state.
+- **Config files are untrusted:** 64 KiB cap before parsing, unknown keys preserved on write,
+  corrupt files refused and never overwritten, writes hash-checked (`file.conflict` on a race).
+  A machine `config.toml` symlinked out of its dir is refused (a symlinked dir is fine).
+- **Tests never touch the real user config:** `common::bin()` sets an uncreated per-spawn
+  `MDA_CONFIG_DIR`; in-process tests use `Ctx::with_config_dir`; `std::env::set_var` is forbidden.
+
+Artifact directory names are fixed (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`,
+`AIPrompts/`, `Variables/`).
 
 ### Listing *(E-11)*
 
@@ -191,19 +254,33 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Artifact types and their properties | `mda-core/src/registry.rs` |
 | Language tables | `mda-core/src/language.rs` |
 | `.md` parsing | `mda-core/src/parse/` |
-| `.md` emission | `mda-core/src/serialize.rs` |
-| `<VK-…>` token grammar | `mda-core/src/parse/` (one regex constant) |
+| `.md` emission, frontmatter key order, the single-line rule, payload layout (W7c) | `mda-core/src/serialize/` |
+| `<VK-…>` token grammar | `mda-core/src/parse/tokens.rs` (`TOKEN_PATTERN`) |
+| The defaults fence info string (`yaml VKs`) | `mda-core/src/parse/fence.rs` (`DEFAULTS_INFO`) |
+| Token substitution, directives, expansion limits | `mda-core/src/render/` (tokenizes only through `TOKEN_PATTERN`) |
+| The vks codec | `mda-core/src/vks/` |
+| `vks.*` codes | `mda-core/src/error.rs` (listed in `mda-ops` `ALL_CODES`) |
+| JS trim / line split / decoding | `mda-core/src/parse/text.rs` |
 | Slugs and file names | `mda-core/src/naming.rs` |
 | Vault-authored relative paths (index links, `paths:`) | `mda-core/src/multi_index.rs` — `safe_rel_path` |
+| Variables-file edits (addressing, shape transitions, names) | `mda-core/src/variables.rs` |
+| The bounded walk (caps, symlink rule, starts) | `mda-vault/src/listing.rs` (`walk_md`) |
+| Migrations (frontmatter) | `mda-core/src/migrate/` |
+| The migration / validate scope walk | `mda-ops/src/migrate.rs` (`scope`) over `walk_md` |
+| Var-set scoring, apply, search text | `mda-core/src/varset/` |
+| The render variable rule | `mda-core/src/render/` (`variable_names`) |
 | Path containment | `mda-vault/src/contain.rs` |
-| Atomic writes + content hash | `mda-vault/src/write.rs` |
+| Atomic writes + content hash (`content_hash`, SHA-256) | `mda-vault/src/write.rs` |
 | Configuration files | `mda-vault/src/config.rs` |
+| Vault validation, type-dir creation | `mda-vault/src/vault.rs` (`validate_vault`, `create_type_dir`) |
+| Session vault resolution | `mda-ops/src/vault.rs` (`resolve`) |
 | The operation list | `mda-ops/src/ops_list.rs` (registered through `registry.rs`) |
 | Error codes | `mda-ops/src/error.rs` |
 | NDJSON framing | `mda/src/serve/` (shared with `mda-mcp` later) |
+| The wire protocol (methods, codes, transport) | `spec/PROTOCOL.md` (guarded by `crates/mda/tests/protocol_doc.rs`) |
 
 The on-disk format is specified by **`spec/ARTIFACT_FILE_FORMAT.md`** (ported from the extension;
-§9–§10, the YAML variables and directives, are *proposed* until the engine-port W1 refinement). **If the spec and the
+§9–§10, the YAML variables and directives, were ruled at the engine-port W1 Role A pass 1). **If the spec and the
 parser disagree, that is a bug to reconcile, never a judgement call.**
 
 ---
@@ -211,7 +288,7 @@ parser disagree, that is a bug to reconcile, never a judgement call.**
 ## Conformance — parity with the TypeScript extension
 
 `conformance/` (tracked) holds language-neutral cases: `parse/` (input `.md` → expected JSON),
-`serialize/` (model JSON → expected bytes), `render/` (file + values → expected text) and
+`serialize/` (model JSON → expected bytes; kind `idempotent`: a `.md` that must serialize back byte for byte), `render/` (file + values → expected `{output, warnings, containsEscape}`), `migrate/` (input `.md` → exact migrated bytes or a skip code, W6) and
 `manifest.toml`. TS-derived cases are generated **once** by an exporter in the extension repo from
 its current services, its goldens and the real vault. `tests/conformance.rs` walks the manifest.
 
@@ -220,6 +297,16 @@ its current services, its goldens and the real vault. `tests/conformance.rs` wal
 - A disagreement is a **recorded decision**: fix Rust, or mark the case
   `deviates_from_ts = "<reason>"`.
 - Features the extension never had (vks YAML, structured values, loops) get Rust-only cases.
+- **No vault file is ever committed** (the repo is public). Parity on the real vault is a local-only,
+  `#[ignore]`d test: `MDA_TEST_VAULT=<vault> cargo test -p mda --test vault_local -- --ignored`, against
+  expectations in gitignored `docs/`, regenerated from the engine by `conformance-gen/gen-vault-rust.py`
+  (YAML vks cannot come from TS) with a per-file TS comparison (`deviates_from_ts`). Resync it whenever
+  the vault's test files change.
+- **Client parity on a real vault** (local-only, not in the gate): `python3 -I scripts/vault_parity.py
+  --vault <vault> [--scope test]` copies the vault twice and runs one create → match → apply → render /
+  write-file → save flow through `mda serve` and through the CLI subcommands; every response and both
+  file trees must be identical, renders of `create(read(S))` must equal renders of `S`, and the emitted
+  form must be a fixed point. Canonical-form diffs and refused creates are notes (`<out>/notes.txt`).
 
 ---
 
@@ -227,17 +314,25 @@ its current services, its goldens and the real vault. `tests/conformance.rs` wal
 
 Every op is tested **once as data, three ways**. A case is a file,
 `crates/mda/tests/op_cases/<op>/<case>.toml`: the request, the fixture vault, and either the expected
-response JSON (`expect`) or the expected error code (`expect_error`). One harness (`tests/op_cases.rs`)
+response JSON (`expect`) or the expected error code (`expect_error`, optionally with its exact params,
+`expect_error_params`). One harness (`tests/op_cases.rs` + `tests/op_harness/`)
 runs every case through `mda_ops::dispatch`, through `mda call <op> '<json>' --json` (exit code included), and
 through a `serve` NDJSON session (asserting every stdout line is JSON).
 
 - **Coverage guard:** every registered op needs at least one `expect` case and one `expect_error`
   case, or the suite fails. A new op without cases cannot land.
-- **Human CLI output** (the non-`--json` form) is asserted per command in `tests/cli_human.rs`.
-- **Fixture vault:** `crates/mda/tests/fixtures/vault/` (with `.obsidian/`), tracked, extended per wave.
+- **Human CLI output** (the non-`--json` form) is asserted per command in `tests/cli_human*.rs` (split by group) and `tests/cli_<group>.rs`.
+- **Fixture vault:** `crates/mda/tests/fixtures/vault/` (with `.obsidian/`), tracked, extended per wave;
+  W4 adds `vault_bare/`, `vault_cfg/`, `vault_badcfg/`, `not_vault/`; W5b adds `vault_vars/`; W6 adds `vault_migrate/`.
+- **Machine config per leg:** every leg gets a fresh canonical config dir (`MDA_CONFIG_DIR`);
+  `machine_config` seeds it, `expect_config_files` asserts it, `vault_flag = false` copies the fixture
+  without passing `--vault`; `$VAULT` / `$CONFIG` / `$WORKSPACE` are substituted. `expect` is full-body equality.
 - **Shared test helpers:** `crates/mda/tests/common/mod.rs` (spawn the binary, NDJSON session, the
   every-stdout-line-is-JSON check), orchestrator-owned; test files import it with `mod common;`.
-- The case files double as the protocol's examples in `spec/PROTOCOL.md`.
+- The case files double as the protocol's examples in `spec/PROTOCOL.md` (§3 links each op's folder; §9 the grammar).
+- **Protocol tests:** `tests/serve.rs` + `tests/serve_ids.rs` (in-process framing, ids, 🔒 sinks), `tests/serve_e2e.rs` (real
+  binary: long session under trace, pipelined backpressure, EOF, kill during write — a characterization pin; atomicity is
+  `write.rs` `with_temp`). `// ponytail:` a SIGKILL leaves a hidden `.<name>.mda-tmp-*` temp (never listed); cleanup later.
 
 ## Debug mode *(W0)*
 
@@ -255,18 +350,24 @@ through MCP), CLI arguments, TUI text inputs. Held by construction, because clip
 analysis:
 
 - **Reject, never sanitise.** Limits (file size, nesting depth, node counts, expansion size) are
-  checked **before** the work they bound.
+  checked **before** the work they bound. Render bounds output bytes, iterations, steps (nodes
+  visited) and loop nesting (spec §10), so empty loops and repeated `join` walks are bounded too.
 - **One containment rule** (`contain.rs`): canonicalize (symlinks resolved) and compare path
   **components**. Checked immediately before the I/O it protects. Vault writes are contained to the
   vault root; workspace writes (whole-file artifacts, scaffolds) to an allowed root the client
-  passes, never one derived from vault content.
+  passes, never one derived from vault content, and through the **same** `write.rs` path as vault
+  writes (atomic, UTF-8, no BOM). Every output-name input (typed name, `extension:`, `target:`, the
+  title fallback) is a path-injection surface (`naming.rs`).
 - **Atomic writes** only; a crash leaves the old file or the new one.
 - **No panics on input:** `#![forbid(unsafe_code)]`; `unwrap`/`expect`/`panic!` denied outside tests.
 - **stdout discipline** in `serve`/`mcp` (above): a stray byte breaks every client.
 - **Terminal safety for rendered output:** clients that send rendered text to a terminal refuse
-  content containing `ESC` (`\x1b`); the engine reports it in the render response, so every client
-  can apply the same rule.
-- **MCP write tools are off unless `--allow-write`** (when MCP exists).
+  content containing `ESC` (`\x1b`); the engine reports it in the render response (`containsEscape`),
+  so every client can apply the same rule. The CLI's human `render` refuses it
+  (`render.contains_escape`); `--json` returns the response unchanged.
+- **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete`,
+  `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled`, `vars.file.new`, `vars.meta.tags`,
+  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`.
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the
 **sink** (the file outside the vault is unchanged; stdout carried only protocol lines; nothing was

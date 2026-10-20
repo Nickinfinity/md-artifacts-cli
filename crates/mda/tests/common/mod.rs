@@ -6,14 +6,33 @@
 use std::io::Write;
 use std::process::{Command, Output, Stdio};
 
-/// The built `mda` binary.
+static SPAWNS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// The built `mda` binary, with `MDA_CONFIG_DIR` set to a unique, **uncreated** temp path: no test
+/// ever reads or writes the real user config (V-8); a missing dir reads as "no machine config".
 pub fn bin() -> Command {
-    Command::new(env!("CARGO_BIN_EXE_mda"))
+    let n = SPAWNS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let cfg = std::env::temp_dir().join(format!("mda-cfg-{}-{n}", std::process::id()));
+    let mut c = Command::new(env!("CARGO_BIN_EXE_mda"));
+    c.env("MDA_CONFIG_DIR", cfg);
+    c
+}
+
+/// [`run`] with `MDA_CONFIG_DIR` = `cfg` (a test's own machine config dir).
+pub fn run_cfg(args: &[&str], stdin: &[u8], cfg: &std::path::Path) -> Output {
+    let mut cmd = bin();
+    cmd.env("MDA_CONFIG_DIR", cfg);
+    run_with(cmd, args, stdin)
 }
 
 /// Run `mda <args>` with `stdin` piped in; wait for it to exit.
 pub fn run(args: &[&str], stdin: &[u8]) -> Output {
-    let mut child = bin()
+    run_with(bin(), args, stdin)
+}
+
+/// Spawn `cmd <args>` with `stdin` piped in; wait for it to exit.
+pub fn run_with(mut cmd: Command, args: &[&str], stdin: &[u8]) -> Output {
+    let mut child = cmd
         .args(args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -42,8 +61,26 @@ pub fn json_lines(out: &[u8]) -> Vec<serde_json::Value> {
         .collect()
 }
 
-/// Run `mda serve` with `lines` as NDJSON input (each followed by `\n`), then EOF.
-pub fn serve_session(lines: &[&str]) -> Output {
+/// Run `mda <args> serve` with `lines` as NDJSON input (each followed by `\n`), then EOF.
+pub fn serve_session(args: &[&str], lines: &[&str]) -> Output {
     let input: String = lines.iter().map(|l| format!("{l}\n")).collect();
-    run(&["serve"], input.as_bytes())
+    let mut all = args.to_vec();
+    all.push("serve");
+    run(&all, input.as_bytes())
+}
+
+/// Copy the directory tree `src` to `dst` (created): regular files and directories only, std only.
+/// Write op cases run each leg on a fresh copy so no leg sees another's writes (W-13).
+pub fn copy_tree(src: &std::path::Path, dst: &std::path::Path) {
+    std::fs::create_dir_all(dst).expect("create copy dir");
+    for e in std::fs::read_dir(src).expect("read fixture dir") {
+        let e = e.expect("dir entry");
+        let ty = e.file_type().expect("file type");
+        let to = dst.join(e.file_name());
+        if ty.is_dir() {
+            copy_tree(&e.path(), &to);
+        } else if ty.is_file() {
+            std::fs::copy(e.path(), &to).expect("copy fixture file");
+        }
+    }
 }

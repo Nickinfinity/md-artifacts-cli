@@ -1,0 +1,6 @@
+vault = "not_vault"
+vault_flag = false
+params = { path = "$VAULT/x.md" }
+expect_error = "path.not_dir"
+[expect_config_files]
+"config.toml" = false

@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "AIAgentsConf/reviewer.md", workspaceRoot = "$WORKSPACE", destDir = "", values = { VK-repo = "mda" } }
+expect = { path = "CLAUDE.md", hash = "ff81606a2ff2281ed8282f71bd19b6b5a9238e2411c708946b43c4de53030680", warnings = [], containsEscape = false }
+expect_workspace_files = { "CLAUDE.md" = "You review mda." }

@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "title" = "CON" }
+expect_error = "naming.reserved"
+expect_files = { "Variables/con.md" = false }

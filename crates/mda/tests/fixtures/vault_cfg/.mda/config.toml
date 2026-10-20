@@ -1,0 +1,8 @@
+[future]
+keep = 1
+
+[types.Command]
+enabled = true
+
+[types.Snippet]
+enabled = false

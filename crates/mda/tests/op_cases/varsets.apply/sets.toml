@@ -1,0 +1,5 @@
+vault = "vault"
+params = { path = "Variables/sets.md", subset = { index = 0, heading = "Dev" } }
+[expect]
+values = { "VK-host" = "localhost" }
+changes = [ { name = "VK-host", oldValue = "", newValue = "localhost", action = "filled" } ]

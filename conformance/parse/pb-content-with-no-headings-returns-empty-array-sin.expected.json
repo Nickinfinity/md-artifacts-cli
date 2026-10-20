@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "echo hello",
+  "fileName": "pb-content-with-no-headings-returns-empty-array-sin",
+  "filePath": "Snippets/pb-content-with-no-headings-returns-empty-array-sin.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-content-with-no-headings-returns-empty-array-sin.md",
+  "vars": []
+}

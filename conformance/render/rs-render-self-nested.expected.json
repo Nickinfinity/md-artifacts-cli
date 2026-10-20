@@ -1,0 +1,13 @@
+{
+  "output": "(<VK-each:env>x<VK-end:env>)(<VK-each:env>x<VK-end:env>)",
+  "warnings": [
+    {
+      "code": "render.self_nested",
+      "params": {
+        "line": "1",
+        "path": "VK-env"
+      }
+    }
+  ],
+  "containsEscape": false
+}

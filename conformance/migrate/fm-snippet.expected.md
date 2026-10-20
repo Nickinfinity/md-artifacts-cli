@@ -1,0 +1,4 @@
+---
+artifactType: Snippet
+---
+body

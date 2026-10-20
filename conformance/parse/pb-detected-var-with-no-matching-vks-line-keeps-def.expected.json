@@ -1,0 +1,34 @@
+{
+  "blocks": [
+    {
+      "code": "const <VK-a> = <VK-b>;",
+      "description": "",
+      "fenceLang": "javascript",
+      "heading": "Partial",
+      "vars": [
+        {
+          "defaultValue": "1",
+          "name": "VK-a"
+        },
+        {
+          "defaultValue": "",
+          "name": "VK-b"
+        }
+      ]
+    }
+  ],
+  "code": "const <VK-a> = <VK-b>;",
+  "fileName": "pb-detected-var-with-no-matching-vks-line-keeps-def",
+  "filePath": "Snippets/pb-detected-var-with-no-matching-vks-line-keeps-def.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "javascript"
+  },
+  "relativePath": "pb-detected-var-with-no-matching-vks-line-keeps-def.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-a"
+    }
+  ]
+}

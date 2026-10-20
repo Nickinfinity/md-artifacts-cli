@@ -1,0 +1,42 @@
+{
+  "artifactType": "Variables",
+  "title": "Structured",
+  "blocks": [
+    {
+      "vars": [
+        {
+          "name": "VK-env",
+          "value": [
+            "dev",
+            "prod"
+          ]
+        },
+        {
+          "name": "VK-users",
+          "value": [
+            {
+              "id": "1",
+              "name": "Alice Smith",
+              "tags": [
+                "core",
+                "ops"
+              ]
+            },
+            {
+              "id": "2",
+              "name": "Bob Jones",
+              "tags": []
+            }
+          ]
+        },
+        {
+          "name": "VK-db",
+          "value": {
+            "host": "localhost",
+            "port": "5432"
+          }
+        }
+      ]
+    }
+  ]
+}

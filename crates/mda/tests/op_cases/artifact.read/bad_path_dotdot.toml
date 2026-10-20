@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Snippets/../Commands/x.md" }
+expect_error = "artifact.bad_path"

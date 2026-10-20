@@ -1,0 +1,20 @@
+{
+  "blocks": [
+    {
+      "code": "echo hello",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Greeting",
+      "vars": []
+    }
+  ],
+  "code": "echo hello",
+  "fileName": "pb-single-heading-and-fence-returns-a-one-element-a",
+  "filePath": "Snippets/pb-single-heading-and-fence-returns-a-one-element-a.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-single-heading-and-fence-returns-a-one-element-a.md",
+  "vars": []
+}

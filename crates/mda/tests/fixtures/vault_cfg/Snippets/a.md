@@ -1,0 +1,3 @@
+---
+artifactType: Snippet
+---

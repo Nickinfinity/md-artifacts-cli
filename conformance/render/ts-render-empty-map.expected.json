@@ -1,0 +1,20 @@
+{
+  "output": "const url = <VK-host>/<VK-path>",
+  "warnings": [
+    {
+      "code": "render.unknown_var",
+      "params": {
+        "line": "1",
+        "name": "VK-host"
+      }
+    },
+    {
+      "code": "render.unknown_var",
+      "params": {
+        "line": "1",
+        "name": "VK-path"
+      }
+    }
+  ],
+  "containsEscape": false
+}

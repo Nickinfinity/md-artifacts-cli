@@ -1,0 +1,15 @@
+vault = "vault_bare"
+vault_flag = false
+machine_config = '''
+default = "/other"
+vaults = ["/other", "$VAULT"]
+'''
+params = { path = "$VAULT" }
+[expect]
+path = "$VAULT"
+created = ["Snippets", "AIAgentsConf", "AIPrompts"]
+[expect_config_files]
+"config.toml" = '''
+default = "$VAULT"
+vaults = ["/other", "$VAULT"]
+'''

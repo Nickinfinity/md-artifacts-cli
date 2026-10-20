@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Templates/index.md", mirrorFrom = "../x" }
+expect_error = "path.parent_segment"

@@ -141,3 +141,12 @@ fn unserializable_response_is_internal_error() {
     assert_eq!(e.code, "op.internal");
     assert!(e.params.is_empty());
 }
+
+#[test]
+fn array_params_refused() {
+    for p in [json!(["x"]), json!([]), json!(5)] {
+        let e = dispatch_in(LIST, &ctx(), "t.empty", p).unwrap_err();
+        assert_eq!(e.code, "op.bad_request");
+        assert_eq!(e.params["reason"], "params must be an object");
+    }
+}

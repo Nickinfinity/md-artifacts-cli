@@ -1,0 +1,21 @@
+vault = "vault"
+vault_flag = false
+machine_config = '''
+default = "$VAULT"
+vaults = ["$VAULT"]
+'''
+params = { path = "Snippets/hello.md" }
+[expect]
+filePath = "Snippets/hello.md"
+fileName = "hello"
+relativePath = "hello.md"
+code = "echo <VK-greeting> <VK-name>"
+vars = [{ name = "VK-greeting", defaultValue = "marker-7f3a" }]
+blocks = []
+hash = "ec08b1ff85244ca852728e7bf761ccb8cfcaf796abd9ddfef6e5f8aef5082c1e"
+[expect.frontmatter]
+artifactType = "Snippet"
+title = "Hello"
+description = "Fixture snippet"
+language = "bash"
+tags = ["fixture"]

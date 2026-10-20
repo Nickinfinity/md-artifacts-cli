@@ -1,0 +1,5 @@
+# An unknown request field reaches deny_unknown_fields; nothing is written.
+vault = "vault"
+params = { type = "Template", dir = "Templates/gen", paths = ["a.ts"], nope = 1 }
+expect_error = "op.bad_request"
+expect_files = { "Templates/gen/a.md" = false, "Templates/gen/index.md" = false }

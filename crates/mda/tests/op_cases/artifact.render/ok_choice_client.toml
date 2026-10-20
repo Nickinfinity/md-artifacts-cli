@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Templates/users.md", code = "<VK-env>", values = { "VK-env" = "staging" } }
+expect = { output = "staging", warnings = [], containsEscape = false }

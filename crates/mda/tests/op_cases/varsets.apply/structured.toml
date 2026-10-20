@@ -1,0 +1,5 @@
+vault = "vault"
+params = { path = "Variables/structured.md" }
+[expect]
+values = { "VK-db" = { zeta = "z", alpha = "a" } }
+changes = [ { name = "VK-db", oldValue = "", newValue = { zeta = "z", alpha = "a" }, action = "filled" } ]

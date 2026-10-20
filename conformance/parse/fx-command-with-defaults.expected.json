@@ -1,0 +1,25 @@
+{
+  "blocks": [],
+  "code": "./deploy.sh <VK-env> <VK-region>",
+  "fileName": "command-with-defaults",
+  "filePath": "Commands/artifact-form/command-with-defaults.md",
+  "frontmatter": {
+    "artifactType": "Command",
+    "description": "Deploy to a named environment and region.",
+    "tags": [
+      "deploy"
+    ],
+    "title": "Deploy Command"
+  },
+  "relativePath": "artifact-form/command-with-defaults.md",
+  "vars": [
+    {
+      "defaultValue": "staging",
+      "name": "VK-env"
+    },
+    {
+      "defaultValue": "us-east-1",
+      "name": "VK-region"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+vault = "vault_bare"
+vault_flag = false
+machine_config = "vaults = 1"
+params = { path = "$VAULT" }
+expect_error = "config.invalid"
+[expect_config_files]
+"config.toml" = "vaults = 1"

@@ -1,0 +1,14 @@
+{
+  "blocks": [],
+  "code": "export * from './Button';",
+  "fileName": "barrel",
+  "filePath": "Templates/multi-index/dir_1/barrel.md",
+  "frontmatter": {
+    "artifactType": "Template",
+    "extension": ".ts",
+    "language": "ts",
+    "title": "Barrel"
+  },
+  "relativePath": "multi-index/dir_1/barrel.md",
+  "vars": []
+}

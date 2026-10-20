@@ -1,0 +1,20 @@
+{
+  "blocks": [],
+  "code": "Wrap your prompt like this:\n```md\n%%oa:start%%\ntext\n%%oa:end%%\n```\nDone.",
+  "fileName": "fs-an-end-flag-inside-a-fenced-block-does-not-close",
+  "filePath": "AIPrompts/fs-an-end-flag-inside-a-fenced-block-does-not-close.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": ""
+      }
+    ]
+  },
+  "relativePath": "fs-an-end-flag-inside-a-fenced-block-does-not-close.md",
+  "vars": []
+}

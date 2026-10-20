@@ -1,0 +1,5 @@
+vault_flag = false
+vault = "vault"
+machine_config = "default = ["
+params = {}
+expect_error = "config.invalid"

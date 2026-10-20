@@ -1,0 +1,25 @@
+vault = "vault_vars"
+params = { query = "#api" }
+[[expect.files]]
+path = "Variables/dev.md"
+name = "dev"
+title = "Dev"
+tags = ["api"]
+shape = "flat"
+[[expect.files.subsets]]
+index = 0
+heading = ""
+description = ""
+vars = [{ name = "VK-host", defaultValue = "localhost" }, { name = "VK-port", defaultValue = "8080" }]
+
+[[expect.files]]
+path = "Variables/team/ops.md"
+name = "ops"
+title = "Ops"
+tags = ["api", "ops"]
+shape = "flat"
+[[expect.files.subsets]]
+index = 0
+heading = ""
+description = ""
+vars = [{ name = "VK-user", defaultValue = "ops-bot" }]

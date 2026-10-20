@@ -1,0 +1,5 @@
+# W7c: tags are a YAML block list, so a comma inside a tag round-trips (it was refused inline).
+vault = "vault"
+params = { "path" = "Variables/flat.md", "expectedHash" = "c42fac55361cbad76ff13f44e1429d039493ed1d46e60598e4774ba30b03b0cb", "tags" = ["a,b"] }
+expect = { "path" = "Variables/flat.md", "hash" = "c32ea91b9b274feafb4b76ea8c8437e2116e0d30a538a2ee7f71a527da66db01" }
+expect_files = { "Variables/flat.md" = "---\nartifactType: Variables\ntitle: Flat\ntags:\n  - a,b\n---\n\n```yaml VKs\nVK-host: localhost\nVK-port: '3000'\n```\n" }

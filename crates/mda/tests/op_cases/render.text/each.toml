@@ -1,0 +1,2 @@
+params = { text = "<VK-each:u:\", \"><VK-u><VK-end:u>", values = { "VK-u" = ["a", "b"] } }
+expect = { output = "a, b", warnings = [], containsEscape = false }

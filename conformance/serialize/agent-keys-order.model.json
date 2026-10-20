@@ -1,0 +1,19 @@
+{
+  "artifactType": "AIAgentsConfig",
+  "title": "Code reviewer",
+  "provider": "Claude",
+  "model": "Opus",
+  "version": "4.8",
+  "tags": [
+    "review"
+  ],
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "md",
+      "code": "review it",
+      "vars": []
+    }
+  ]
+}

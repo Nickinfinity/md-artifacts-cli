@@ -1,0 +1,37 @@
+{
+  "blocks": [
+    {
+      "code": "http://<VK-host>/dev",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Dev",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-host"
+        }
+      ]
+    },
+    {
+      "code": "https://<VK-host>/prod",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Prod",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-host"
+        }
+      ]
+    }
+  ],
+  "code": "http://<VK-host>/dev",
+  "fileName": "pb-same-var-name-in-two-blocks-is-listed-independen",
+  "filePath": "Snippets/pb-same-var-name-in-two-blocks-is-listed-independen.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-same-var-name-in-two-blocks-is-listed-independen.md",
+  "vars": []
+}

@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/hostile.md", workspaceRoot = "$WORKSPACE", destDir = "" }
+expect_error = "naming.path_injection"
+expect_workspace_files = { "out" = false, "x" = false, "Btn" = false, "CON.txt" = false }

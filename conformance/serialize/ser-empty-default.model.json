@@ -1,0 +1,18 @@
+{
+  "artifactType": "Snippet",
+  "title": "T",
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "",
+      "code": "<VK-host>",
+      "vars": [
+        {
+          "name": "VK-host",
+          "value": ""
+        }
+      ]
+    }
+  ]
+}

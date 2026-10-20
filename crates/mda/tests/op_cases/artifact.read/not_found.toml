@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Snippets/nope.md" }
+expect_error = "path.not_found"

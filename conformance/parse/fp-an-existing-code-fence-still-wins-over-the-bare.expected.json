@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "fenced payload",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "md"
+  },
+  "relativePath": "reviewer.md",
+  "vars": []
+}

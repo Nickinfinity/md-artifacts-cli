@@ -1,0 +1,4 @@
+vault = "vault_badcfg"
+params = { type = "Snippet", enabled = true }
+expect_error = "config.invalid"
+expect_files = { ".mda/config.toml" = "[types\n" }
