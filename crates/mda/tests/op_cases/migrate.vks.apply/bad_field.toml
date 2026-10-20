@@ -1,3 +1,0 @@
-vault = "vault_migrate"
-params = { files = [], x = 1 }
-expect_error = "op.bad_request"

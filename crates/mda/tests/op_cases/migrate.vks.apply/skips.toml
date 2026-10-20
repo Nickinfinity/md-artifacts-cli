@@ -1,9 +1,0 @@
-vault = "vault_migrate"
-params = { files = [{ path = "Variables/badkey.md", hash = "bb56fab35742260bc8bf877329b929ecbe5885ad4aa957ebeddeca4875799366" }, { path = "Variables/dup.md", hash = "576bd63a6d24b3df15a94638659266217190036c239200656465159d515372d5" }, { path = "AIPrompts/inside.md", hash = "d0b64f551f96dad02f2f329361b95cad77e5bc58c092fcce19800f048232c9eb" }, { path = "Snippets/unfenced.md", hash = "6054a1643e0eb11dbe6a0043983eeb3b6c6078d09792f44ef38a4f91c4b8eb80" }] }
-expect = { results = [
-  { status = "skipped", path = "Variables/badkey.md", code = "vks.bad_key", params = { key = "VK-a.b", line = "0", var = "VK-a.b" } },
-  { status = "skipped", path = "Variables/dup.md", code = "vks.duplicate_key", params = { key = "VK-a", line = "0", var = "VK-a" } },
-  { status = "skipped", path = "AIPrompts/inside.md", code = "artifact.unrepresentable", params = { field = "vars", reason = "round_trip" } },
-  { status = "skipped", path = "Snippets/unfenced.md", code = "migrate.unfenced_vars", params = {} }
-], written = 0, skipped = 4 }
-expect_files = { "Variables/badkey.md" = "---\nartifactType: Variables\ntitle: B\n---\n\n```yaml VKs\nVK-a.b=1\n```\n", "Variables/dup.md" = "---\nartifactType: Variables\ntitle: D\n---\n\n```yaml VKs\nVK-a=1\nVK-a=2\n```\n", "AIPrompts/inside.md" = "---\nartifactType: AIPrompt\ntitle: Inside\n---\n\n%%oa:start%%\n```yaml VKs\nVK-a=1\n```\n%%oa:end%%\n", "Snippets/unfenced.md" = "---\nartifactType: Snippet\ntitle: U\n---\n\n```sh\necho <VK-a>\n```\n\nvars:\nVK-a=1\n" }

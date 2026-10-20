@@ -15,7 +15,7 @@ use mda::serve::{self, MAX_LINE_BYTES};
 use mda_ops::Ctx;
 use serde_json::{Value, json};
 
-const INIT: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.0"}}"#;
+const INIT: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"2.0"}}"#;
 const OPS: &str = r#"{"jsonrpc":"2.0","id":7,"method":"system.ops"}"#;
 
 fn session(input: &[u8]) -> Vec<Value> {
@@ -50,7 +50,7 @@ fn initialize_answers_protocol_and_engine() {
     let out = lines(&[INIT]);
     assert_eq!(out.len(), 1);
     assert_eq!(out[0]["id"], 1);
-    assert_eq!(out[0]["result"]["protocol"], "1.2");
+    assert_eq!(out[0]["result"]["protocol"], "2.0");
     let engine = mda_ops::system::version(&Ctx::new(None), mda_ops::system::VersionRequest {})
         .unwrap()
         .engine;
@@ -61,12 +61,12 @@ fn initialize_answers_protocol_and_engine() {
 
 #[test]
 fn other_major_is_mismatch() {
-    let out = lines(&[r#"{"id":1,"method":"initialize","params":{"protocol":"2.0"}}"#]);
+    let out = lines(&[r#"{"id":1,"method":"initialize","params":{"protocol":"3.0"}}"#]);
     assert_eq!(out.len(), 1);
     assert_eq!(code(&out[0]), -32000);
     assert_eq!(out[0]["error"]["data"]["code"], "protocol.version_mismatch");
-    assert_eq!(out[0]["error"]["data"]["params"]["client"], "2.0");
-    assert_eq!(out[0]["error"]["data"]["params"]["server"], "1.2");
+    assert_eq!(out[0]["error"]["data"]["params"]["client"], "3.0");
+    assert_eq!(out[0]["error"]["data"]["params"]["server"], "2.0");
 }
 
 #[test]
@@ -87,7 +87,7 @@ fn op_after_initialize_keeps_id_and_order() {
     assert_eq!(out[1]["id"], 7);
     assert!(out[1]["result"]["ops"].is_array());
     assert_eq!(out[2]["id"], "b");
-    assert_eq!(out[2]["result"]["protocol"], "1.2");
+    assert_eq!(out[2]["result"]["protocol"], "2.0");
 }
 
 #[test]
@@ -104,7 +104,7 @@ fn non_json_is_32700_and_next_request_answered() {
     assert_eq!(out.len(), 2);
     assert_eq!(code(&out[0]), -32700);
     assert_eq!(out[0]["id"], Value::Null);
-    assert_eq!(out[1]["result"]["protocol"], "1.2");
+    assert_eq!(out[1]["result"]["protocol"], "2.0");
 }
 
 #[test]
@@ -116,7 +116,7 @@ fn over_long_line_is_32600_and_next_request_answered() {
     let out = session(&input);
     assert_eq!(out.len(), 2);
     assert_eq!(code(&out[0]), -32600);
-    assert_eq!(out[1]["result"]["protocol"], "1.2");
+    assert_eq!(out[1]["result"]["protocol"], "2.0");
 }
 
 #[test]
@@ -241,11 +241,11 @@ fn parse_error_has_code_and_message() {
 #[test]
 fn initialize_tolerates_unknown_params() {
     for line in [
-        r#"{"jsonrpc":"1.0","id":1,"method":"initialize","params":{"protocol":"1.0","clientInfo":{"name":"x"}}}"#,
-        r#"{"id":1,"method":"initialize","params":{"protocol":"1.0"}}"#,
+        r#"{"jsonrpc":"1.0","id":1,"method":"initialize","params":{"protocol":"2.0","clientInfo":{"name":"x"}}}"#,
+        r#"{"id":1,"method":"initialize","params":{"protocol":"2.0"}}"#,
     ] {
         let out = lines(&[line]);
-        assert_eq!(out[0]["result"]["protocol"], "1.2");
+        assert_eq!(out[0]["result"]["protocol"], "2.0");
         assert_eq!(out[0]["jsonrpc"], "2.0");
     }
 }
@@ -253,12 +253,12 @@ fn initialize_tolerates_unknown_params() {
 #[test]
 fn failed_initialize_can_retry() {
     let out = lines(&[
-        r#"{"id":1,"method":"initialize","params":{"protocol":"2.0"}}"#,
-        r#"{"id":2,"method":"initialize","params":{"protocol":"1.0"}}"#,
+        r#"{"id":1,"method":"initialize","params":{"protocol":"3.0"}}"#,
+        r#"{"id":2,"method":"initialize","params":{"protocol":"2.0"}}"#,
         OPS,
     ]);
     assert_eq!(out.len(), 3);
     assert_eq!(out[0]["error"]["data"]["code"], "protocol.version_mismatch");
-    assert_eq!(out[1]["result"]["protocol"], "1.2");
+    assert_eq!(out[1]["result"]["protocol"], "2.0");
     assert!(out[2]["result"].is_object());
 }

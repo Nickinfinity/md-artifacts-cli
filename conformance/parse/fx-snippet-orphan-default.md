@@ -12,5 +12,5 @@ console.log('no tokens here');
 
 vars:
 ```yaml VKs
-VK-extra=hello
+VK-extra: hello
 ```

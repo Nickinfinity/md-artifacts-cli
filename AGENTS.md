@@ -3,7 +3,10 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-20): W7d landed** — the defaults fence is ```` ```yaml VKs ```` (Obsidian highlights YAML; `VKs` keeps it
+> **Status (2026-10-20): W7e landed** — the legacy `KEY=value` dialect is gone: defaults bodies are YAML only (a `K=v` line is
+> `vks.mixed_dialect`), no unfenced `vars:` section, `migrate.vks.*` / `mda migrate vks` / `migrate.unfenced_vars` removed; protocol
+> **2.0** (first major, PROTOCOL §7.2), engine `0.10.0`.
+> **W7d landed (MAC-13)** — the defaults fence is ```` ```yaml VKs ```` (Obsidian highlights YAML; `VKs` keeps it
 > apart from YAML code fences); ```` ```vks ```` is no longer read; owner `mda-core/src/parse/fence.rs` (`DEFAULTS_INFO`,
 > `is_defaults_opener`, `untagged_defaults`); `vault.validate` warns `vars.untagged_defaults{info}`; protocol **1.2**, engine `0.9.0`.
 > **W7c landed (MAC-12)** — lossless rewrite, protocol **1.1**, engine `0.8.0`: `artifact.read` reports `layout`
@@ -113,7 +116,7 @@ md-artifacts-cli/
 │   │       ├── language.rs    # language alias / fence / extension tables
 │   │       ├── parse/         # frontmatter · code fence · ## blocks · vars · tokens · flags
 │   │       │   └── text.rs    # JS string semantics (trim, line split) + decode
-│   │       ├── vks/           # {mod, classify, legacy, yaml, value, emit}.rs — the vks codec (read both dialects, emit YAML)
+│   │       ├── vks/           # {mod, control, yaml, value, emit}.rs — the vks codec (YAML only, read and emit; W7e)
 │   │       ├── serialize/     # THE .md emitter: mod.rs · payload.rs (flags, bare bodies; W7c) · guard.rs (round-trip guard, from_parsed)
 │   │       ├── patch.rs       # surgical in-place edits
 │   │       ├── render/        # token substitution + the directive engine (paths, each/end, join, limits)
@@ -121,7 +124,7 @@ md-artifacts-cli/
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
 │   │       ├── varset/        # shapes, sub-sets, search text; score.rs: scoring, order, apply (W5b)
 │   │       ├── variables.rs   # Variables-file edits: sub-sets, vars, name rule, shapes (W5)
-│   │       ├── migrate/       # {mod, frontmatter, vks}.rs — the two pure migration rewrites (W6, spec §11)
+│   │       ├── migrate/       # {mod, frontmatter}.rs — the pure frontmatter migration rewrite (W6, spec §11; vks removed W7e)
 │   │       └── error.rs       # vks.* code constants + VarsError
 │   ├── mda-vault/             # ALL filesystem access
 │   │   └── src/
@@ -143,7 +146,7 @@ md-artifacts-cli/
 │   │       ├── index.rs · index_create.rs  # index.plan / run / create (W3b)
 │   │       ├── vars.rs        # vars.file/meta/subset/var edits (W5); vars/{requests,list,scan}.rs (W5b: list, search, the walk collector)
 │   │       ├── varsets.rs     # varsets.match / apply / save (W5b)
-│   │       ├── migrate.rs     # migrate.frontmatter|vks.plan|apply over the shared walk (W6)
+│   │       ├── migrate.rs     # migrate.frontmatter.plan|apply over the shared walk (W6)
 │   │       └── validate.rs    # vault.validate (W6)
 │   ├── mda/                   # lib + bin: `mda`
 │   │   └── src/
@@ -262,7 +265,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Vault-authored relative paths (index links, `paths:`) | `mda-core/src/multi_index.rs` — `safe_rel_path` |
 | Variables-file edits (addressing, shape transitions, names) | `mda-core/src/variables.rs` |
 | The bounded walk (caps, symlink rule, starts) | `mda-vault/src/listing.rs` (`walk_md`) |
-| Migrations (frontmatter, vks) | `mda-core/src/migrate/` |
+| Migrations (frontmatter) | `mda-core/src/migrate/` |
 | The migration / validate scope walk | `mda-ops/src/migrate.rs` (`scope`) over `walk_md` |
 | Var-set scoring, apply, search text | `mda-core/src/varset/` |
 | The render variable rule | `mda-core/src/render/` (`variable_names`) |
@@ -364,7 +367,7 @@ analysis:
   (`render.contains_escape`); `--json` returns the response unchanged.
 - **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete`,
   `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled`, `vars.file.new`, `vars.meta.tags`,
-  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`, `migrate.vks.apply`.
+  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`.
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the
 **sink** (the file outside the vault is unchanged; stdout carried only protocol lines; nothing was

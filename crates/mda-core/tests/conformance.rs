@@ -127,17 +127,11 @@ fn run_idempotent(dir: &Path, c: &Case) -> Result<(), String> {
 /// Migrate: decode the input, run the core rewrite, compare the exact output bytes (`expected`), the
 /// skip code (`skip`), or "no change" (neither).
 fn run_migrate(dir: &Path, c: &Case) -> Result<(), String> {
-    use mda_core::migrate::{frontmatter, vks};
+    use mda_core::migrate::frontmatter;
     let bytes = std::fs::read(dir.join(&c.input)).map_err(|e| format!("{}: {e}", c.id))?;
     let text = mda_core::parse::decode(&bytes);
     let got = match c.migration.as_deref() {
         Some("frontmatter") => frontmatter::rewrite(&text).map(|r| r.map(|r| r.content)),
-        Some("vks") => {
-            let Some(path) = &c.path else {
-                return Err(format!("{}: vks migrate needs path", c.id));
-            };
-            vks::rewrite(&text, path).map(|r| r.map(|r| r.content))
-        }
         m => return Err(format!("{}: migrate needs migration, got {m:?}", c.id)),
     };
     match (got, &c.expected, &c.skip) {
@@ -251,11 +245,8 @@ fn real_manifest_ok() {
 }
 
 /// Parse cases the serializer refuses by design (B-RISK 3): id -> reason. Anything else refused fails.
-const ROUND_TRIP_REFUSALS: &[(&str, &str, &str)] = &[(
-    "q-legacy-dup-appended-twice",
-    "vks.duplicate_key",
-    "legacy duplicate VK key: YAML mapping cannot carry it (vks.duplicate_key)",
-)];
+/// Empty since W7e: the one entry was a legacy duplicate-key body, a dialect no longer read.
+const ROUND_TRIP_REFUSALS: &[(&str, &str, &str)] = &[];
 
 /// D-9: every clean `parse` case re-serializes through the guard (`Ok` is the assertion).
 #[test]

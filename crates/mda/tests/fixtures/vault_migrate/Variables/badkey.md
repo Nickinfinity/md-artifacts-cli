@@ -4,5 +4,5 @@ title: B
 ---
 
 ```yaml VKs
-VK-a.b=1
+VK-a.b: 1
 ```

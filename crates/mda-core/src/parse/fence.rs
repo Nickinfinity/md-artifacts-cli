@@ -5,7 +5,6 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use super::frontmatter;
 use super::text::{compile, js_trim_end};
 use crate::error::VarsError;
 use crate::model::ParsedVar;
@@ -39,9 +38,6 @@ pub const DEFAULTS_INFO: &str = "yaml VKs";
 pub(crate) fn is_defaults_opener(line: &str) -> bool {
     line.strip_prefix("```") == Some(DEFAULTS_INFO)
 }
-// `\z`, not `$`: JS `$` without `m` is end of input. `(?-u:\b)`: ASCII word boundary like JS.
-static VARS_SECTION_RE: LazyLock<Regex> =
-    LazyLock::new(|| compile(r"(?-u:\b)vars:?[ \t]*\r?\n((?s:.)+?)(?:\n\n|\z)"));
 
 /// JS line terminators, the set `^`/`$` break at under the `m` flag.
 pub(super) fn is_js_terminator(c: char) -> bool {
@@ -90,29 +86,15 @@ pub(super) fn vks_fence(s: &str) -> Option<&str> {
     VKS_FENCE_RE.captures(s)?.get(1).map(|m| m.as_str())
 }
 
-/// Byte range of the first ```` ```vks ```` fence's body (group 1) in `s`.
+/// Byte range of the first defaults fence's body (group 1) in `s`.
 pub(super) fn vks_range(s: &str) -> Option<Range<usize>> {
     VKS_FENCE_RE.captures(s)?.get(1).map(|m| m.range())
 }
 
-/// File-level defaults: the first `vks` fence anywhere in the **unstripped** `content`, else the
-/// unfenced `vars:` section after the first code fence. `Ok([])` when neither exists.
+/// File-level defaults: the first defaults fence anywhere in the **unstripped** `content`;
+/// `Ok([])` when there is none. (The pre-W7e unfenced `vars:` section is not read.)
 pub(super) fn parse_vars(content: &str) -> Result<Vec<ParsedVar>, VarsError> {
-    if let Some(body) = vks_fence(content) {
-        return vks::read_fence(body);
-    }
-    unfenced_vars(content).unwrap_or(Ok(vec![]))
-}
-
-/// The unfenced `vars:` section after the first code fence, read as legacy. `None` when a `vks`
-/// fence exists (it wins) or no section matches.
-pub(super) fn unfenced_vars(content: &str) -> Option<Result<Vec<ParsedVar>, VarsError>> {
-    if vks_fence(content).is_some() {
-        return None;
-    }
-    let after_code = CODE_FENCE_RE.replacen(frontmatter::strip(content), 1, "");
-    let m = VARS_SECTION_RE.captures(&after_code)?.get(1)?;
-    Some(vks::read_section(m.as_str()))
+    vks_fence(content).map_or(Ok(vec![]), vks::read_fence)
 }
 
 /// `body` minus its first `vks` fence and the first `vars:` label line (that line's text only; its
@@ -157,7 +139,6 @@ mod tests {
         LazyLock::force(&CODE_FENCE_RE);
         LazyLock::force(&UNTAGGED_RE);
         LazyLock::force(&VKS_FENCE_RE);
-        LazyLock::force(&VARS_SECTION_RE);
     }
 
     #[test]

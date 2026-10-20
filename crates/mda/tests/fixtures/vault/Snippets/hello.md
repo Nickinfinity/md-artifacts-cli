@@ -11,5 +11,5 @@ echo <VK-greeting> <VK-name>
 
 vars:
 ```yaml VKs
-VK-greeting=marker-7f3a
+VK-greeting: marker-7f3a
 ```

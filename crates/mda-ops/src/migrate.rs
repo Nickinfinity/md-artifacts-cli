@@ -1,10 +1,10 @@
-//! `migrate.frontmatter.plan|apply` and `migrate.vks.plan|apply` (W6, spec §11): plans write
+//! `migrate.frontmatter.plan|apply` (W6, spec §11; the vks migration was removed in W7e): plans write
 //! nothing; apply re-runs the rewrite on fresh, hash-checked bytes and writes per file.
 
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use mda_core::migrate::{Normalise, Skip, frontmatter, normalises, vks};
+use mda_core::migrate::{Normalise, Skip, frontmatter, normalises};
 use mda_core::parse::decode;
 use mda_core::registry::{ArtifactType, TYPES};
 use mda_vault::{
@@ -83,27 +83,6 @@ pub struct FrontmatterChange {
     pub normalises: Vec<Normalise>,
 }
 
-/// A planned vks rewrite (counts only, never values — L-9).
-///
-/// # Examples
-///
-/// ```
-/// use mda_ops::migrate::VksChange;
-/// let c = VksChange { path: "Variables/a.md".into(), hash: "h".into(), fences: 1, vars: 2, dropped_lines: 0, normalises: vec![] };
-/// assert_eq!(serde_json::to_value(&c).unwrap()["droppedLines"], 0);
-/// ```
-#[derive(Debug, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct VksChange {
-    pub path: String,
-    pub hash: String,
-    pub fences: usize,
-    pub vars: usize,
-    pub dropped_lines: usize,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub normalises: Vec<Normalise>,
-}
-
 /// A file a plan leaves untouched, with the reason.
 ///
 /// # Examples
@@ -124,7 +103,7 @@ pub struct Skipped {
 /// # Examples
 ///
 /// ```
-/// let p: mda_ops::migrate::PlanResponse<mda_ops::migrate::VksChange> = mda_ops::migrate::PlanResponse { changes: vec![], skipped: vec![] };
+/// let p: mda_ops::migrate::PlanResponse<mda_ops::migrate::FrontmatterChange> = mda_ops::migrate::PlanResponse { changes: vec![], skipped: vec![] };
 /// assert_eq!(serde_json::to_value(&p).unwrap(), serde_json::json!({"changes": [], "skipped": []}));
 /// ```
 #[derive(Debug, PartialEq, Eq, serde::Serialize)]
@@ -342,17 +321,6 @@ fn fm_change(path: &str, bytes: &[u8]) -> Result<Option<FrontmatterChange>, Skip
     )
 }
 
-fn vks_change(path: &str, bytes: &[u8]) -> Result<Option<VksChange>, Skip> {
-    Ok(vks::rewrite(&decode(bytes), path)?.map(|r| VksChange {
-        path: path.to_owned(),
-        hash: content_hash(bytes),
-        fences: r.fences,
-        vars: r.vars,
-        dropped_lines: r.dropped_lines,
-        normalises: normalises(bytes),
-    }))
-}
-
 /// `migrate.frontmatter.plan`: every legacy `type:` line the vault would lose.
 ///
 /// # Examples
@@ -382,30 +350,4 @@ pub fn frontmatter_apply(ctx: &Ctx, req: ApplyRequest) -> Result<ApplyResponse, 
     apply_all(ctx, req, &|_, c| {
         Ok(frontmatter::rewrite(c)?.map(|r| r.content))
     })
-}
-
-/// `migrate.vks.plan`: every legacy vks body the vault would migrate.
-///
-/// # Examples
-///
-/// ```
-/// let ctx = mda_ops::Ctx::new(None);
-/// assert!(mda_ops::migrate::vks_plan(&ctx, Default::default()).is_err());
-/// ```
-pub fn vks_plan(ctx: &Ctx, req: PlanRequest) -> Result<PlanResponse<VksChange>, OpError> {
-    let PlanRequest {} = req;
-    plan_all(ctx, vks_change)
-}
-
-/// `migrate.vks.apply`: rewrite the listed files (hash-checked, per file).
-///
-/// # Examples
-///
-/// ```
-/// let ctx = mda_ops::Ctx::new(None);
-/// let req = mda_ops::migrate::ApplyRequest { files: vec![] };
-/// assert!(mda_ops::migrate::vks_apply(&ctx, req).is_err());
-/// ```
-pub fn vks_apply(ctx: &Ctx, req: ApplyRequest) -> Result<ApplyResponse, OpError> {
-    apply_all(ctx, req, &|p, c| Ok(vks::rewrite(c, p)?.map(|r| r.content)))
 }

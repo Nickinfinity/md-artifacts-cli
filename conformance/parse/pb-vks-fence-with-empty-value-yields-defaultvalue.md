@@ -1,4 +1,4 @@
 ## Empty Defaults
 ```yaml VKs
-VK-token=
+VK-token:
 ```

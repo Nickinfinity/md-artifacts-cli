@@ -435,5 +435,3 @@ pub const ARTIFACT_UNREPRESENTABLE: &str = "artifact.unrepresentable";
 pub const MIGRATE_LEADING_BLANK: &str = "migrate.leading_blank";
 /// Frontmatter migration: the `type:` value is quoted (spec §11.1). Param `value` (raw, quotes kept).
 pub const MIGRATE_QUOTED_TYPE: &str = "migrate.quoted_type";
-/// vks migration: variables sit in an unfenced legacy `vars:` section (spec §11.2). No params.
-pub const MIGRATE_UNFENCED_VARS: &str = "migrate.unfenced_vars";

@@ -151,30 +151,6 @@ origin = "ts@b368c20"
 deviates_from_ts = "W7c: read reports the payload layout (spec §7.6)"
 
 [[cases]]
-id = "fp-the-legacy-unfenced-vars-section-still-parses-in"
-kind = "parse"
-input = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in.md"
-expected = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in.expected.json"
-path = "Snippets/x.md"
-origin = "ts@b368c20"
-
-[[cases]]
-id = "fp-the-legacy-unfenced-vars-section-still-parses-in-2"
-kind = "parse"
-input = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in-2.md"
-expected = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in-2.expected.json"
-path = "Snippets/x.md"
-origin = "ts@b368c20"
-
-[[cases]]
-id = "fp-the-legacy-unfenced-vars-section-still-parses-in-3"
-kind = "parse"
-input = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in-3.md"
-expected = "parse/fp-the-legacy-unfenced-vars-section-still-parses-in-3.expected.json"
-path = "Snippets/x.md"
-origin = "ts@b368c20"
-
-[[cases]]
 id = "fp-the-payload-is-the-region-not-the-first-code-fen"
 kind = "parse"
 input = "parse/fp-the-payload-is-the-region-not-the-first-code-fen.md"
@@ -797,15 +773,6 @@ origin = "ts@b368c20"
 deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
 
 [[cases]]
-id = "q-legacy-dup-appended-twice"
-kind = "parse"
-input = "parse/q-legacy-dup-appended-twice.md"
-expected = "parse/q-legacy-dup-appended-twice.expected.json"
-path = "Snippets/q-legacy-dup.md"
-origin = "ts@b368c20"
-deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
-
-[[cases]]
 id = "q-single-block-top-vars"
 kind = "parse"
 input = "parse/q-single-block-top-vars.md"
@@ -830,14 +797,6 @@ expected = "parse/q-variables-code-is-vks-body.expected.json"
 path = "Variables/q-variables-code.md"
 origin = "ts@b368c20"
 deviates_from_ts = "W7d: defaults fence ```yaml VKs (TS reads ```vks)"
-
-[[cases]]
-id = "rs-dialect-per-fence"
-kind = "parse"
-input = "parse/rs-dialect-per-fence.md"
-expected = "parse/rs-dialect-per-fence.expected.json"
-path = "Snippets/rs-dialect-per-fence.md"
-origin = "rust"
 
 [[cases]]
 id = "rs-directive-detect"
@@ -1809,150 +1768,3 @@ input = "migrate/fm-block-list.md"
 expected = "migrate/fm-block-list.expected.md"
 origin = "rust"
 deviates_from_ts = "Rust-only: block-list tags (#57) left as they are"
-
-[[cases]]
-id = "vks-flat"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-flat.md"
-expected = "migrate/vks-flat.expected.md"
-path = "Variables/l.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-crlf"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-crlf.md"
-expected = "migrate/vks-crlf.expected.md"
-path = "Variables/l.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-sets"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-sets.md"
-expected = "migrate/vks-sets.expected.md"
-path = "Variables/s.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-trailing"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-trailing.md"
-expected = "migrate/vks-trailing.expected.md"
-path = "Snippets/s.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-second-fence-kept"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-second-fence-kept.md"
-expected = "migrate/vks-second-fence-kept.expected.md"
-path = "Snippets/t.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-quoting"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-quoting.md"
-expected = "migrate/vks-quoting.expected.md"
-path = "Variables/q.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-close-same-line"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-close-same-line.md"
-expected = "migrate/vks-close-same-line.expected.md"
-path = "Variables/c.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-yaml"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-yaml.md"
-path = "Variables/y.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-comment-only"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-comment-only.md"
-path = "Variables/k.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-empty"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-empty.md"
-path = "Variables/e.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-dup"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-dup.md"
-skip = "vks.duplicate_key"
-path = "Variables/d.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-bad-key"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-bad-key.md"
-skip = "vks.bad_key"
-path = "Variables/b.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-unfenced"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-unfenced.md"
-skip = "migrate.unfenced_vars"
-path = "Snippets/u.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-flagged-outside"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-flagged-outside.md"
-expected = "migrate/vks-flagged-outside.expected.md"
-path = "AIPrompts/f.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"
-
-[[cases]]
-id = "vks-flagged-inside"
-kind = "migrate"
-migration = "vks"
-input = "migrate/vks-flagged-inside.md"
-skip = "artifact.unrepresentable"
-path = "AIPrompts/f.md"
-origin = "rust"
-deviates_from_ts = "Rust-only vks migration (seed D-6)"

@@ -197,7 +197,7 @@ fn leg_cli(op: &str, params: &Value, leg: &Leg) -> Seen {
 }
 
 fn leg_serve(op: &str, params: &Value, leg: &Leg) -> Seen {
-    let init = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.0"}}"#;
+    let init = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"2.0"}}"#;
     let req = json!({"jsonrpc":"2.0","id":2,"method":op,"params":params}).to_string();
     let mut args = leg.args();
     args.push("serve".to_owned());

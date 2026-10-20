@@ -44,9 +44,6 @@ pub fn english(code: &str) -> Option<&'static str> {
         MIGRATE_UP_TO_DATE => "nothing left to migrate in this file",
         MIGRATE_LEADING_BLANK => "blank line(s) precede the frontmatter; remove them to migrate",
         MIGRATE_QUOTED_TYPE => "the type: value is quoted; expected a bare legacy value",
-        MIGRATE_UNFENCED_VARS => {
-            "variables are in an unfenced vars: section; move them into a ```yaml VKs fence"
-        }
         MIGRATE_PENDING => "a migration is pending for this file",
         VARS_FENCELESS_SECTION => "a ## section with no defaults fence is dropped by every rewrite",
         VARS_UNTAGGED_DEFAULTS => {

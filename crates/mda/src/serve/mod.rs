@@ -31,9 +31,9 @@ const NOT_INITIALIZED: i64 = -32002;
 /// ```
 /// let ctx = mda_ops::Ctx::new(None);
 /// let mut out = Vec::new();
-/// let input = b"{\"id\":1,\"method\":\"initialize\",\"params\":{\"protocol\":\"1.0\"}}\n";
+/// let input = b"{\"id\":1,\"method\":\"initialize\",\"params\":{\"protocol\":\"2.0\"}}\n";
 /// mda::serve::run(&ctx, &input[..], &mut out).unwrap();
-/// assert!(String::from_utf8(out).unwrap().contains("\"protocol\":\"1.2\""));
+/// assert!(String::from_utf8(out).unwrap().contains("\"protocol\":\"2.0\""));
 /// ```
 pub fn run(ctx: &Ctx, mut input: impl BufRead, mut out: impl Write) -> std::io::Result<()> {
     let mut initialized = false;

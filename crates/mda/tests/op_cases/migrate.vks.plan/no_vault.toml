@@ -1,3 +1,0 @@
-# No --vault: the op refuses before touching any path.
-params = {}
-expect_error = "vault.not_selected"

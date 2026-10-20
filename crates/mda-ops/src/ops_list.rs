@@ -83,16 +83,6 @@ pub(crate) static OPS: &[OpSpec] = &[
         handler: |c, v| typed(c, v, migrate::frontmatter_plan),
     },
     OpSpec {
-        name: "migrate.vks.apply",
-        summary: "Rewrite planned files: legacy variables bodies → YAML",
-        handler: |c, v| typed(c, v, migrate::vks_apply),
-    },
-    OpSpec {
-        name: "migrate.vks.plan",
-        summary: "List files with legacy variables bodies",
-        handler: |c, v| typed(c, v, migrate::vks_plan),
-    },
-    OpSpec {
         name: "render.text",
         summary: "Fill tokens in text with values (no artifact)",
         handler: |c, v| typed(c, v, render::text),

@@ -19,7 +19,8 @@ client (CLI, VS Code extension, TUI, MCP) sees vault content only through the en
 > is written back byte for byte. Recorded deviations from the extension: `deviates_from_ts` in
 > `conformance/manifest.toml`.
 > **The defaults fence is ```` ```yaml VKs ```` since engine W7d (2026-10-20, §9)**; ```` ```vks ```` is no
-> longer read.
+> longer read. **The `KEY=value` dialect, the unfenced `vars:` section and the vks migration are gone since
+> W7e** (2026-10-20, §9.6, §11.2).
 
 > Examples use `~~~` as the outer fence so inner ```` ``` ```` fences render literally. In a real file
 > every fence is a standard triple backtick.
@@ -93,14 +94,11 @@ parse; the emitter trims too. A file may instead delimit its payload with **flag
 
 ### 1.3 Variable defaults
 
-Optional. Accepted forms, in priority order:
+Optional. One form:
 
-1. A ```` ```yaml VKs ```` fence (preferred). It may be preceded by a decorative label line (`vars:`,
-   `vars`, `### VKs:`, prose); the label is ignored and the fence binds. The fence body is **YAML**
-   (§9) or, for files written before §9, **legacy `KEY=value`** (§9.6). The engine reads both and
-   **emits only YAML**.
-2. **Legacy unfenced section:** a `vars:` / `vars` label directly followed by bare `KEY=value` lines,
-   placed after the code block. Read forever; never emitted.
+A ```` ```yaml VKs ```` fence. It may be preceded by a decorative label line (`vars:`, `vars`,
+`### VKs:`, prose); the label is ignored and the fence binds. The fence body is **YAML** (§9). Nothing
+else supplies defaults: the pre-W7e `KEY=value` dialect and the unfenced `vars:` section are gone (§9.6).
 
 Keys use the full `VK-` prefix (`VK-host`). Variables are also **auto-detected** from the tokens in the
 code (§4), so a defaults section is only needed to supply values. A var that appears only in the
@@ -211,8 +209,8 @@ VK-db_url: mongodb://localhost:27017
 - In a Variables file, vars are emitted **unfiltered**: an empty value is a key the user asked to
   record. A `## ` sub-set with no vars still gets an **empty** fence (```` ```yaml VKs ```` + ```` ``` ````),
   or the heading would be dropped on re-parse.
-- Top-level keys in a Variables file **may** omit the `VK-` prefix (legacy files do: `API_URL=…`);
-  such a key cannot be referenced by a token and is kept as written.
+- Top-level keys in a Variables file **may** omit the `VK-` prefix (`API_URL: …`); such a key cannot
+  be referenced by a token and is kept as written.
 
 ---
 
@@ -645,7 +643,7 @@ in `code font` are the fixed vocabulary, part of the protocol like the codes the
 | `vks.inline_comment` | — | ` #` after a value on the same line (`name: a # note`, `color: #fff`); never truncated |
 | `vks.control_char` | — | a C0 control character or DEL other than tab; a newline is legal only as a line break or `"\n"` |
 | `vks.limit` | `limit`: `body_bytes` · `depth` · `nodes` · `list_items` · `map_keys` · `block_defaults`; `max` | any §9.7 limit, checked before the work it bounds |
-| `vks.mixed_dialect` | — | in a fence classified as YAML (§9.6): a non-comment line that is not a valid entry or item, contains `=`, and has no `:` before its first `=` |
+| `vks.mixed_dialect` | — | a non-comment line that is not a valid entry or item, contains `=`, and has no `:` before its first `=` — a `KEY=value` line of the removed dialect (§9.6) |
 
 Emission has one more code, `vks.unrepresentable` (§9.5).
 
@@ -719,21 +717,13 @@ of records.
   rule to client values; U+2028 and U+2029 are rejected as `vks.control_char` (line splitting treats them as
   line breaks, so they cannot round-trip).
 
-### 9.6 Legacy `KEY=value` bodies and the classifier (D-6)
+### 9.6 The `KEY=value` dialect is gone *(ruled — engine W7e, 2026-10-20; was D-6 dual-read)*
 
-- **Dual-read is permanent.** Per fence, the **first significant line** (not blank, not `#`) decides:
-  `^[A-Za-z][A-Za-z0-9_-]*:(\s|$)` → YAML; anything else → legacy. The whole fence is read in that
-  dialect. The unfenced `vars:` section is always legacy.
-- **Legacy rules:** each line splits on its **first `=`**; lines without `=` or starting with `#` are
-  skipped; name and value are trimmed; empty names are dropped; duplicates are kept in order (the last
-  wins on overlay). **Values are literal:** `VK-value="active"` is the string `"active"`, quotes
-  included. Control characters are rejected as in §9.1 (`vks.control_char`) — a deliberate deviation
-  from the extension, which accepted them.
-- Examples: `KEY=value: x` → legacy (`KEY` = `value: x`); `VK-url: http://a=b` → YAML;
-  `VK-a:b=c` → legacy (`VK-a:b` = `c`); a YAML fence with a later `K=v` line → YAML error.
-- **Writing a file through create/update converts its bodies to YAML**, value-preserving (a byte-surgical
-  patch of title, description or block code leaves the vks bytes as they are): `VK-value="active"` becomes
-  `VK-value: '"active"'`, so the output a template produces is byte-identical before and after.
+A defaults body is read as YAML (§9.1) only. There is no per-fence classifier and no unfenced `vars:`
+section: a `KEY=value` line is `vks.mixed_dialect` (so a whole pre-§9 body is rejected with that code,
+on its first line), and `vars:` followed by bare `KEY=value` lines after the code is plain text. An empty
+or comment-only body still reads as no vars. The vks migration that converted old bodies was removed with
+it (§11); a vault from before §9 needs converting with an engine older than 0.10.0 first.
 
 ### 9.7 Limits (checked before the work they bound)
 
@@ -747,7 +737,7 @@ of records.
 
 Counting: **depth** = containers inside one var's value (the top-level map is depth 0, so a var holding a
 record is depth 1); **nodes** = every value (strings, lists, records), not keys and not the top-level map.
-Each limit is checked before the push it bounds. Legacy bodies (§9.6) are bounded by the body size only.
+Each limit is checked before the push it bounds.
 On emission, a body over 64 KiB is refused (`vks.limit{limit: body_bytes}`) by every writer (§13.1).
 
 **`block_defaults`** bounds the parser, not the codec: every block of a flagged multi-block file (§7)
@@ -761,8 +751,7 @@ tokens kept with `""`, no error on the blocks).
 `parse → serialize → parse` preserves strings (quotes, `=`, `:`, `#` mid-value, unicode), empty
 strings and lists, one-item lists, records, nesting to the limit, key and field order, multi-line
 values, sub-set headings and descriptions, untitled blocks. **Ceilings:** comments are dropped on write;
-a legacy body is rewritten as YAML (value-preserving); strings with two or more trailing newlines are
-refused at emission.
+strings with two or more trailing newlines are refused at emission.
 
 ---
 
@@ -843,9 +832,9 @@ const users = [
 
 ## 11. Migrations *(ruled — engine-port W6 Role A pass 1, 2026-10-16)*
 
-Two migrations, each a **plan** op that writes nothing and an **apply** op that rewrites files
-surgically: `migrate.frontmatter.plan|apply` and `migrate.vks.plan|apply` (CLI `mda migrate
-frontmatter|vks plan|apply`). Never automatic. Shared rules:
+One migration: a **plan** op that writes nothing and an **apply** op that rewrites files surgically,
+`migrate.frontmatter.plan|apply` (CLI `mda migrate frontmatter plan|apply`). Never automatic. (The vks
+migration, `migrate.vks.plan|apply`, was removed at W7e with the dialect it converted, §9.6.) Rules:
 
 - **Scope:** the six type directories (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`,
   `AIPrompts/`, `Variables/`), walked once with one shared budget (depth 32, 10 000 entries, 64 MiB
@@ -874,18 +863,10 @@ values are left silently. Skipped with a code: a blank line before the frontmatt
 (`migrate.leading_blank`), a quoted value (`migrate.quoted_type{value}`). Every other byte — `index:`,
 `paths:`, unknown keys, block-list `tags:`/`paths:` (§1.1; not normalised) — is preserved.
 
-### 11.2 `vks` bodies — legacy → YAML
+### 11.2 *(removed — W7e)*
 
-Only fences the parser reads (§9: the first `vks` fence of a single-block body, the first per `##`
-section) are candidates, and only when the body is legacy (§9.6) **and** holds at least one variable
-(an empty or comment-only body is left alone). Only the bytes between the opening `vks` line and its
-closing fence are replaced, by the §9.5 emission of the same values (CRLF kept when the opening line
-ends CRLF); legacy comment and junk lines are dropped (§9.8; the plan reports `droppedLines`). A file
-is migrated whole or not at all; it is skipped, untouched, when any candidate fence fails to read
-(its `vks.*` code), fails `check_vars` (`vks.bad_key`, `vks.duplicate_key`, `vks.limit`), cannot be
-emitted (`vks.unrepresentable`), or emits a body over 64 KiB (`vks.limit{limit: body_bytes}`). Keys
-YAML cannot hold are **reported, never renamed** (a rename would also need the code's tokens
-rewritten). An unfenced legacy `vars:` section is reported (`migrate.unfenced_vars`), not rewritten.
+The `vks` migration (legacy `KEY=value` bodies → YAML) and its `migrate.unfenced_vars` report are gone with
+the dialect (§9.6).
 
 ### 11.3 Validation — `vault.validate`
 
@@ -894,7 +875,7 @@ severity}]}`, listing only files with issues; at most 10 000 issues are listed (
 past that; the counts stay exact). A block's `varsError` carries `block` in its params and is not
 repeated when it equals the file-level one. **Errors:** a read failure (`file.too_large`,
 `file.not_regular`, `io.failed`, `path.outside_root`) or a file/block `varsError`. **Warnings:** a
-pending migration (`migrate.pending{kind}`), `migrate.unfenced_vars`, a `## ` section with no defaults
+pending frontmatter migration (`migrate.pending{kind: frontmatter}`), a `## ` section with no defaults
 fence in a Variables file (dropped by every rewrite), a mixed Variables file (§13.1), and a fence with
 `VK-` keys that is not ```` ```yaml VKs ```` (`vars.untagged_defaults{info}`, §9). `mda vault
 validate` exits 1 when `errors > 0`, else 0.
@@ -945,7 +926,7 @@ apply / save, `mda-vault/src/listing.rs` the walk).
 
 ### 13.1 Edits and shape transitions
 
-Every edit rewrites the file through the §1.4 emitter (legacy bodies become YAML, §9.6; unknown frontmatter keys are not kept).
+Every edit rewrites the file through the §1.4 emitter (unknown frontmatter keys are not kept).
 A sub-set is addressed by its index **and** heading; both must match. With no sub-set, an edit targets the flat (untitled) vars.
 
 | From | Edit | To |
@@ -960,8 +941,8 @@ The flat (untitled) block is addressed as sub-set index 0 with an empty heading;
 `blank` one. It takes no description. A file with an untitled fence **before** its first `## ` section cannot be edited this way
 (`artifact.not_serializable{reason: variables}`): an edit would drop those vars. A `## ` section with **no** `vks` fence is not part of the
 model (the parser skips it, §2) and is dropped by any rewrite (`artifact.update` and every Variables edit alike). The emitted fence body is capped at 64 KiB (§9.7)
-for every writer. Var names follow the token grammar (§4.1, `VK-` + identifier, no dots); a legacy
-prefix-less key may be set, renamed or deleted, never added. Names are unique per sub-set; headings are trimmed, non-empty and
+for every writer. Var names follow the token grammar (§4.1, `VK-` + identifier, no dots); a prefix-less
+key (`API_URL`) may be set, renamed or deleted, never added. Names are unique per sub-set; headings are trimmed, non-empty and
 unique per file.
 
 ### 13.2 Listing and search

@@ -3,7 +3,7 @@
 
 use std::collections::BTreeMap;
 
-use mda_core::migrate::{Skip, fenceless_sections, frontmatter, vks};
+use mda_core::migrate::{fenceless_sections, frontmatter};
 use mda_core::parse::{
     decode, file_fence_block, is_flagged, parse_from_content, untagged_defaults,
 };
@@ -168,13 +168,6 @@ fn issues_of(path: &str, bytes: &[u8]) -> Vec<Issue> {
     }
     if matches!(frontmatter::rewrite(&content), Ok(Some(_))) {
         v.push(warn(path, MIGRATE_PENDING, "kind", "frontmatter"));
-    }
-    match vks::rewrite(&content, path) {
-        Ok(Some(_)) => v.push(warn(path, MIGRATE_PENDING, "kind", "vks")),
-        Err(Skip::UnfencedVars) => {
-            v.push(warn(path, mda_core::error::MIGRATE_UNFENCED_VARS, "", ""));
-        }
-        _ => {}
     }
     for info in untagged_defaults(&content) {
         v.push(warn(path, VARS_UNTAGGED_DEFAULTS, "info", &info));

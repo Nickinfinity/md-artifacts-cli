@@ -371,12 +371,8 @@ fn w6_codes_exact_json() {
             serde_json::json!({"code": "migrate.quoted_type", "params": {"value": "\"template\""}}),
         ),
         (
-            OpError::new(MIGRATE_UNFENCED_VARS),
-            serde_json::json!({"code": "migrate.unfenced_vars", "params": {}}),
-        ),
-        (
-            OpError::new(MIGRATE_PENDING).with("kind", "vks"),
-            serde_json::json!({"code": "migrate.pending", "params": {"kind": "vks"}}),
+            OpError::new(MIGRATE_PENDING).with("kind", "frontmatter"),
+            serde_json::json!({"code": "migrate.pending", "params": {"kind": "frontmatter"}}),
         ),
         (
             OpError::new(VARS_FENCELESS_SECTION).with("heading", "Empty"),
@@ -395,7 +391,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 76);
+    assert_eq!(ALL_CODES.len(), 75);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE

@@ -1,6 +1,6 @@
 {
   "blocks": [],
-  "code": "VK-api_key=abc123\nVK-region=us-east-1",
+  "code": "VK-api_key: abc123\nVK-region: us-east-1",
   "fileName": "single-subset",
   "filePath": "Variables/vars-edit/single-subset.md",
   "frontmatter": {

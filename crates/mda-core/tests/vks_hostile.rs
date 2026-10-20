@@ -4,7 +4,7 @@
 mod common;
 
 use mda_core::error::*;
-use mda_core::vks::{read_fence, read_section};
+use mda_core::vks::read_fence;
 
 /// Assert `body` is rejected with `code`, `line`, and exactly the `extra` params.
 fn case(body: &str, code: &str, line: usize, extra: &[(&str, &str)]) {
@@ -91,8 +91,8 @@ fn key_rules() {
     case("VK-a: 1\n: x", VKS_BAD_KEY, 2, &[("key", "")]);
     assert!(read_fence("VK-a:\n  constructor: x").is_ok());
     assert!(read_fence("VK-a-b: x").is_ok(), "top-level dash is legal");
-    // line 1 of a fence is the classifier's: it is legacy, skipped (TS parity), never an error
-    assert_eq!(read_fence("VK-ñ: x").unwrap(), vec![]);
+    // W7e: no classifier — a bad key on line 1 is an error like any other line.
+    case("VK-ñ: x", VKS_BAD_KEY, 1, &[("key", "VK-ñ")]);
 }
 
 #[test]
@@ -179,10 +179,6 @@ fn limits() {
     assert!(read_fence(&big[1..]).is_ok(), "exactly 64 KiB passes");
     let legacy_big = format!("K={}", "x".repeat(65_537));
     limit(&legacy_big, 0, Limit::BodyBytes, 65_536);
-    assert_eq!(
-        read_section(&legacy_big).unwrap_err().params["limit"],
-        "body_bytes"
-    );
 
     let nest = |records: usize| {
         let mut s = String::from("VK-a:\n");
@@ -242,7 +238,6 @@ fn crlf_equals_lf() {
 fn fuzz_all_inputs() {
     for b in common::fuzz_strings(0x5EED, 10_000, 40) {
         let _ = read_fence(&b);
-        let _ = read_section(&b);
     }
     for b in common::fuzz_strings(7, 5_000, 40) {
         let _ = read_fence(&format!("VK-a:\n  - {b}"));

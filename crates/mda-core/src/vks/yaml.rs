@@ -3,7 +3,7 @@
 //! Line-based recursive descent. Recursion is bounded by [`MAX_DEPTH`], checked when a container
 //! is entered; every other limit is checked before the push it bounds. No regex, no `&s[a..b]`.
 
-use super::legacy::{control_error, control_line};
+use super::control::{control_error, control_line};
 use super::{
     MAX_DEPTH, MAX_LIST_ITEMS, MAX_MAP_KEYS, MAX_NODES, VksList, VksRecord, VksValue, limit_error,
 };

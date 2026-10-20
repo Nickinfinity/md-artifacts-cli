@@ -4,5 +4,5 @@ title: Crlf
 ---
 
 ```yaml VKs
-VK-a=x
+VK-a: x
 ```

@@ -1,7 +1,7 @@
 {
   "blocks": [
     {
-      "code": "VK-array=users\nVK-result=activeUsers\nVK-property=status\nVK-value=\"active\"",
+      "code": "VK-array: users\nVK-result: activeUsers\nVK-property: status\nVK-value: '\"active\"'",
       "description": "Active users keyed by `status`; works for filter, find, map, group and dedupe.",
       "fenceLang": "yaml VKs",
       "heading": "Users",
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "code": "VK-array=products\nVK-result=stationery\nVK-property=category\nVK-value=\"stationery\"",
+      "code": "VK-array: products\nVK-result: stationery\nVK-property: category\nVK-value: '\"stationery\"'",
       "description": "A product catalogue grouped or filtered by `category`.",
       "fenceLang": "yaml VKs",
       "heading": "Products",
@@ -49,7 +49,7 @@
       ]
     },
     {
-      "code": "VK-array=orders\nVK-result=revenue\nVK-property=total\nVK-value=100",
+      "code": "VK-array: orders\nVK-result: revenue\nVK-property: total\nVK-value: '100'",
       "description": "Orders summed or sorted by their numeric `total`.",
       "fenceLang": "yaml VKs",
       "heading": "Orders",
@@ -73,7 +73,7 @@
       ]
     },
     {
-      "code": "VK-array=tasks\nVK-result=urgentTasks\nVK-property=priority\nVK-value=\"high\"",
+      "code": "VK-array: tasks\nVK-result: urgentTasks\nVK-property: priority\nVK-value: '\"high\"'",
       "description": "A to-do list filtered by `priority`.",
       "fenceLang": "yaml VKs",
       "heading": "Tasks",
@@ -97,7 +97,7 @@
       ]
     },
     {
-      "code": "VK-array=response.data\nVK-result=pages\nVK-size=25",
+      "code": "VK-array: response.data\nVK-result: pages\nVK-size: '25'",
       "description": "Chunk an API response into pages of 25.",
       "fenceLang": "yaml VKs",
       "heading": "API page",
@@ -117,7 +117,7 @@
       ]
     },
     {
-      "code": "VK-array=tags\nVK-result=uniqueTags",
+      "code": "VK-array: tags\nVK-result: uniqueTags",
       "description": "A flat array of strings — for Deduplicate primitives and Flatten one level.",
       "fenceLang": "yaml VKs",
       "heading": "Tags",
@@ -133,7 +133,7 @@
       ]
     }
   ],
-  "code": "VK-array=users\nVK-result=activeUsers\nVK-property=status\nVK-value=\"active\"",
+  "code": "VK-array: users\nVK-result: activeUsers\nVK-property: status\nVK-value: '\"active\"'",
   "fileName": "with-descriptions",
   "filePath": "Variables/vars-edit/with-descriptions.md",
   "frontmatter": {

@@ -1,6 +1,6 @@
 {
   "blocks": [],
-  "code": "VK-a=1",
+  "code": "VK-a: '1'",
   "fileName": "q-variables-code",
   "filePath": "Variables/q-variables-code.md",
   "frontmatter": {

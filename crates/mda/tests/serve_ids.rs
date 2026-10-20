@@ -15,7 +15,7 @@ use mda::serve;
 use mda_ops::{Ctx, Root, dispatch};
 use serde_json::{Value, json};
 
-const INIT: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.0"}}"#;
+const INIT: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"2.0"}}"#;
 const OPS: &str = r#"{"jsonrpc":"2.0","id":7,"method":"system.ops"}"#;
 const HELLO: &str = "Snippets/hello.md";
 
@@ -70,7 +70,7 @@ fn bad_ids_are_invalid_request() {
     assert_invalid(&out[1]);
     // (a) invalid-id initialize does not initialize
     let out = lines(&[
-        r#"{"id":{},"method":"initialize","params":{"protocol":"1.0"}}"#,
+        r#"{"id":{},"method":"initialize","params":{"protocol":"2.0"}}"#,
         OPS,
     ]);
     assert_invalid(&out[0]);
@@ -150,7 +150,7 @@ fn id_less() {
     assert_eq!(out.len(), 2);
     assert_eq!(out[1]["id"], 7);
     let out = lines(&[
-        r#"{"method":"initialize","params":{"protocol":"1.0"}}"#,
+        r#"{"method":"initialize","params":{"protocol":"2.0"}}"#,
         OPS,
     ]);
     assert_eq!(out.len(), 1);

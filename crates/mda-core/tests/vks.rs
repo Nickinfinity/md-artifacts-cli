@@ -2,9 +2,9 @@
 #![allow(clippy::expect_used, clippy::panic)] // reason: assertion helpers outside #[test] fns; a panic is the failure signal
 
 mod common;
-use mda_core::error::{VKS_CONTROL_CHAR, VarsError};
+use mda_core::error::{VKS_CONTROL_CHAR, VKS_MIXED_DIALECT, VarsError};
 use mda_core::model::ParsedVar;
-use mda_core::vks::{Dialect, VksList, VksRecord, VksValue, classify, read_fence, read_section};
+use mda_core::vks::{VksList, VksRecord, VksValue, read_fence};
 
 fn s(x: &str) -> VksValue {
     VksValue::Str(x.into())
@@ -77,25 +77,7 @@ fn t1_spec_example() {
 }
 
 #[test]
-fn t2_classify() {
-    assert_eq!(classify("# c\n\nVK-a: 1"), Dialect::Yaml);
-    assert_eq!(classify("VK-a:b=c"), Dialect::Legacy);
-    assert_eq!(classify("KEY=value: x"), Dialect::Legacy);
-    assert_eq!(classify("VK-url: http://a=b"), Dialect::Yaml);
-    assert_eq!(classify("VK-a:"), Dialect::Yaml);
-    assert_eq!(classify(""), Dialect::Legacy);
-    assert_eq!(classify("  VK-a: 1"), Dialect::Legacy);
-    assert_eq!(classify("1a: x"), Dialect::Legacy);
-    assert_eq!(
-        classify("VK-a:\u{85}x"),
-        Dialect::Legacy,
-        "U+0085 is not JS whitespace"
-    );
-}
-
-#[test]
 fn t3_typing() {
-    assert_eq!(one("VK-value=\"active\""), s("\"active\""));
     assert_eq!(one("VK-value: \"active\""), s("active"));
     for (raw, want) in [
         ("1", "1"),
@@ -113,35 +95,26 @@ fn t3_typing() {
 }
 
 #[test]
-fn t4_legacy_pins() {
-    let v = read("# c\nVK-a = x=y \n=nameless\nno equals\nVK-b=1\nVK-b=2\n  # =hash\n");
-    assert_eq!(
-        v,
-        vec![
-            ("VK-a".into(), s("x=y")),
-            ("VK-b".into(), s("1")),
-            ("VK-b".into(), s("2"))
-        ]
-    );
-    assert_eq!(read_section("VK-a: 1").unwrap(), vec![]);
-    assert_eq!(read_section("VK-a=\"q\"").unwrap()[0].value, s("\"q\""));
+fn legacy_key_value_lines_are_mixed_dialect() {
+    // W7e: the KEY=value dialect is not read; such a line is a YAML error naming the cause.
+    for body in ["VK-a=1", "# c\nVK-a = x=y", "VK-a: 1\nVK-b=2"] {
+        assert_eq!(err(body).code, VKS_MIXED_DIALECT, "{body}");
+    }
+    assert_eq!(read_fence("").unwrap(), vec![]);
+    assert_eq!(read_fence("# only a comment\n").unwrap(), vec![]);
 }
 
 #[test]
-fn t5_legacy_control_chars() {
-    let e = err("VK-a=\u{1b}x");
+fn control_chars_are_rejected_on_their_line() {
+    let e = err("VK-a: \u{1b}x");
     assert_eq!((e.code, e.params["line"].as_str()), (VKS_CONTROL_CHAR, "1"));
-    let e = err("VK-a=ok\nVK-b=\u{7f}");
+    let e = err("VK-a: ok\nVK-b: \u{7f}");
     assert_eq!((e.code, e.params["line"].as_str()), (VKS_CONTROL_CHAR, "2"));
-    assert_eq!(read("VK-a=a\tb"), vec![("VK-a".into(), s("a\tb"))]);
     assert_eq!(
-        read("VK-a=ok\r\nVK-b=2\r\n").len(),
+        read("VK-a: ok\r\nVK-b: 2\r\n").len(),
         2,
         "CRLF is never flagged"
     );
-    let e = read_section("# c \u{1}\nnoequals").expect_err("section");
-    assert_eq!((e.code, e.params["line"].as_str()), (VKS_CONTROL_CHAR, "1"));
-    assert!(read_fence("VK-a=1\u{b}").is_err());
 }
 
 #[test]
@@ -212,7 +185,6 @@ fn compact_records_and_comments() {
 fn fuzz_never_panics() {
     for b in common::fuzz_strings(0x5EED, 10_000, 40) {
         let _ = read_fence(&b);
-        let _ = read_section(&b);
         let _ = read_fence(&format!("VK-a: 1\n{b}"));
     }
 }

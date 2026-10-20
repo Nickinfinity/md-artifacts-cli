@@ -221,11 +221,11 @@ fn key_order_is_pinned() {
 // ── Group B ──────────────────────────────────────────────────────────────────
 
 const MINIMAL: &str = "---\nartifactType: Snippet\ntitle: Minimal Snippet\ndescription: Smallest valid snippet.\nlanguage: javascript\n---\n<!-- c -->\n\n```javascript\nconsole.log('hello');\n```\n";
-const QUOTED: &str = "---\nartifactType: Snippet\ntitle: Q\nlanguage: javascript\ntags: [ui, state]\n---\n\n```javascript\nelement.className = <VK-x>;\n```\n\nvars:\n```yaml VKs\nVK-x=\"active\"\n```\n";
+const QUOTED: &str = "---\nartifactType: Snippet\ntitle: Q\nlanguage: javascript\ntags: [ui, state]\n---\n\n```javascript\nelement.className = <VK-x>;\n```\n\nvars:\n```yaml VKs\nVK-x: '\"active\"'\n```\n";
 const PLAIN: &str = "---\nartifactType: Snippet\ntitle: P\n---\n\n```\nSome plain text content.\nNo language highlight.\n```\n";
-const COMMAND: &str = "---\nartifactType: Command\ntitle: Deploy Command\ntags: [deploy]\n---\n\n```\n./deploy.sh <VK-env> <VK-region>\n```\n\nvars:\n```yaml VKs\nVK-env=staging\nVK-region=us-east-1\n```\n";
-const MULTI: &str = "---\nartifactType: Snippet\ntitle: API URLs\ntags: [api, urls]\n---\n\n## Development\nLocal development server URL.\n\n```javascript\nconst baseUrl = 'http://localhost:<VK-PORT>';\n```\n\n### VKs:\n\n```yaml VKs\nVK-PORT=3000\n```\n\n## Production\nProduction API base URL.\n\n```javascript\nconst baseUrl = 'https://api.<VK-DOMAIN>';\n```\n\n### VKs:\n\n```yaml VKs\nVK-DOMAIN=example.com\n```\n";
-const ORPHAN: &str = "---\nartifactType: Snippet\ntitle: O\nlanguage: javascript\n---\n\n```javascript\nconsole.log('no tokens here');\n```\n\nvars:\n```yaml VKs\nVK-extra=hello\n```\n";
+const COMMAND: &str = "---\nartifactType: Command\ntitle: Deploy Command\ntags: [deploy]\n---\n\n```\n./deploy.sh <VK-env> <VK-region>\n```\n\nvars:\n```yaml VKs\nVK-env: staging\nVK-region: us-east-1\n```\n";
+const MULTI: &str = "---\nartifactType: Snippet\ntitle: API URLs\ntags: [api, urls]\n---\n\n## Development\nLocal development server URL.\n\n```javascript\nconst baseUrl = 'http://localhost:<VK-PORT>';\n```\n\n### VKs:\n\n```yaml VKs\nVK-PORT: 3000\n```\n\n## Production\nProduction API base URL.\n\n```javascript\nconst baseUrl = 'https://api.<VK-DOMAIN>';\n```\n\n### VKs:\n\n```yaml VKs\nVK-DOMAIN: example.com\n```\n";
+const ORPHAN: &str = "---\nartifactType: Snippet\ntitle: O\nlanguage: javascript\n---\n\n```javascript\nconsole.log('no tokens here');\n```\n\nvars:\n```yaml VKs\nVK-extra: hello\n```\n";
 
 fn round_trip(src: &str, path: &str) -> (ParsedArtifact, ParsedArtifact, String) {
     let p1 = parse_from_content(src, path);

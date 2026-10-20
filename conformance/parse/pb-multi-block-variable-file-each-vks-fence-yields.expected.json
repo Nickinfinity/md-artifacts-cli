@@ -1,7 +1,7 @@
 {
   "blocks": [
     {
-      "code": "VK-host=localhost",
+      "code": "VK-host: localhost",
       "description": "",
       "fenceLang": "yaml VKs",
       "heading": "Dev",
@@ -13,7 +13,7 @@
       ]
     },
     {
-      "code": "VK-host=prod.example.com",
+      "code": "VK-host: prod.example.com",
       "description": "",
       "fenceLang": "yaml VKs",
       "heading": "Prod",
@@ -25,7 +25,7 @@
       ]
     }
   ],
-  "code": "VK-host=localhost",
+  "code": "VK-host: localhost",
   "fileName": "pb-multi-block-variable-file-each-vks-fence-yields",
   "filePath": "Variables/pb-multi-block-variable-file-each-vks-fence-yields.md",
   "frontmatter": {

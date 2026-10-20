@@ -7,5 +7,5 @@ Review <VK-repo> on <VK-branch>.
 
 vars:
 ```yaml VKs
-VK-repo=md-artifacts
+VK-repo: md-artifacts
 ```

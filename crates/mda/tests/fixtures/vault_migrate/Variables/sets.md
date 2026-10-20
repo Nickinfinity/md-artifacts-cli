@@ -6,11 +6,11 @@ title: Sets
 ## Dev
 
 ```yaml VKs
-VK-a=1
+VK-a: '1'
 ```
 
 ## Prod
 
 ```yaml VKs
-VK-a=2
+VK-a: '2'
 ```

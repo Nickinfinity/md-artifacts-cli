@@ -8,4 +8,6 @@ const x = <VK-name>;
 ```
 
 vars:
-VK-name=hi
+```yaml VKs
+VK-name: hi
+```

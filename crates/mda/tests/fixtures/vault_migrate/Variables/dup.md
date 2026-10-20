@@ -4,6 +4,6 @@ title: D
 ---
 
 ```yaml VKs
-VK-a=1
-VK-a=2
+VK-a: 1
+VK-a: 2
 ```

@@ -7,5 +7,5 @@ tags: [edge]
 
 ## Only
 ```yaml VKs
-VK-token=xyz
+VK-token: xyz
 ```

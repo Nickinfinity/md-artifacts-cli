@@ -30,21 +30,6 @@ pub(crate) fn block_code_ranges(content: &str) -> Vec<(String, Range<usize>)> {
         .collect()
 }
 
-/// Absolute byte ranges of the first `vks` fence body of every section `block_code_ranges` lists:
-/// the bodies the parser reads (a leading `vks` code fence or the trailing defaults).
-pub(crate) fn block_vks_ranges(content: &str) -> Vec<Range<usize>> {
-    let body = frontmatter::strip(content);
-    let base = content.len() - body.len();
-    sections(body)
-        .filter_map(|(off, sec)| {
-            heading_raw(sec)?;
-            fence::code_range(sec)?;
-            let r = fence::vks_range(sec)?;
-            Some(base + off + r.start..base + off + r.end)
-        })
-        .collect()
-}
-
 /// Index (into the parsed blocks) of the block whose `vks` body is the file-level one — the first
 /// `vks` fence of the unstripped content (`fence.rs` `parse_vars`). Its `varsError` is the file's,
 /// so a report shows it once (spec §11.3). `None` when no block reads that fence.
@@ -143,7 +128,7 @@ mod tests {
     #[test]
     fn file_fence_block_is_positional() {
         // Block 0 holds the file-level fence; a later identical block is a different fence.
-        let sets = "## A\n```yaml VKs\nVK-a=x\n```\n## B\n```yaml VKs\nVK-a=x\n```\n";
+        let sets = "## A\n```yaml VKs\nVK-a: x\n```\n## B\n```yaml VKs\nVK-a: x\n```\n";
         assert_eq!(file_fence_block(sets), Some(0));
         // A leading untitled fence is the file-level one: no block reads it.
         let mixed = "```yaml VKs\nVK-t: 1\n```\n## A\n```yaml VKs\nVK-a: 1\n```\n";

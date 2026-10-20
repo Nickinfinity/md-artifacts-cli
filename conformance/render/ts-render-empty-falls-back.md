@@ -9,5 +9,5 @@ title: ts-render-empty-falls-back
 
 vars:
 ```yaml VKs
-VK-host=localhost
+VK-host: localhost
 ```

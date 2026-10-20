@@ -4,7 +4,7 @@
 
 use std::collections::HashSet;
 
-use super::legacy::is_control;
+use super::control::is_control;
 use super::yaml::{check_key, is_dash, line_construct};
 use super::{
     MAX_DEPTH, MAX_LIST_ITEMS, MAX_MAP_KEYS, MAX_NODES, VksList, VksRecord, VksValue, limit_error,

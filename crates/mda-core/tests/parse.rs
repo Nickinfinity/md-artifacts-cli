@@ -270,7 +270,7 @@ fn bare_markdown_agent_note_is_the_payload() {
 
 #[test]
 fn vars_section_is_not_written_into_the_payload() {
-    let c = "---\nartifactType: AIAgentsConfig\n---\nBe terse with <VK-repo_name>.\n\nvars:\n```yaml VKs\nVK-repo_name=my-app\n```\n";
+    let c = "---\nartifactType: AIAgentsConfig\n---\nBe terse with <VK-repo_name>.\n\nvars:\n```yaml VKs\nVK-repo_name: my-app\n```\n";
     let a = p(c, AGENT);
     assert_eq!(a.code, "Be terse with <VK-repo_name>.");
     assert_eq!(a.vars, vars(&[("VK-repo_name", "my-app")]));
@@ -305,28 +305,12 @@ fn snippet_with_no_fence_does_not_take_the_bare_body() {
 
 #[test]
 fn classic_fenced_single_block_file_parses_as_before() {
-    let c = "---\nartifactType: Snippet\nlanguage: javascript\n---\n\n```javascript\nconst x = <VK-name>;\n```\n\nvars:\nVK-name=hi\n";
+    let c = "---\nartifactType: Snippet\nlanguage: javascript\n---\n\n```javascript\nconst x = <VK-name>;\n```\n\nvars:\n```yaml VKs\nVK-name: hi\n```\n";
     let a = p(c, "Snippets/x.md");
     assert_eq!(a.code, "const x = <VK-name>;");
     assert_eq!(a.frontmatter.language.as_deref(), Some("javascript"));
     assert_eq!(a.vars, vars(&[("VK-name", "hi")]));
     assert!(a.blocks.is_empty());
-}
-
-#[test]
-fn legacy_unfenced_vars_section_parses_in_every_spacing() {
-    let vars_of = |s: &str| {
-        let c = format!("---\nartifactType: Snippet\n---\n\n```js\nx = <VK-a>;\n```\n\n{s}");
-        p(&c, "Snippets/x.md").vars
-    };
-    let expected = vars(&[("VK-a", "1")]);
-    assert_eq!(vars_of("vars:\nVK-a=1\n"), expected, "tight");
-    assert_eq!(
-        vars_of("vars:\n\nVK-a=1\n"),
-        expected,
-        "blank line after the label"
-    );
-    assert_eq!(vars_of("vars:\nVK-a=1"), expected, "no trailing newline");
 }
 
 #[test]
@@ -345,13 +329,13 @@ fn classic_hash_heading_file_still_splits_on_headings() {
 
 #[test]
 fn quirk_single_block_top_vars_are_the_fence_only() {
-    let c = "```js\nf(<VK-a>);\n```\n\nvars:\nVK-b=2\n";
+    let c = "```js\nf(<VK-a>);\n```\n\nvars:\n```yaml VKs\nVK-b: 2\n```\n";
     assert_eq!(p(c, "Snippets/x.md").vars, vars(&[("VK-b", "2")]));
 }
 
 #[test]
 fn quirk_first_vks_fence_anywhere_even_inside_a_block_is_file_level() {
-    let c = "## A\n```js\nf(<VK-x>);\n```\n```yaml VKs\nVK-x=1\n```\n";
+    let c = "## A\n```js\nf(<VK-x>);\n```\n```yaml VKs\nVK-x: 1\n```\n";
     let a = p(c, "Snippets/x.md");
     assert_eq!(a.vars, vars(&[("VK-x", "1")]));
     assert_eq!(a.blocks[0].vars, vars(&[("VK-x", "1")]));
@@ -378,7 +362,7 @@ fn flagged_file(regions: usize, defaults: usize) -> String {
     }
     c.push_str("```yaml VKs\n");
     for i in 0..defaults {
-        c.push_str(&format!("VK-d{i}=v\n"));
+        c.push_str(&format!("VK-d{i}: v\n"));
     }
     c.push_str("```\n");
     c
@@ -386,7 +370,8 @@ fn flagged_file(regions: usize, defaults: usize) -> String {
 
 #[test]
 fn sec_flagged_regions_times_defaults_over_the_cap_is_refused() {
-    let c = flagged_file(400, 300); // 120_000 > MAX_BLOCK_DEFAULTS
+    // 255 keys = the YAML map cap (§9.7), so the product cap is what trips: 102_000 > 100_000.
+    let c = flagged_file(400, 255);
     let a = p(&c, AGENT);
     let e = a.vars_error.as_ref().expect("limit error on the artifact");
     assert_eq!(e.code, "vks.limit");
@@ -412,10 +397,10 @@ fn sec_flagged_product_exactly_at_the_cap_keeps_the_overlay() {
 #[test]
 fn quirk_variables_file_code_is_the_defaults_body_and_language_is_its_info() {
     let a = p(
-        "---\nartifactType: Variables\n---\n\n```yaml VKs\nVK-a=1\n```\n",
+        "---\nartifactType: Variables\n---\n\n```yaml VKs\nVK-a: 1\n```\n",
         "Variables/v.md",
     );
-    assert_eq!(a.code, "VK-a=1");
+    assert_eq!(a.code, "VK-a: 1");
     assert_eq!(a.frontmatter.language.as_deref(), Some("yaml VKs"));
     assert_eq!(a.vars, vars(&[("VK-a", "1")]));
 }
@@ -450,13 +435,6 @@ fn quirk_dashes_only_is_not_frontmatter() {
 #[test]
 fn quirk_crlf_code_keeps_inner_carriage_returns() {
     assert_eq!(p("```js\r\na\r\nb\r\n```", "Snippets/x.md").code, "a\r\nb");
-}
-
-#[test]
-fn quirk_legacy_duplicates_are_appended_twice() {
-    let c = "## A\n```js\nf(<VK-x>);\n```\n```yaml VKs\nVK-z=1\nVK-z=2\nVK-x=9\n```\n";
-    let b = &p(c, "Snippets/x.md").blocks[0];
-    assert_eq!(b.vars, vars(&[("VK-x", "9"), ("VK-z", "1"), ("VK-z", "2")]));
 }
 
 #[test]

@@ -4,5 +4,5 @@ title: Old
 ---
 
 ```yaml VKs
-VK-x=1
+VK-x: '1'
 ```

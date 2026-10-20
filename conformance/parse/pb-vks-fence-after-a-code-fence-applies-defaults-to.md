@@ -4,8 +4,8 @@ Filter items.
 const <VK-result> = <VK-array>.filter(i => i.<VK-prop> === <VK-value>);
 ```
 ```yaml VKs
-VK-result=filtered
-VK-array=items
-VK-prop=status
-VK-value="active"
+VK-result: filtered
+VK-array: items
+VK-prop: status
+VK-value: '"active"'
 ```

@@ -5,7 +5,7 @@ mod common;
 use common::{bin, json_lines, run};
 use std::process::Stdio;
 
-const INIT: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.0"}}"#;
+const INIT: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"2.0"}}"#;
 const OPS: &str = r#"{"jsonrpc":"2.0","id":2,"method":"system.ops"}"#;
 
 fn tmp(name: &str) -> std::path::PathBuf {
@@ -365,14 +365,14 @@ fn debug_varsets_apply_keeps_values_out() {
 }
 
 /// `seen` proves the secret file was actually processed: `Some(bytes)` = its migrated content,
-/// `None` = its path appears on stdout (validate lists it as pending).
+/// `None` = its path appears on stdout (validate lists it: its secret sits in an untagged fence).
 fn debug_vault_run(tag: &str, args: &[&str], ops: &[&str], seen: Option<&str>) {
     let v = tmp(tag);
     let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/vault_migrate");
     common::copy_tree(&src, &v);
     std::fs::write(
         v.join("Variables/s.md"),
-        "---\nartifactType: Variables\ntitle: S\n---\n\n```yaml VKs\nVK-a=SECRET-mig-77\n```\n",
+        "---\nartifactType: Variables\ntitle: S\n---\n\n```yaml\nVK-a: SECRET-mig-77\n```\n",
     )
     .unwrap();
     let mut a = vec!["--vault", v.to_str().unwrap(), "--debug"];
@@ -395,18 +395,6 @@ fn debug_vault_run(tag: &str, args: &[&str], ops: &[&str], seen: Option<&str>) {
         ),
     }
     std::fs::remove_dir_all(&v).unwrap();
-}
-
-#[test]
-fn debug_migrate_keeps_values_out() {
-    debug_vault_run(
-        "migdbg",
-        &["migrate", "vks", "apply"],
-        &["migrate.vks.plan", "migrate.vks.apply"],
-        Some(
-            "---\nartifactType: Variables\ntitle: S\n---\n\n```yaml VKs\nVK-a: SECRET-mig-77\n```\n",
-        ),
-    );
 }
 
 #[test]

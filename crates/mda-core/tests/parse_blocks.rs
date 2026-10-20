@@ -193,8 +193,8 @@ fn vks_fence_parses_key_value_pairs_into_block_vars() {
     let b = blocks(&j(&[
         "## Local Dev",
         "```yaml VKs",
-        "VK-host=localhost",
-        "VK-port=3000",
+        "VK-host: localhost",
+        "VK-port: 3000",
         "```",
     ]));
     assert_eq!(b.len(), 1);
@@ -210,7 +210,7 @@ fn vks_fence_with_empty_value_yields_empty_default() {
     let b = blocks(&j(&[
         "## Empty Defaults",
         "```yaml VKs",
-        "VK-token=",
+        "VK-token:",
         "```",
     ]));
     assert_eq!(b[0].vars, vars(&[("VK-token", "")]));
@@ -221,12 +221,12 @@ fn multi_block_variable_file_each_vks_fence_yields_its_own_vars() {
     let b = blocks(&j(&[
         "## Dev",
         "```yaml VKs",
-        "VK-host=localhost",
+        "VK-host: localhost",
         "```",
         "",
         "## Prod",
         "```yaml VKs",
-        "VK-host=prod.example.com",
+        "VK-host: prod.example.com",
         "```",
     ]));
     assert_eq!(b[0].vars, vars(&[("VK-host", "localhost")]));
@@ -243,10 +243,10 @@ fn vks_fence_after_a_code_fence_applies_defaults_to_detected_vars() {
         code,
         "```",
         "```yaml VKs",
-        "VK-result=filtered",
-        "VK-array=items",
-        "VK-prop=status",
-        "VK-value=\"active\"",
+        "VK-result: filtered",
+        "VK-array: items",
+        "VK-prop: status",
+        "VK-value: '\"active\"'",
         "```",
     ]));
     assert_eq!(b.len(), 1);
@@ -272,7 +272,7 @@ fn detected_var_with_no_matching_vks_line_keeps_empty_default() {
         "const <VK-a> = <VK-b>;",
         "```",
         "```yaml VKs",
-        "VK-a=1",
+        "VK-a: 1",
         "```",
     ]));
     assert_eq!(b[0].vars, vars(&[("VK-a", "1"), ("VK-b", "")]));
@@ -286,8 +286,8 @@ fn vks_line_with_no_matching_code_token_is_appended_after_detected_vars() {
         "const <VK-a> = 1;",
         "```",
         "```yaml VKs",
-        "VK-a=10",
-        "VK-unused=99",
+        "VK-a: 10",
+        "VK-unused: 99",
         "```",
     ]));
     assert_eq!(b[0].vars, vars(&[("VK-a", "10"), ("VK-unused", "99")]));
@@ -301,7 +301,7 @@ fn code_plus_vars_fence_pairs_are_scoped_per_block() {
         "f(<VK-x>);",
         "```",
         "```yaml VKs",
-        "VK-x=alpha",
+        "VK-x: alpha",
         "```",
         "",
         "## Two",
@@ -309,7 +309,7 @@ fn code_plus_vars_fence_pairs_are_scoped_per_block() {
         "g(<VK-x>);",
         "```",
         "```yaml VKs",
-        "VK-x=beta",
+        "VK-x: beta",
         "```",
     ]));
     assert_eq!(b[0].vars, vars(&[("VK-x", "alpha")]));
@@ -330,8 +330,8 @@ fn arbitrary_marker_text_between_code_fence_and_vks_fence_is_ignored() {
         "### VKs:",
         "",
         "```yaml VKs",
-        "VK-result=grouped",
-        "VK-array=items",
+        "VK-result: grouped",
+        "VK-array: items",
         "```",
     ]));
     assert_eq!(b.len(), 1);
@@ -356,7 +356,7 @@ fn marker_text_plus_vks_scoped_per_block_across_two_sections() {
         "```",
         "whatever marker",
         "```yaml VKs",
-        "VK-x=alpha",
+        "VK-x: alpha",
         "```",
         "",
         "## Two",
@@ -365,7 +365,7 @@ fn marker_text_plus_vks_scoped_per_block_across_two_sections() {
         "```",
         "--- notes ---",
         "```yaml VKs",
-        "VK-x=beta",
+        "VK-x: beta",
         "```",
     ]));
     assert_eq!(b[0].vars, vars(&[("VK-x", "alpha")]));

@@ -248,7 +248,7 @@ fn multi_keeps_per_block_vks() {
         "### VKs:",
         "",
         "```yaml VKs",
-        "VK-PORT=3000",
+        "VK-PORT: 3000",
         "```",
         "",
         "## Production",
@@ -406,9 +406,13 @@ fn code_with_backticks_is_unrepresentable() {
 
 #[test]
 fn block_code_cannot_smuggle_file_level_vars() {
+    // W7e: no unfenced `vars:` section is read any more, so `vars:` lines in code stay code; a
+    // defaults fence cannot be smuggled either (backticks are refused above).
     let m = "## A\n```js\nx\n```\n## B\n```js\ny\n```\n";
+    let out = patch_code(m, P, &multi(1, "B"), "vars:\nA=1").unwrap();
+    assert!(mda_core::parse::parse_from_content(&out, P).vars.is_empty());
     assert_eq!(
-        patch_code(m, P, &multi(1, "B"), "vars:\nA=1"),
+        patch_code(m, P, &multi(1, "B"), "a\n```yaml VKs\nA: 1"),
         Err(PatchError::Unrepresentable("code"))
     );
 }

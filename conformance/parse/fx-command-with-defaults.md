@@ -12,6 +12,6 @@ tags: [deploy]
 
 vars:
 ```yaml VKs
-VK-env=staging
-VK-region=us-east-1
+VK-env: staging
+VK-region: us-east-1
 ```

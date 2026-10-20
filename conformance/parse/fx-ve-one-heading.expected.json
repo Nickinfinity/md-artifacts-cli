@@ -1,7 +1,7 @@
 {
   "blocks": [
     {
-      "code": "VK-token=xyz",
+      "code": "VK-token: xyz",
       "description": "",
       "fenceLang": "yaml VKs",
       "heading": "Only",
@@ -13,7 +13,7 @@
       ]
     }
   ],
-  "code": "VK-token=xyz",
+  "code": "VK-token: xyz",
   "fileName": "one-heading",
   "filePath": "Variables/vars-edit/one-heading.md",
   "frontmatter": {

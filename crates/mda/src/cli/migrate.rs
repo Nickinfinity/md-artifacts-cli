@@ -1,4 +1,4 @@
-//! `mda migrate frontmatter|vks plan|apply` and the migrate / `vault.validate` human printers.
+//! `mda migrate frontmatter plan|apply` and the migrate / `vault.validate` human printers.
 
 use super::print::{clean, coded_value, s};
 use mda_ops::OpError;
@@ -10,9 +10,6 @@ pub enum MigrateCmd {
     /// `type:` → `artifactType:` in frontmatter.
     #[command(subcommand)]
     Frontmatter(Step),
-    /// Legacy `KEY=value` variables bodies → YAML.
-    #[command(subcommand)]
-    Vks(Step),
 }
 
 /// One migration step.
@@ -32,7 +29,6 @@ pub(super) fn migrate_request(
 ) -> (String, Result<Value, OpError>) {
     let (kind, step) = match cmd {
         MigrateCmd::Frontmatter(s) => ("frontmatter", s),
-        MigrateCmd::Vks(s) => ("vks", s),
     };
     let plan = format!("migrate.{kind}.plan");
     match step {
@@ -59,8 +55,8 @@ pub(super) fn migrate_request(
 /// Human output for the migrate ops and `vault.validate`; `None` falls back to pretty JSON.
 pub(super) fn success(op: &str, v: &Value) -> Option<String> {
     Some(match op {
-        "migrate.frontmatter.plan" | "migrate.vks.plan" => plan(op, v),
-        "migrate.frontmatter.apply" | "migrate.vks.apply" => apply(v),
+        "migrate.frontmatter.plan" => plan(v),
+        "migrate.frontmatter.apply" => apply(v),
         "vault.validate" => validate(v),
         _ => return None,
     })
@@ -80,22 +76,15 @@ fn normalises(c: &Value) -> String {
     }
 }
 
-fn plan(op: &str, v: &Value) -> String {
+fn plan(v: &Value) -> String {
     let mut out: Vec<String> = Vec::new();
     let changes = v["changes"].as_array().map_or(&[][..], Vec::as_slice);
     for c in changes {
-        let head = if op == "migrate.vks.plan" {
-            format!(
-                "fences {}  vars {}  dropped {}",
-                c["fences"], c["vars"], c["droppedLines"]
-            )
-        } else {
-            format!(
-                "{:?} -> {:?}",
-                clean(c["oldLine"].as_str().unwrap_or(""), false),
-                clean(c["newLine"].as_str().unwrap_or(""), false)
-            )
-        };
+        let head = format!(
+            "{:?} -> {:?}",
+            clean(c["oldLine"].as_str().unwrap_or(""), false),
+            clean(c["newLine"].as_str().unwrap_or(""), false)
+        );
         out.push(format!("{}  {head}{}", s(c, "path"), normalises(c)));
     }
     let skipped = v["skipped"].as_array().map_or(&[][..], Vec::as_slice);
@@ -168,7 +157,7 @@ mod tests {
         let ok = json!({"errors": 0, "warnings": 3});
         assert_eq!(super::super::report_exit("vault.validate", &ok), 0);
         assert_eq!(
-            super::super::report_exit("migrate.vks.plan", &json!({"errors": 5})),
+            super::super::report_exit("migrate.frontmatter.plan", &json!({"errors": 5})),
             0
         );
     }

@@ -18,7 +18,7 @@ fn select_then_tree_then_config_get() {
         json!({"jsonrpc":"2.0","id":id,"method":m,"params":p}).to_string()
     };
     let lines = [
-        req(1, "initialize", json!({"protocol": "1.0"})),
+        req(1, "initialize", json!({"protocol": "2.0"})),
         req(2, "vault.select", json!({"path": vault})),
         req(3, "artifact.tree", json!({"type": "Snippet"})),
         req(4, "config.get", json!({})),

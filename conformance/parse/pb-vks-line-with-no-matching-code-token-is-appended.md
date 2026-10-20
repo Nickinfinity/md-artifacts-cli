@@ -3,6 +3,6 @@
 const <VK-a> = 1;
 ```
 ```yaml VKs
-VK-a=10
-VK-unused=99
+VK-a: '10'
+VK-unused: '99'
 ```

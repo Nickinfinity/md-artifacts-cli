@@ -4,7 +4,7 @@ f(<VK-x>);
 ```
 whatever marker
 ```yaml VKs
-VK-x=alpha
+VK-x: alpha
 ```
 
 ## Two
@@ -13,5 +13,5 @@ g(<VK-x>);
 ```
 --- notes ---
 ```yaml VKs
-VK-x=beta
+VK-x: beta
 ```

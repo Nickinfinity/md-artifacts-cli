@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 use mda_ops::migrate::{
     ApplyRequest, ApplyResponse, ApplyResult, FileRef, PlanRequest, frontmatter_apply,
-    frontmatter_plan, vks_apply, vks_plan,
+    frontmatter_plan,
 };
 use mda_ops::{Ctx, Root};
 use mda_vault::content_hash;
@@ -247,7 +247,7 @@ fn copy_dir(from: &Path, to: &Path) {
 }
 
 #[test]
-fn idempotent_both() {
+fn idempotent_frontmatter() {
     let (d, _) = vault("idem");
     let v = d.join("copy");
     copy_dir(
@@ -265,42 +265,6 @@ fn idempotent_both() {
             .changes
             .is_empty()
     );
-    let p = vks_plan(&ctx, PlanRequest {}).unwrap();
-    assert!(!p.changes.is_empty());
-    let stale = FileRef {
-        path: "Variables/old.md".into(),
-        hash: "0".repeat(64),
-    };
-    let mut files = all_refs(&p.changes, |c| (&c.path, &c.hash));
-    let r = vks_apply(&ctx, ApplyRequest { files: vec![stale] }).unwrap();
-    assert_eq!(skipped_code(&r.results[0]).0, "file.conflict");
-    files.retain(|f| f.path != "Variables/old.md");
-    let r = vks_apply(&ctx, ApplyRequest { files }).unwrap();
-    assert_eq!(r.skipped, 0, "{r:?}");
-    let fresh = vks_plan(&ctx, PlanRequest {}).unwrap();
-    assert_eq!(fresh.changes.len(), 1, "only old.md left");
-    let r = vks_apply(
-        &ctx,
-        ApplyRequest {
-            files: all_refs(&fresh.changes, |c| (&c.path, &c.hash)),
-        },
-    )
-    .unwrap();
-    assert_eq!(r.written, 1);
-    assert!(vks_plan(&ctx, PlanRequest {}).unwrap().changes.is_empty());
-}
-
-#[test]
-fn plans_carry_no_values() {
-    let (d, ctx) = vault("novalues");
-    fs::write(
-        d.join("vault/Variables/s.md"),
-        "---\nartifactType: Variables\ntitle: S\n---\n\n```yaml VKs\nVK-a=SECRET-mig-41\n```\n",
-    )
-    .unwrap();
-    let p = vks_plan(&ctx, PlanRequest {}).unwrap();
-    assert_eq!(p.changes.len(), 1);
-    assert!(!serde_json::to_string(&p).unwrap().contains("SECRET-mig-41"));
 }
 
 #[test]
@@ -308,18 +272,18 @@ fn plan_is_linear() {
     let (d, ctx) = vault("linear");
     for i in 0..2000 {
         fs::write(
-            d.join(format!("vault/Variables/f{i}.md")),
-            "---\nartifactType: Variables\ntitle: S\n---\n\n```yaml VKs\nVK-a=1\n```\n",
+            d.join(format!("vault/Snippets/f{i}.md")),
+            "---\ntype: snippet\ntitle: S\n---\nbody\n",
         )
         .unwrap();
     }
     let t = std::time::Instant::now();
-    let p = vks_plan(&ctx, PlanRequest {}).unwrap();
+    let p = frontmatter_plan(&ctx, PlanRequest {}).unwrap();
     assert_eq!(p.changes.len(), 2000);
     assert!(t.elapsed().as_secs() < 3, "{:?}", t.elapsed());
 }
 
-/// H6.2 cross-op: validate → both migrations → validate agree, and the migrated values read back the same.
+/// H6.2 cross-op: validate → the frontmatter migration → validate agree, and the values read back the same.
 #[test]
 fn validate_migrate_validate_agree() {
     use mda_ops::artifact::{ReadRequest, read};
@@ -346,48 +310,29 @@ fn validate_migrate_validate_agree() {
     .map(vars_of);
 
     let r = validate(&ctx, ValidateRequest {}).unwrap();
-    assert_eq!((r.files, r.errors, r.warnings), (20, 1, 13));
+    assert_eq!((r.files, r.errors, r.warnings), (19, 3, 7));
 
     let p = frontmatter_plan(&ctx, PlanRequest {}).unwrap();
     let a = apply_fm(&ctx, all_refs(&p.changes, |c| (&c.path, &c.hash))).unwrap();
     assert_eq!((a.written, a.skipped), (5, 0), "{a:?}");
-    // Fresh hashes after the frontmatter pass: `old.md` is listed with its new bytes.
-    let p = vks_plan(&ctx, PlanRequest {}).unwrap();
-    assert!(p.changes.iter().any(|c| c.path == "Variables/old.md"));
-    let a = vks_apply(
-        &ctx,
-        ApplyRequest {
-            files: all_refs(&p.changes, |c| (&c.path, &c.hash)),
-        },
-    )
-    .unwrap();
-    assert_eq!((a.written, a.skipped), (5, 0), "{a:?}");
 
     let r = validate(&ctx, ValidateRequest {}).unwrap();
-    assert_eq!((r.errors, r.warnings), (1, 3), "{:?}", r.issues);
+    assert_eq!((r.errors, r.warnings), (3, 2), "{:?}", r.issues);
     assert!(r.issues.iter().all(|i| i.code != "migrate.pending"));
     let mut warn: Vec<_> = r
         .issues
         .iter()
-        .filter(|i| i.code != "vks.control_char")
+        .filter(|i| !i.code.starts_with("vks."))
         .map(|i| i.code)
         .collect();
     warn.sort_unstable();
-    assert_eq!(
-        warn,
-        [
-            "migrate.unfenced_vars",
-            "vars.fenceless_section",
-            "vars.mixed_file"
-        ]
-    );
+    assert_eq!(warn, ["vars.fenceless_section", "vars.mixed_file"]);
     assert!(
         frontmatter_plan(&ctx, PlanRequest {})
             .unwrap()
             .changes
             .is_empty()
     );
-    assert!(vks_plan(&ctx, PlanRequest {}).unwrap().changes.is_empty());
     let after = [
         "Variables/legacy.md",
         "Variables/sets.md",

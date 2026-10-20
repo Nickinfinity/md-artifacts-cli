@@ -1,8 +1,0 @@
-vault = "vault_migrate"
-params = { files = [{ path = "Variables/legacy.md", hash = "27e878dc8ffad841d7530f2f3cb42ad80fd1f4b3f22666e0edbd46ab87952680" }, { path = "Variables/crlf.md", hash = "0406921e378bfbb76daf96980758f275d27fcc77fd19ecbbe7011689ff2e7d27" }, { path = "Variables/sets.md", hash = "eb70af06e2bd0e0d69c8050d68b44c8b10cff14770875a022f326cd9d66f2dcc" }] }
-expect = { results = [
-  { status = "written", path = "Variables/legacy.md", hash = "0b6877d63d5cd16d9845307590e028433f805846ab57e9d1a7fb833743a4ad80" },
-  { status = "written", path = "Variables/crlf.md", hash = "616e072d32721a02675bbcb478d895384f188c18daed4ad18b35d94d2df53e32" },
-  { status = "written", path = "Variables/sets.md", hash = "e81d785d0d94b1be6a6bd1f12ed686ff0ff9707a95395c9e29efc53881442a8f" },
-], written = 3, skipped = 0 }
-expect_files = { "Variables/legacy.md" = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```yaml VKs\nVK-host: localhost\nVK-port: '8080'\n```\n", "Variables/crlf.md" = "---\r\nartifactType: Variables\r\ntitle: Crlf\r\n---\r\n\r\n```yaml VKs\r\nVK-a: x\r\n```\r\n", "Variables/sets.md" = "---\nartifactType: Variables\ntitle: Sets\n---\n\n## Dev\n\n```yaml VKs\nVK-a: '1'\n```\n\n## Prod\n\n```yaml VKs\nVK-a: '2'\n```\n" }

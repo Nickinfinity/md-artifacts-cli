@@ -1,4 +1,0 @@
-vault = "vault"
-params = { "path" = "Variables/legacy-badkey.md", "expectedHash" = "69b6d897557c9ae00f07eeda94754f7ab12389195db100023f8dfdc503f0fb14", "name" = "VK-a:b", "newName" = "VK-a" }
-expect = { "path" = "Variables/legacy-badkey.md", "hash" = "9647f09890e992d7bd4045c5abe1a293f2ebc89da6d955b99ff24bb295ed484c" }
-expect_files = { "Variables/legacy-badkey.md" = "---\nartifactType: Variables\ntitle: Bad key\n---\n\n```yaml VKs\nVK-a: c\nVK-ok: '1'\n```\n" }

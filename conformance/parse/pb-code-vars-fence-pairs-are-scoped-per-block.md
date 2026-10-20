@@ -3,7 +3,7 @@
 f(<VK-x>);
 ```
 ```yaml VKs
-VK-x=alpha
+VK-x: alpha
 ```
 
 ## Two
@@ -11,5 +11,5 @@ VK-x=alpha
 g(<VK-x>);
 ```
 ```yaml VKs
-VK-x=beta
+VK-x: beta
 ```

@@ -1,15 +1,12 @@
-//! The two vault migrations (spec §11): frontmatter `type:` → `artifactType:` and legacy `vks`
-//! bodies → YAML. Pure rewrites of decoded content; the ops crate walks, hash-checks and writes.
+//! The vault migration (spec §11): frontmatter `type:` → `artifactType:`. A pure rewrite of decoded
+//! content; the ops crate walks, hash-checks and writes. (The pre-W7e vks migration is gone with the
+//! legacy `KEY=value` dialect it converted.)
 
 pub mod frontmatter;
-pub mod vks;
 
 use std::collections::BTreeMap;
 
-use crate::error::{
-    ARTIFACT_UNREPRESENTABLE, MIGRATE_LEADING_BLANK, MIGRATE_QUOTED_TYPE, MIGRATE_UNFENCED_VARS,
-    Unrepresentable, VKS_UNREPRESENTABLE, VarsError,
-};
+use crate::error::{ARTIFACT_UNREPRESENTABLE, MIGRATE_LEADING_BLANK, MIGRATE_QUOTED_TYPE};
 
 /// A byte normalisation every engine write applies (#35/#36); the plan flags it before apply (M-4).
 ///
@@ -57,10 +54,7 @@ pub fn normalises(bytes: &[u8]) -> Vec<Normalise> {
 pub enum Skip {
     LeadingBlank,
     QuotedType(String),
-    Vars(VarsError),
-    Unrepresentable(Unrepresentable),
     RoundTrip { field: &'static str },
-    UnfencedVars,
 }
 
 impl Skip {
@@ -69,10 +63,7 @@ impl Skip {
         match self {
             Self::LeadingBlank => MIGRATE_LEADING_BLANK,
             Self::QuotedType(_) => MIGRATE_QUOTED_TYPE,
-            Self::Vars(e) => e.code,
-            Self::Unrepresentable(_) => VKS_UNREPRESENTABLE,
             Self::RoundTrip { .. } => ARTIFACT_UNREPRESENTABLE,
-            Self::UnfencedVars => MIGRATE_UNFENCED_VARS,
         }
     }
 
@@ -80,14 +71,9 @@ impl Skip {
     pub fn params(&self) -> BTreeMap<String, String> {
         let mut p = BTreeMap::new();
         match self {
-            Self::LeadingBlank | Self::UnfencedVars => {}
+            Self::LeadingBlank => {}
             Self::QuotedType(v) => {
                 p.insert("value".to_owned(), v.clone());
-            }
-            Self::Vars(e) => p.clone_from(&e.params),
-            Self::Unrepresentable(u) => {
-                p.insert("var".to_owned(), u.var.clone());
-                p.insert("reason".to_owned(), u.reason.as_str().to_owned());
             }
             Self::RoundTrip { field } => {
                 p.insert("field".to_owned(), (*field).to_owned());
@@ -112,7 +98,6 @@ pub fn fenceless_sections(content: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::error::{EmitReason, VKS_BAD_KEY};
 
     #[test]
     fn skip_code_params() {
@@ -129,24 +114,10 @@ mod tests {
                 s(&[("value", "\"t\"")]),
             ),
             (
-                Skip::Vars(VarsError::new(VKS_BAD_KEY, 0).with("key", "VK-a.b")),
-                "vks.bad_key",
-                s(&[("key", "VK-a.b"), ("line", "0")]),
-            ),
-            (
-                Skip::Unrepresentable(Unrepresentable {
-                    var: "VK-a".into(),
-                    reason: EmitReason::Backticks,
-                }),
-                "vks.unrepresentable",
-                s(&[("var", "VK-a"), ("reason", "backticks")]),
-            ),
-            (
                 Skip::RoundTrip { field: "vars" },
                 "artifact.unrepresentable",
                 s(&[("field", "vars"), ("reason", "round_trip")]),
             ),
-            (Skip::UnfencedVars, "migrate.unfenced_vars", s(&[])),
         ];
         for (skip, code, params) in cases {
             assert_eq!(skip.code(), code);

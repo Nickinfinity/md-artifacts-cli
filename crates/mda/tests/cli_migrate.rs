@@ -57,31 +57,11 @@ fn frontmatter_plan_apply_plan() {
 }
 
 #[test]
-fn vks_apply_and_json_plan() {
-    let v = copy("vks");
-    let (_, out, _) = go(&v, &["--json", "migrate", "vks", "plan"]);
-    assert_eq!(out.len(), 1);
-    let got: serde_json::Value = serde_json::from_str(&out[0]).unwrap();
-    let case = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/op_cases/migrate.vks.plan/ok.toml"),
-    )
-    .unwrap();
-    let case: toml::Value = toml::from_str(&case).unwrap();
-    let want = serde_json::to_value(&case["expect"]).unwrap();
-    assert_eq!(got, want);
-
-    let (rc, out, _) = go(&v, &["migrate", "vks", "apply"]);
-    assert_eq!(rc, Some(0));
-    assert_eq!(out.last().unwrap(), "5 written, 0 skipped");
-    std::fs::remove_dir_all(&v).unwrap();
-}
-
-#[test]
 fn validate_exit_codes() {
     let v = copy("val");
     let (rc, out, _) = go(&v, &["vault", "validate"]);
     assert_eq!(rc, Some(1));
-    assert_eq!(out.last().unwrap(), "20 files, 1 errors, 13 warnings");
+    assert_eq!(out.last().unwrap(), "19 files, 3 errors, 7 warnings");
 
     let (rc, out, _) = go(&v, &["--json", "vault", "validate"]);
     assert_eq!(rc, Some(1));

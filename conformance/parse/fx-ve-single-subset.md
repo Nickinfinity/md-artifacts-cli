@@ -6,6 +6,6 @@ tags: [solo]
 ---
 
 ```yaml VKs
-VK-api_key=abc123
-VK-region=us-east-1
+VK-api_key: abc123
+VK-region: us-east-1
 ```

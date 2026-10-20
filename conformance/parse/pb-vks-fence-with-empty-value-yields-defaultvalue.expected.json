@@ -1,7 +1,7 @@
 {
   "blocks": [
     {
-      "code": "VK-token=",
+      "code": "VK-token:",
       "description": "",
       "fenceLang": "yaml VKs",
       "heading": "Empty Defaults",
@@ -13,7 +13,7 @@
       ]
     }
   ],
-  "code": "VK-token=",
+  "code": "VK-token:",
   "fileName": "pb-vks-fence-with-empty-value-yields-defaultvalue",
   "filePath": "Variables/pb-vks-fence-with-empty-value-yields-defaultvalue.md",
   "frontmatter": {

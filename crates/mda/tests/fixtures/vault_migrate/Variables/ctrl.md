@@ -4,5 +4,5 @@ title: Ctrl
 ---
 
 ```yaml VKs
-VK-a=ab
+VK-a: ab
 ```

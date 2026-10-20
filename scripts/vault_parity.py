@@ -47,7 +47,7 @@ class Rpc:
         self.p = subprocess.Popen([mda, "serve", "--vault", str(vault)], stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE, env=env, text=True)
         self.next_id = 0
-        self.init = self._send("initialize", {"protocol": "1.0", "clientInfo": {"name": "parity"}})
+        self.init = self._send("initialize", {"protocol": "2.0", "clientInfo": {"name": "parity"}})
 
     def _send(self, method, params):
         self.next_id += 1

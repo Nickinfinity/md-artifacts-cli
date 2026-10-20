@@ -16,7 +16,7 @@ const baseUrl = 'http://localhost:<VK-PORT>';
 ### VKs:
 
 ```yaml VKs
-VK-PORT=3000
+VK-PORT: '3000'
 ```
 
 ## Production
@@ -29,5 +29,5 @@ const baseUrl = 'https://api.<VK-DOMAIN>';
 ### VKs:
 
 ```yaml VKs
-VK-DOMAIN=example.com
+VK-DOMAIN: example.com
 ```

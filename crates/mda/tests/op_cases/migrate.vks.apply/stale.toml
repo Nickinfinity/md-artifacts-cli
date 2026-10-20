@@ -1,6 +1,0 @@
-vault = "vault_migrate"
-params = { files = [{ path = "Variables/legacy.md", hash = "0000000000000000000000000000000000000000000000000000000000000000" }] }
-expect = { results = [
-  { status = "skipped", path = "Variables/legacy.md", code = "file.conflict", params = { path = "Variables/legacy.md", expected = "0000000000000000000000000000000000000000000000000000000000000000", actual = "27e878dc8ffad841d7530f2f3cb42ad80fd1f4b3f22666e0edbd46ab87952680" } },
-], written = 0, skipped = 1 }
-expect_files = { "Variables/legacy.md" = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```yaml VKs\n# hosts\nVK-host=localhost\nVK-port=8080\n```\n" }

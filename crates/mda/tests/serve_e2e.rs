@@ -18,7 +18,7 @@ use mda_ops::{Ctx, Root, dispatch};
 use serde_json::{Value, json};
 
 const SIZE: usize = 150_000;
-const INIT: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.0"}}"#;
+const INIT: &str = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"2.0"}}"#;
 
 /// Removes this test's `mda-e2e-<pid>-<tag>*` temp dirs on drop (also on panic).
 struct Clean(&'static str);

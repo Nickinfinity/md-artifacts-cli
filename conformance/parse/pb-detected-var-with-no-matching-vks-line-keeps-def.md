@@ -3,5 +3,5 @@
 const <VK-a> = <VK-b>;
 ```
 ```yaml VKs
-VK-a=1
+VK-a: '1'
 ```

@@ -1,7 +1,7 @@
 {
   "blocks": [
     {
-      "code": "VK-host=localhost\nVK-port=3000",
+      "code": "VK-host: localhost\nVK-port: '3000'",
       "description": "",
       "fenceLang": "yaml VKs",
       "heading": "Dev",
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "code": "VK-host=prod.example.com\nVK-port=443",
+      "code": "VK-host: prod.example.com\nVK-port: '443'",
       "description": "",
       "fenceLang": "yaml VKs",
       "heading": "Prod",
@@ -33,7 +33,7 @@
       ]
     }
   ],
-  "code": "VK-host=localhost\nVK-port=3000",
+  "code": "VK-host: localhost\nVK-port: '3000'",
   "fileName": "with-env",
   "filePath": "Variables/vars-edit/with-env.md",
   "frontmatter": {

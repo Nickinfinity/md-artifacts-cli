@@ -15,11 +15,8 @@ const SETS: &str = "---\nartifactType: Variables\ntitle: Sets\ntags: [env, dev]\
 const BLANK: &str = "---\nartifactType: Variables\ntitle: Blank\n---\n";
 const ONE_SET: &str =
     "---\nartifactType: Variables\ntitle: One\n---\n\n## Only\n\n```yaml VKs\nVK-a: x\n```\n";
-const LEGACY: &str = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```yaml VKs\nVK-host=localhost\nAPI_URL=http://a\n```\n";
-const BADKEY: &str =
-    "---\nartifactType: Variables\ntitle: Bad key\n---\n\n```yaml VKs\nVK-a:b=c\nVK-ok=1\n```\n";
+const LEGACY: &str = "---\nartifactType: Variables\ntitle: Legacy\n---\n\n```yaml VKs\nVK-host: localhost\nAPI_URL: 'http://a'\n```\n";
 const MIXED: &str = "---\nartifactType: Variables\ntitle: Mixed\n---\n\n```yaml VKs\nVK-top: t\n```\n\n## A\n\n```yaml VKs\nVK-a: a\n```\n";
-const DUPS: &str = "---\nartifactType: Variables\ntitle: Dups\n---\n\n```yaml VKs\nA=1\nA=2\n```\n";
 const FIRST_EMPTY: &str =
     "---\nartifactType: Variables\ntitle: F\n---\n\n## A\n\n## B\n\n```yaml VKs\nVK-b: 1\n```\n";
 
@@ -178,14 +175,6 @@ fn rename_var_cases() {
     let mut l = m(LEGACY);
     rename_var(&mut l, None, "API_URL", "VK-api_url").unwrap();
     assert_eq!(names(&l, 0), ["VK-host", "VK-api_url"]);
-
-    let mut k = m(BADKEY);
-    assert!(matches!(
-        serialize(&k, 1 << 20),
-        Err(SerializeError::Vars(_))
-    ));
-    rename_var(&mut k, None, "VK-a:b", "VK-a").unwrap();
-    assert!(serialize(&k, 1 << 20).is_ok());
 }
 
 #[test]
@@ -218,10 +207,6 @@ fn delete_var_cases() {
         |mm| delete_var(mm, None, "VK-port"),
         E::VarNotFound("VK-port".into()),
     );
-
-    let mut d = m(DUPS);
-    delete_var(&mut d, None, "A").unwrap();
-    assert!(d.blocks[0].vars.is_empty());
 
     let mut o = m(ONE_SET);
     delete_var(&mut o, Some(&at(0, "Only")), "VK-a").unwrap();

@@ -5,7 +5,7 @@ echo <VK-x>
 ```
 
 ```yaml VKs
-VK-x=1
+VK-x: '1'
 ```
 
 ## Two

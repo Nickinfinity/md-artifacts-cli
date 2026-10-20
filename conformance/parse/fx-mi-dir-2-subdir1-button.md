@@ -10,5 +10,5 @@ export const Button = () => console.log('<VK-language>');
 
 vars:
 ```yaml VKs
-VK-language=javascript
+VK-language: javascript
 ```
