@@ -91,7 +91,7 @@ pub(super) fn strip_vars_section(body: &str) -> String {
 }
 
 /// `^[ \t]*vars:?[ \t]*$`
-fn is_vars_label(line: &str) -> bool {
+pub(super) fn is_vars_label(line: &str) -> bool {
     let blank = |c: char| c == ' ' || c == '\t';
     let Some(rest) = line.trim_start_matches(blank).strip_prefix("vars") else {
         return false;

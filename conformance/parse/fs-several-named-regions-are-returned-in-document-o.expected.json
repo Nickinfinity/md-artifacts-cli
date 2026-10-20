@@ -22,6 +22,18 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "Dev"
+      },
+      {
+        "name": "Prod",
+        "notes": "notes between"
+      }
+    ]
+  },
   "relativePath": "fs-several-named-regions-are-returned-in-document-o.md",
   "vars": []
 }

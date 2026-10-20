@@ -2,6 +2,9 @@
 
 use serde::ser::SerializeMap;
 
+mod layout;
+pub use layout::{Layout, PayloadKind, RegionLayout};
+
 use crate::error::VarsError;
 use crate::registry::ArtifactType;
 use crate::vks::VksValue;
@@ -154,6 +157,9 @@ pub struct ParsedArtifact {
     pub blocks: Vec<ParsedBlock>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vars_error: Option<VarsError>,
+    /// Bare body or flags, with the notes and chrome around them (W7c). Omitted when fenced.
+    #[serde(skip_serializing_if = "Layout::is_default")]
+    pub layout: Layout,
 }
 
 /// The serializer's input and the `artifact.create`/`artifact.update` request body (W-10). Shape
@@ -168,8 +174,8 @@ pub struct ParsedArtifact {
 /// assert!(serde_json::from_str::<ArtifactModel>(r#"{"artifactType":"Snippet","x":1}"#).is_err());
 /// assert!(!m.index);
 /// ```
-// Serialize (the `artifact.prefill` response): every field written except `index`, which is written
-// only when true (so prefill responses never carry it), and `create(prefill(x))` round-trips. `ParsedVar` keeps its read-shape Serialize; prefill always emits
+// Serialize (the `artifact.prefill` response): every field written except `index`, `paths` and
+// `layout`, which are written only when set (so prefill responses never carry them), and `create(prefill(x))` round-trips. `ParsedVar` keeps its read-shape Serialize; prefill always emits
 // `vars: []`, so the asymmetry never reaches a client.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -196,8 +202,14 @@ pub struct ArtifactModel {
     /// `index: true` (spec §8.7): an ordinary property, emitted last and only when true.
     #[serde(default, skip_serializing_if = "is_false")]
     pub index: bool,
+    /// An index's extra destination folders (spec §8.1), emitted after `index` (W7c).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub paths: Vec<String>,
     #[serde(default)]
     pub blocks: Vec<ModelBlock>,
+    /// How the payload is written: fenced (default), bare body or flags (W7c, spec §7.6).
+    #[serde(default, skip_serializing_if = "Layout::is_default")]
+    pub layout: Layout,
 }
 
 fn is_false(b: &bool) -> bool {

@@ -7,6 +7,14 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": ""
+      }
+    ]
+  },
   "relativePath": "fs-longer-asterisk-runs-count-as-a-rule-two-do-not.md",
   "vars": []
 }

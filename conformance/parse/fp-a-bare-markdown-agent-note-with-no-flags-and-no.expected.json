@@ -9,6 +9,9 @@
     "target": "CLAUDE.md",
     "title": "Reviewer"
   },
+  "layout": {
+    "payload": "bare"
+  },
   "relativePath": "reviewer.md",
   "vars": [
     {

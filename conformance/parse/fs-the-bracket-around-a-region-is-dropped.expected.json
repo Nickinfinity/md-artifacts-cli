@@ -7,6 +7,15 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "",
+        "rule": true
+      }
+    ]
+  },
   "relativePath": "fs-the-bracket-around-a-region-is-dropped.md",
   "vars": []
 }

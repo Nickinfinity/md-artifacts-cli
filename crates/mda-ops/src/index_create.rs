@@ -188,7 +188,9 @@ pub(crate) fn model(t: ArtifactType, title: &str) -> ArtifactModel {
         env: String::new(),
         target: String::new(),
         index: false,
+        paths: vec![],
         blocks: vec![],
+        layout: Default::default(),
     }
 }
 

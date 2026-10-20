@@ -1,7 +1,9 @@
 ---
 artifactType: Variables
 title: Sets
-tags: [env, dev]
+tags:
+  - env
+  - dev
 ---
 
 ## Dev

@@ -9,6 +9,16 @@
     "target": "CLAUDE.md",
     "title": "Code reviewer"
   },
+  "layout": {
+    "notes": "More scratch notes.",
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "",
+        "notes": "Scratch notes that are not part of the config."
+      }
+    ]
+  },
   "relativePath": "reviewer.md",
   "vars": [
     {

@@ -7,6 +7,9 @@
     "artifactType": "AIAgentsConfig",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "bare"
+  },
   "relativePath": "reviewer.md",
   "vars": [
     {

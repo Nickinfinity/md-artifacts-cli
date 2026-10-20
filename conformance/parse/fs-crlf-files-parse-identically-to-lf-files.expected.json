@@ -7,6 +7,14 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "Dev"
+      }
+    ]
+  },
   "relativePath": "fs-crlf-files-parse-identically-to-lf-files.md",
   "vars": []
 }

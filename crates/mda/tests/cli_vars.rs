@@ -223,7 +223,7 @@ fn file_new_and_tags_clear() {
     );
     assert_eq!(
         file(&v, "Variables/local-dev.md"),
-        "---\nartifactType: Variables\ntitle: Local Dev\ntags: [env]\n---\n"
+        "---\nartifactType: Variables\ntitle: Local Dev\ntags:\n  - env\n---\n"
     );
     let o = go(
         &["vars", "meta", "tags", "Variables/sets.md", "--hash", SETS],

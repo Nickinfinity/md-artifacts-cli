@@ -1,17 +1,23 @@
-//! THE `.md` emitter (spec §1.4, §2.1, §3): an [`ArtifactModel`] in, file bytes out, vks bodies as
-//! YAML only (D-8). Every output is re-parsed and compared to the model before it is returned
-//! (W-11), so a model the format cannot carry is refused, never written. Ports
-//! `artifact-serializer.service.ts` (extension @ `b368c20`).
+//! THE `.md` emitter (spec §1.4, §2.1, §3, §7.6): an [`ArtifactModel`] in, file bytes out, vks
+//! bodies as YAML only (D-8). Every output is re-parsed and compared to the model before it is
+//! returned (W-11, `guard.rs`), so a model the format cannot carry is refused, never written. Ports
+//! `artifact-serializer.service.ts` (extension @ `b368c20`); the frontmatter list style and the
+//! flag / bare-body layouts are W7c deviations (Obsidian style, lossless round-trip).
+
+mod guard;
+mod payload;
+
+pub use guard::from_parsed;
 
 use crate::error::{FieldReason, Limit, Unrepresentable, VarsError};
-use crate::model::{ArtifactModel, ModelBlock, ParsedArtifact, ParsedVar};
-use crate::parse::parse_from_content;
+use crate::model::{ArtifactModel, ModelBlock, ParsedVar, PayloadKind};
 use crate::parse::text::{js_trim, js_trim_end};
 use crate::registry::{ArtifactType, LanguageMode};
 use crate::vks::{self, VksValue};
 
-/// Frontmatter key emission order (`artifact-serializer.service.ts:17-19`, spec §1.4). The patcher
-/// inserts an absent key in this order too.
+/// Frontmatter key emission order (spec §1.4; W7c: `tags` last, as Obsidian's property editor keeps
+/// it, after `index` and `paths`, which are not in this list). The patcher inserts an absent key in
+/// this order too.
 ///
 /// # Examples
 ///
@@ -27,9 +33,9 @@ pub const FRONTMATTER_KEY_ORDER: [&str; 11] = [
     "provider",
     "model",
     "version",
-    "tags",
     "env",
     "target",
+    "tags",
 ];
 
 /// The §1.4 single-line rule (`safeYamlValue`, `artifact-serializer.service.ts:328-330`): every
@@ -102,7 +108,7 @@ pub fn serialize(model: &ArtifactModel, max_bytes: usize) -> Result<String, Seri
     if out.len() > max_bytes {
         return Err(SerializeError::TooLarge { size: out.len() });
     }
-    guard(model, &out)?;
+    guard::guard(model, &out)?;
     Ok(out)
 }
 
@@ -141,6 +147,15 @@ fn emit(m: &ArtifactModel) -> Result<String, SerializeError> {
         };
         return Ok(frontmatter(m, "") + &body);
     }
+    if m.layout.payload == PayloadKind::Flags {
+        return payload::flags(m);
+    }
+    if m.layout.payload == PayloadKind::Bare
+        && m.blocks.len() <= 1
+        && let Some(out) = payload::bare(m)?
+    {
+        return Ok(out);
+    }
     if m.blocks.len() > 1 {
         let body = m
             .blocks
@@ -165,12 +180,14 @@ fn emit(m: &ArtifactModel) -> Result<String, SerializeError> {
     Ok(frontmatter(m, &lang) + &code + &vars_part(&b.vars)?)
 }
 
-/// Frontmatter in [`FRONTMATTER_KEY_ORDER`]; empty values are omitted, strings go through
-/// [`single_line`]. Tags are emitted raw: the guard refuses any that do not survive the re-parse.
+/// Frontmatter in [`FRONTMATTER_KEY_ORDER`], `index` and `paths` before `tags`; empty values are
+/// omitted, strings go through [`single_line`]. Lists are YAML block lists (Obsidian style), items
+/// emitted raw: the guard refuses any that do not survive the re-parse.
 fn frontmatter(m: &ArtifactModel, lang: &str) -> String {
     let mut out = format!("---\nartifactType: {}\n", m.artifact_type.as_str());
     for key in FRONTMATTER_KEY_ORDER.iter().skip(1) {
         let value = match *key {
+            "tags" => String::new(), // a list, emitted last below
             "title" => single_line(&m.title),
             "description" => single_line(&m.description),
             "language" => lang.to_owned(),
@@ -180,18 +197,28 @@ fn frontmatter(m: &ArtifactModel, lang: &str) -> String {
             "version" => single_line(&m.version),
             "env" => single_line(&m.env),
             "target" => single_line(&m.target),
-            "tags" if !m.tags.is_empty() => format!("[{}]", m.tags.join(", ")),
             _ => String::new(),
         };
         if !value.is_empty() {
             out.push_str(&format!("{key}: {value}\n"));
         }
     }
-    // After the loop, not in `FRONTMATTER_KEY_ORDER`: that const ranks the patcher's insertions.
+    // Not in `FRONTMATTER_KEY_ORDER` (it ranks the patcher's scalar insertions): just before `tags`.
     if m.index {
         out.push_str("index: true\n");
     }
+    out.push_str(&block_list("paths", &m.paths));
+    out.push_str(&block_list("tags", &m.tags));
     out + "---\n"
+}
+
+/// `key:` then one `  - item` line per item; nothing for an empty list.
+fn block_list(key: &str, items: &[String]) -> String {
+    if items.is_empty() {
+        return String::new();
+    }
+    let lines: String = items.iter().map(|i| format!("  - {i}\n")).collect();
+    format!("{key}:\n{lines}")
 }
 
 /// `\n```vks\n<body>```\n`; with no vars the empty fence a sub-set needs (`ts:181-210`).
@@ -244,178 +271,4 @@ fn vars_part(vars: &[ParsedVar]) -> Result<String, SerializeError> {
         return Ok(String::new());
     }
     Ok(format!("\nvars:{}", vks_fence(&kept)?))
-}
-
-/// Re-parse `out` and compare it with `model` (W-11). The first differing field is the error.
-fn guard(model: &ArtifactModel, out: &str) -> Result<(), SerializeError> {
-    let t = model.artifact_type;
-    let parsed = parse_from_content(out, &format!("{}/_.md", t.info().dir));
-    let sections = if t == ArtifactType::Variables {
-        variables_subsets(&model.blocks)
-    } else {
-        model.blocks.len() > 1
-    };
-    // A one-block model shows no `##` sections; extra ones were smuggled in by the code.
-    let want_blocks = if sections { model.blocks.len() } else { 0 };
-    if parsed.blocks.len() != want_blocks {
-        return Err(refuse("blocks", FieldReason::RoundTrip));
-    }
-    let a = flatten(&canonical(model));
-    let b = flatten(&canonical(&from_parsed(&parsed)));
-    match a.iter().zip(&b).find(|(x, y)| x != y) {
-        Some(((field, _), _)) => Err(refuse(field, FieldReason::RoundTrip)),
-        None => Ok(()),
-    }
-}
-
-/// The serializer's documented normalisations and nothing else; applied to both sides of the guard.
-/// Vars are sorted by name because a re-parse puts detected tokens first (model order is not kept).
-fn canonical(m: &ArtifactModel) -> ArtifactModel {
-    let t = m.artifact_type;
-    let variables = t == ArtifactType::Variables;
-    let sections = if variables {
-        variables_subsets(&m.blocks)
-    } else {
-        m.blocks.len() > 1
-    };
-    let mut c = m.clone();
-    for s in [
-        &mut c.title,
-        &mut c.description,
-        &mut c.extension,
-        &mut c.provider,
-        &mut c.model,
-        &mut c.version,
-        &mut c.env,
-        &mut c.target,
-    ] {
-        *s = single_line(s);
-    }
-    c.tags = m
-        .tags
-        .iter()
-        .map(|s| js_trim(s).to_owned())
-        .filter(|s| !s.is_empty())
-        .collect();
-    if variables && !sections {
-        c.blocks = match m.blocks.first() {
-            Some(b) if !b.vars.is_empty() => vec![b.clone()],
-            _ => vec![],
-        };
-    } else if m.blocks.is_empty() {
-        c.blocks = vec![ModelBlock::default()];
-    }
-    for b in &mut c.blocks {
-        if sections || variables {
-            b.heading = js_trim(&b.heading).to_owned();
-            b.description = js_trim(&b.description).to_owned();
-        } else {
-            b.heading.clear();
-            b.description.clear();
-        }
-        b.language = lang_for(t, &b.language); // Variables → ""
-        if !variables {
-            b.code = js_trim_end(&b.code).to_owned();
-            b.vars.retain(|v| !is_empty_str(v));
-        }
-        b.vars.sort_by(|x, y| x.name.cmp(&y.name));
-    }
-    c
-}
-
-/// `(path, value)` pairs; the first differing pair names the field.
-fn flatten(m: &ArtifactModel) -> Vec<(String, String)> {
-    let kv = |k: &str, v: String| (k.to_owned(), v);
-    let mut v = vec![
-        kv("artifactType", m.artifact_type.as_str().to_owned()),
-        kv("title", m.title.clone()),
-        kv("description", m.description.clone()),
-        kv("extension", m.extension.clone()),
-        kv("provider", m.provider.clone()),
-        kv("model", m.model.clone()),
-        kv("version", m.version.clone()),
-        kv("env", m.env.clone()),
-        kv("target", m.target.clone()),
-        kv("index", m.index.to_string()),
-        kv("tags", format!("{:?}", m.tags)),
-        kv("blocks", m.blocks.len().to_string()),
-    ];
-    for (i, b) in m.blocks.iter().enumerate() {
-        v.push(kv(&format!("blocks/{i}/heading"), b.heading.clone()));
-        v.push(kv(
-            &format!("blocks/{i}/description"),
-            b.description.clone(),
-        ));
-        v.push(kv(&format!("blocks/{i}/language"), b.language.clone()));
-        v.push(kv(&format!("blocks/{i}/code"), b.code.clone()));
-        v.push(kv(&format!("blocks/{i}/vars"), format!("{:?}", b.vars)));
-    }
-    v
-}
-
-/// The model a parsed file corresponds to (TS `parsedToModel`, carrying all ten frontmatter
-/// strings and `index`); `paths` is not carried (§8.7).
-///
-/// # Examples
-///
-/// ```
-/// use mda_core::{parse::parse_from_content, serialize::from_parsed};
-/// let p = parse_from_content("---\nartifactType: Snippet\n---\n", "Snippets/a.md");
-/// assert_eq!(from_parsed(&p).artifact_type, p.frontmatter.artifact_type);
-/// ```
-pub fn from_parsed(p: &ParsedArtifact) -> ArtifactModel {
-    let fm = &p.frontmatter;
-    let s = |o: &Option<String>| o.clone().unwrap_or_default();
-    let variables = fm.artifact_type == ArtifactType::Variables;
-    let blocks = if !p.blocks.is_empty() {
-        p.blocks
-            .iter()
-            .map(|b| ModelBlock {
-                heading: b.heading.clone(),
-                description: b.description.clone(),
-                // A Variables block's "code" is its vks body, which the vars already carry.
-                language: if variables {
-                    String::new()
-                } else {
-                    s(&b.fence_lang)
-                },
-                code: if variables {
-                    String::new()
-                } else {
-                    b.code.clone()
-                },
-                vars: b.vars.clone(),
-            })
-            .collect()
-    } else if variables {
-        if p.vars.is_empty() {
-            vec![]
-        } else {
-            vec![ModelBlock {
-                vars: p.vars.clone(),
-                ..ModelBlock::default()
-            }]
-        }
-    } else {
-        vec![ModelBlock {
-            language: s(&fm.language),
-            code: p.code.clone(),
-            vars: p.vars.clone(),
-            ..ModelBlock::default()
-        }]
-    };
-    ArtifactModel {
-        artifact_type: fm.artifact_type,
-        title: s(&fm.title),
-        description: s(&fm.description),
-        tags: fm.tags.clone().unwrap_or_default(),
-        extension: s(&fm.extension),
-        provider: s(&fm.provider),
-        model: s(&fm.model),
-        version: s(&fm.version),
-        env: s(&fm.env),
-        target: s(&fm.target),
-        index: fm.index == Some(true),
-        blocks,
-    }
 }

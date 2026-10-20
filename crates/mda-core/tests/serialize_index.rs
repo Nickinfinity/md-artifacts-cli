@@ -25,7 +25,8 @@ fn refused(v: Value) -> (String, FieldReason) {
     }
 }
 
-const INDEX_BYTES: &str = "---\nartifactType: AIAgentsConfig\ntitle: Index\ntags: [a]\ntarget: CLAUDE.md\nindex: true\n---\n\n```\n1. [[a]]\n```\n";
+// W7c: `index` (then `paths`) just before `tags`, which is last; tags as a block list.
+const INDEX_BYTES: &str = "---\nartifactType: AIAgentsConfig\ntitle: Index\ntarget: CLAUDE.md\nindex: true\ntags:\n  - a\n---\n\n```\n1. [[a]]\n```\n";
 
 fn index_model(index: bool) -> Value {
     json!({"artifactType":"AIAgentsConfig","title":"Index","tags":["a"],"target":"CLAUDE.md",
@@ -33,7 +34,7 @@ fn index_model(index: bool) -> Value {
 }
 
 #[test]
-fn index_true_is_emitted_last() {
+fn index_true_is_emitted_before_tags() {
     assert_eq!(ser(index_model(true)), INDEX_BYTES);
 }
 

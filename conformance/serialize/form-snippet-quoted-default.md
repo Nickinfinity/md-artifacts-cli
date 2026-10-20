@@ -3,7 +3,9 @@ artifactType: Snippet
 title: Quoted Default Snippet
 description: Tests verbatim default preservation with quoted strings.
 language: javascript
-tags: [ui, state]
+tags:
+  - ui
+  - state
 ---
 
 ```javascript

@@ -3,7 +3,12 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-17): W7 landed (MAC-11)** — protocol **1.0 frozen**, engine `0.7.0` (tag `v0.7.0`): `spec/PROTOCOL.md` (methods,
+> **Status (2026-10-19): W7c landed** — lossless rewrite, protocol **1.1**, engine `0.8.0`: `artifact.read` reports `layout`
+> (`fence`/`bare`/`flags`, region names, notes, `***` wrapping; `mda-core/src/model/layout.rs`, `parse/flags.rs` `scan_flags`), the
+> model carries `layout` + `paths`, the emitter writes flags and bare bodies back (`serialize/payload.rs`; guard `serialize/guard.rs`),
+> frontmatter lists are block lists with `tags` last (Obsidian style); update rewrites flagged/index files only when the model carries
+> the layout/`paths` (a 1.0 client still gets `not_serializable`); spec §7.6, PROTOCOL §7.1; `scripts/vault_parity.py`.
+> **W7 landed (MAC-11)** — protocol **1.0 frozen**, engine `0.7.0` (tag `v0.7.0`): `spec/PROTOCOL.md` (methods,
 > error/warning codes with params, transport, compatibility, client notes) guarded by `crates/mda/tests/protocol_doc.rs`; `serve`
 > hardened (five `protocol.*` codes, `message` = code, ids string or i64/u64 integer and never echoed when invalid, no batch, malformed
 > id-less → −32600, notifications ignored); `typed` refuses non-object params; op cases pin `expect_error_params`; real-binary e2e
@@ -106,7 +111,7 @@ md-artifacts-cli/
 │   │       ├── parse/         # frontmatter · code fence · ## blocks · vars · tokens · flags
 │   │       │   └── text.rs    # JS string semantics (trim, line split) + decode
 │   │       ├── vks/           # {mod, classify, legacy, yaml, value, emit}.rs — the vks codec (read both dialects, emit YAML)
-│   │       ├── serialize.rs   # THE .md emitter
+│   │       ├── serialize/     # THE .md emitter: mod.rs · payload.rs (flags, bare bodies; W7c) · guard.rs (round-trip guard, from_parsed)
 │   │       ├── patch.rs       # surgical in-place edits
 │   │       ├── render/        # token substitution + the directive engine (paths, each/end, join, limits)
 │   │       ├── naming.rs      # slugify, file names, whole-file output names
@@ -148,6 +153,7 @@ md-artifacts-cli/
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
 ├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 1.0) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
+├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
 ├── AGENTS.md
 └── CREATING_A_PLAN.md         # how plans are written here
@@ -191,7 +197,7 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
-- **Authority: `spec/PROTOCOL.md`** (protocol `1.0`, frozen in W7). Its method, error-code and warning-code
+- **Authority: `spec/PROTOCOL.md`** (protocol `1.0` frozen in W7; `1.1` additive, W7c). Its method, error-code and warning-code
   tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
   `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
@@ -242,7 +248,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Artifact types and their properties | `mda-core/src/registry.rs` |
 | Language tables | `mda-core/src/language.rs` |
 | `.md` parsing | `mda-core/src/parse/` |
-| `.md` emission, frontmatter key order, the single-line rule | `mda-core/src/serialize.rs` |
+| `.md` emission, frontmatter key order, the single-line rule, payload layout (W7c) | `mda-core/src/serialize/` |
 | `<VK-…>` token grammar | `mda-core/src/parse/tokens.rs` (`TOKEN_PATTERN`) |
 | Token substitution, directives, expansion limits | `mda-core/src/render/` (tokenizes only through `TOKEN_PATTERN`) |
 | The vks codec | `mda-core/src/vks/` |
@@ -286,7 +292,14 @@ its current services, its goldens and the real vault. `tests/conformance.rs` wal
 - Features the extension never had (vks YAML, structured values, loops) get Rust-only cases.
 - **No vault file is ever committed** (the repo is public). Parity on the real vault is a local-only,
   `#[ignore]`d test: `MDA_TEST_VAULT=<vault> cargo test -p mda --test vault_local -- --ignored`, against
-  TS expectations generated into gitignored `docs/`.
+  expectations in gitignored `docs/`, regenerated from the engine by `conformance-gen/gen-vault-rust.py`
+  (YAML vks cannot come from TS) with a per-file TS comparison (`deviates_from_ts`). Resync it whenever
+  the vault's test files change.
+- **Client parity on a real vault** (local-only, not in the gate): `python3 -I scripts/vault_parity.py
+  --vault <vault> [--scope test]` copies the vault twice and runs one create → match → apply → render /
+  write-file → save flow through `mda serve` and through the CLI subcommands; every response and both
+  file trees must be identical, renders of `create(read(S))` must equal renders of `S`, and the emitted
+  form must be a fixed point. Canonical-form diffs and refused creates are notes (`<out>/notes.txt`).
 
 ---
 

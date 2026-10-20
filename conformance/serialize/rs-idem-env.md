@@ -2,8 +2,9 @@
 artifactType: Variables
 title: Env
 description: Local services
-tags: [env]
 env: dev
+tags:
+  - env
 ---
 
 ```vks

@@ -1,4 +1,4 @@
 vault = "vault"
 params = { "path" = "Variables/sets.md", "expectedHash" = "c947f0a5b355398e9f282a7d39c6c6da2b63c4c0f16d24b1d3ecbe6447fbfe4e", "subset" = { "index" = 1, "heading" = "Prod" }, "heading" = "Live" }
-expect = { "path" = "Variables/sets.md", "hash" = "2a7dd9fbbe3ea6c21fca3931638f8fdb8841fee6767efe0483dd43ab92ce2af5" }
-expect_files = { "Variables/sets.md" = "---\nartifactType: Variables\ntitle: Sets\ntags: [env, dev]\n---\n\n## Dev\nDev machine.\n\n```vks\nVK-host: localhost\n```\n\n## Live\n\n```vks\nVK-host: example.com\n```\n" }
+expect = { "path" = "Variables/sets.md", "hash" = "cd943a380e5f048897469535d75e5c9cbdcbb3e807d5fcfc125e98f7359fcbd8" }
+expect_files = { "Variables/sets.md" = "---\nartifactType: Variables\ntitle: Sets\ntags:\n  - env\n  - dev\n---\n\n## Dev\nDev machine.\n\n```vks\nVK-host: localhost\n```\n\n## Live\n\n```vks\nVK-host: example.com\n```\n" }

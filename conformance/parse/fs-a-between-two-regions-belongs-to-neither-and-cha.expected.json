@@ -22,6 +22,18 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "A"
+      },
+      {
+        "name": "B",
+        "notes": "***"
+      }
+    ]
+  },
   "relativePath": "fs-a-between-two-regions-belongs-to-neither-and-cha.md",
   "vars": []
 }

@@ -104,7 +104,9 @@ fn quoted_default_emits_tags_and_a_vars_fence() {
             "title: Quoted Default Snippet",
             "description: Tests verbatim default preservation with quoted strings.",
             "language: javascript",
-            "tags: [ui, state]",
+            "tags:",
+            "  - ui",
+            "  - state",
             "---",
             "",
             "```javascript",
@@ -132,7 +134,8 @@ fn command_locked_language_is_bash_regardless_of_the_block() {
             "title: Deploy Command",
             "description: Deploy to a named environment and region.",
             "language: bash",
-            "tags: [deploy]",
+            "tags:",
+            "  - deploy",
             "---",
             "",
             "```bash",
@@ -160,7 +163,9 @@ fn multi_block_has_no_top_level_language_or_fence() {
         "artifactType: Snippet",
         "title: API URLs",
         "description: Development and production API base URLs.",
-        "tags: [api, urls]",
+        "tags:",
+        "  - api",
+        "  - urls",
         "---",
         "",
         "## Development",
@@ -206,9 +211,9 @@ fn key_order_is_pinned() {
             "provider",
             "model",
             "version",
-            "tags",
             "env",
-            "target"
+            "target",
+            "tags"
         ]
     );
 }
@@ -371,8 +376,19 @@ fn code_with_a_fence_is_refused() {
 }
 
 #[test]
-fn tag_with_a_comma_is_refused() {
-    let r = refused(json!({"artifactType":"Snippet","tags":["a,b"],"blocks":[{"code":"x"}]}));
+fn tags_are_a_block_list_so_a_comma_survives() {
+    // W7c: Obsidian's block-list style; the old inline `[a, b]` split `a,b` in two.
+    let out = ser(json!({"artifactType":"Snippet","tags":["a,b","c"],"blocks":[{"code":"x"}]}));
+    assert!(
+        out.starts_with("---\nartifactType: Snippet\ntags:\n  - a,b\n  - c\n---\n"),
+        "{out}"
+    );
+}
+
+#[test]
+fn quoted_tag_is_refused() {
+    // A block-list item loses one pair of surrounding quotes on read, so it cannot round-trip.
+    let r = refused(json!({"artifactType":"Snippet","tags":["'a'"],"blocks":[{"code":"x"}]}));
     assert_eq!(r, ("tags".into(), FieldReason::RoundTrip));
 }
 

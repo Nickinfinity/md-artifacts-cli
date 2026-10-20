@@ -14,6 +14,10 @@ client (CLI, VS Code extension, TUI, MCP) sees vault content only through the en
 > variable bodies, structured values, directives); the decisions they cite (D-2…D-11) were **ruled at
 > the engine-port plan's W1 Role A pass 1 (2026-10-09)**. §11.2 stays proposed until W6. Until the extension cuts over to the
 > engine, parity with the extension's behaviour is measured by `conformance/`, not by reading code.
+> **§7.6 (lossless layout) and the Obsidian-style frontmatter (§1.1, §1.4, §8.7) were ruled at engine
+> W7c (2026-10-19)**: `create(read(f))` loses nothing the format defines, and a file in canonical layout
+> is written back byte for byte. Recorded deviations from the extension: `deviates_from_ts` in
+> `conformance/manifest.toml`.
 
 > Examples use `~~~` as the outer fence so inner ```` ``` ```` fences render literally. In a real file
 > every fence is a standard triple backtick.
@@ -25,7 +29,7 @@ client (CLI, VS Code extension, TUI, MCP) sees vault content only through the en
 | Frontmatter, code fence, `##` blocks, flags, tokens | `mda-core/src/parse/` |
 | The `vks` body (both dialects) | `mda-core/src/vks/` (codec) |
 | Token substitution and directive resolution (§4.1, §10) | `mda-core/src/render/` |
-| Emission | `mda-core/src/serialize.rs` |
+| Emission | `mda-core/src/serialize/` (`mod.rs`; flags and bare bodies `payload.rs`; the round-trip guard `guard.rs`) |
 | Artifact types, directories, per-type properties | `mda-core/src/registry.rs` |
 | Language names, fence aliases, file extensions | `mda-core/src/language.rs` |
 | Output file names (whole-file types) | `mda-core/src/naming.rs` |
@@ -69,14 +73,14 @@ each line is split on its **first** `:`; the key and value are trimmed. Unknown 
 | `title`, `description`, `language`, `env`, `target` | string | single line |
 | `extension` | string | `Template` only (§5.1) |
 | `provider`, `model`, `version` | string | `AIAgentsConfig` only (§5.2) |
-| `tags`, `paths` | inline array or block list | `[a, b]`; brackets optional; split on `,`, trimmed, empties dropped. Or, with an empty value, the following `- item` lines (any indent; one pair of matching quotes stripped; empties dropped) — the form Obsidian's property editor writes (engine only; the extension reads inline arrays). Emitted inline. `paths` is index-only (§8) |
+| `tags`, `paths` | inline array or block list | `[a, b]`; brackets optional; split on `,`, trimmed, empties dropped. Or, with an empty value, the following `- item` lines (any indent; one pair of matching quotes stripped; empties dropped) — the form Obsidian's property editor writes (engine only; the extension reads inline arrays). **Emitted as a block list** (W7c). `paths` is index-only (§8) |
 | `index` | boolean | **only the exact value `true`** is true (§8) |
 
 - **`artifactType` is the only type key.** A legacy `type: <lowercase>` line is **not read** — not as
   a fallback, not as a second key. It is an unrecognised line; the other keys still parse, and the type
   falls back to the directory default. The way forward for such files is the frontmatter migration
   (`mda migrate frontmatter`, §11.1).
-- **`index` and `paths` are read-side only**: parsed, never emitted (§8.7).
+- **`index` and `paths` are emitted** when the model sets them (§8.7; `paths` since W7c).
 - A blank line after the closing `---` is optional.
 
 ### 1.2 Code block
@@ -102,13 +106,16 @@ defaults section is kept, after the detected ones.
 
 ### 1.4 Emission rules (single block)
 
-- **Frontmatter key order:** `artifactType`, `title`, `description`, `language`, `extension`,
-  `provider`, `model`, `version`, `tags`, `env`, `target`. Empty values are omitted (`artifactType`
-  is always emitted). `paths` is never emitted; `index: true` is emitted last when the model sets it (§8.7).
+- **Frontmatter key order** (W7c: `tags` last, where Obsidian's property editor keeps it):
+  `artifactType`, `title`, `description`, `language`, `extension`, `provider`, `model`, `version`,
+  `env`, `target`, `index`, `paths`, `tags`. Empty values are omitted (`artifactType` is always
+  emitted); `index` only as `index: true` (§8.7). `paths` and `tags` are YAML block lists
+  (`tags:` then one `  - item` line each).
 - **Single-line values.** `title`, `description`, `env`, `target`, `extension`, `provider`, `model`,
   `version`: every `\r\n` / `\r` / `\n` becomes one space, runs of spaces collapse. A newline would
-  otherwise inject a sibling key on re-parse. `tags` entries must not contain `,`, `]`, `\n` or `\r`
-  (rejected at input; the emitter refuses as the last line of defence).
+  otherwise inject a sibling key on re-parse. A `tags` / `paths` item must not contain `\n` or `\r`
+  and must not be wrapped in one pair of matching quotes (the reader strips them); the round-trip guard
+  refuses such an item (`artifact.unrepresentable`). A `,` is fine in a block list (W7c).
 - **Language in both places:** a single-block file emits `language:` in the frontmatter **and** on the
   fence; the parser hoists the fence language into the model when frontmatter lacks it.
 - **Plain text** (`language` empty): a bare ```` ``` ```` fence and **no** `language` key at all.
@@ -369,7 +376,8 @@ npm test
 
 - **Flags beat fences.** A file with at least one start flag takes the flagged path; its fences and
   `##` headings are payload. A file without flags parses exactly as §1–§2.
-- **Text outside the flags is dropped.**
+- **Text outside the flags is not payload.** It never reaches render or insert; `artifact.read` reports
+  it as **notes** (§7.6) so that writing the file back keeps it.
 - **Content is verbatim**, inner fences included; only blank lines at the two ends are trimmed.
 - **Fenced regions are skipped while scanning** (CommonMark rules: a fence closes on the same character,
   same length or longer), so a payload documenting the flag syntax inside a sample fence does not end
@@ -390,8 +398,9 @@ Tokens in the payload are auto-detected. A ```` ```vks ```` defaults fence is **
 ### 7.4 Whole-file types
 
 The region content is the payload, so the single-block rule (§5.1/§5.2) and output naming apply to a
-flagged file exactly as to a fenced one. **Flags are read-side only:** the emitter writes the fenced
-shape and never writes flags; flagged files are edited as raw text.
+flagged file exactly as to a fenced one. **Flags are written back** (W7c, §7.6): a model whose layout is
+`flags` is emitted with its flags, notes and `***` wrapping, so a payload holding fences or `## ` lines
+survives a rewrite.
 
 ### 7.5 Flags are optional for whole-file types
 
@@ -406,6 +415,77 @@ Payload precedence, strictly ordered:
 
 `Snippet`, `Command`, `Variables` and `AIPrompt` never take rule 3.
 
+
+### 7.6 Layout — writing a file back losslessly *(ruled — engine W7c, 2026-10-19)*
+
+`artifact.read` reports how the payload sits in the file; the model (`artifact.create|update`) carries
+the same object back. Absent (the default) means **fenced** (§1–§2).
+
+```json
+"layout": {
+  "payload": "flags",
+  "regions": [ { "name": "Scope", "notes": "Text before this start flag.", "rule": true } ],
+  "notes": "Text after the last region."
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `payload` | `fence` (default, omitted) · `bare` (§7.5 rule 3, whole-file types, one block) · `flags` (§7) |
+| `regions[i].name` | the flag name; with two or more regions it is block `i`'s heading |
+| `regions[i].notes` | the text between the previous region (or the frontmatter) and this start flag; omitted when empty |
+| `regions[i].rule` | the region's first and last lines are `***` visual rules (chrome); omitted when false |
+| `notes` | the text after the last region, **minus** the defaults section: the first ```` ```vks ```` fence outside the regions and the `vars:` label just above it |
+
+- **Notes** are verbatim text with whole blank lines trimmed at both ends; they are never payload.
+- **Canonical flagged layout**, written by the emitter:
+
+~~~md
+---
+<frontmatter; no `language:` when it is the default `markdown`>
+---
+
+<regions[0].notes>
+
+%%oa:start <name>%%
+***
+<payload>
+***
+%%oa:end%%
+
+<regions[1].notes, then region 1 …>
+
+<notes>
+
+vars:
+```vks
+<every valued default>
+```
+~~~
+
+  Blank lines separate the parts; an empty part is left out with its blank line; `***` lines only
+  when `rule` is true. The defaults fence is file-level (§7.3) and holds **every valued var of every
+  block** (the reader gives every region every default, so blocks that disagree on a value are refused).
+- **Canonical bare layout:** frontmatter, a blank line, the trimmed body, then the defaults section.
+  A bare model with an empty body is the empty fenced shape (§1.4).
+- **Normalisations** (the round-trip guard applies them to both sides, nothing else): notes and
+  payload trimmed as the reader trims them; missing `regions` entries are default; with several
+  regions the name is the heading; the payload language defaults to `markdown`.
+- **Refused, never written lossy** (`artifact.unrepresentable{field, reason: round_trip}`): notes holding
+  a start flag, a defaults fence or an unclosed fence; a payload holding an end flag, an all-asterisk
+  line or an unclosed fence; `bare` on a non-whole-file type or with a fence in the body; `flags` on a
+  Variables file; regions or notes on a fenced model.
+- **Byte for byte:** for a file already in canonical layout, `serialize(from_parsed(parse(f))) == f`.
+  A hand-written file converges in one rewrite; what changes is spacing, key order, list style, the
+  defaults fence's position and key order, and a missing end flag — never text the reader saw.
+- **Ceilings:** an all-asterisk line in the **middle** of a region is chrome and is dropped (§7.2); only
+  the wrapping pair is recorded. A fence-less `## ` section of a multi-block file is not a block (§2) and
+  is not carried; neither is prose around the fence of a fenced file (§1.2).
+- **Older clients:** a 1.0 client never sends `layout` / `paths`. `artifact.update` (and every `vars.*`
+  edit) on a flagged file whose model is not `flags`, or on an index whose `paths` the model drops, stays
+  `artifact.not_serializable{reason: flagged | index}` — the pre-W7c answer, so such a client can never
+  erase notes or `paths`. A flagged **Variables** file is always refused (`flagged`). A frontmatter
+  `artifact.patch` is byte-surgical and allowed on a flagged file; a code patch there stays refused.
 ---
 
 ## 8. Template indexes — `index: true`
@@ -498,11 +578,11 @@ is in-memory and per run; nothing is written to the vault.
 
 ### 8.7 Emission
 
-`paths` is parsed and never emitted. `index` is an ordinary frontmatter property of the model (W3b
-Q4): a model with `index: true` emits `index: true` (unquoted) as the **last** frontmatter key — where
-the extension's index creator appends it — and `index: false` is never written. `index.create` and
-`artifact.create` both use it; rewriting an existing index file with `artifact.update` stays refused
-(W-7).
+`index` is an ordinary frontmatter property of the model (W3b Q4): a model with `index: true` emits
+`index: true` (unquoted) and `index: false` is never written. `paths` is a model field too since W7c,
+emitted right after `index` as a block list; `tags` follows (§1.4). `index.create` and
+`artifact.create` both use them. `artifact.update` rewrites an index file when the model carries its
+`paths` (a model that drops them is refused, §7.6).
 
 ---
 

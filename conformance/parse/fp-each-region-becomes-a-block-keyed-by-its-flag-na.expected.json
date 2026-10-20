@@ -28,6 +28,18 @@
     "language": "markdown",
     "title": "Reviewer"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "Dev"
+      },
+      {
+        "name": "Prod",
+        "notes": "Notes between the two configs."
+      }
+    ]
+  },
   "relativePath": "reviewer.md",
   "vars": [
     {

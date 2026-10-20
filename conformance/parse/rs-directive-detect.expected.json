@@ -8,6 +8,9 @@
     "extension": "ts",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "bare"
+  },
   "relativePath": "rs-directive-detect.md",
   "vars": [
     {

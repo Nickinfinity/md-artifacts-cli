@@ -7,6 +7,14 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": ""
+      }
+    ]
+  },
   "relativePath": "fs-a-inside-a-fenced-block-is-untouched-content.md",
   "vars": []
 }

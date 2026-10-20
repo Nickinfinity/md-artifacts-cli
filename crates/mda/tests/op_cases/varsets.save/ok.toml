@@ -1,4 +1,4 @@
 vault = "vault"
 params = { title = "Local Dev", tags = ["env"], values = { "VK-host" = "localhost", "VK-a" = "" } }
-expect = { path = "Variables/local-dev.md", hash = "d2613cc013bc5adba0507e38b3fb702128efda169b62dc5e9d177ab2ec95a1ed" }
-expect_files = { "Variables/local-dev.md" = "---\nartifactType: Variables\ntitle: Local Dev\ntags: [env]\n---\n\n```vks\nVK-a:\nVK-host: localhost\n```\n" }
+expect = { path = "Variables/local-dev.md", hash = "1501ecf69c738a07c8d62c94277b34ca49d50964ca86ebab4bea0c99b691075b" }
+expect_files = { "Variables/local-dev.md" = "---\nartifactType: Variables\ntitle: Local Dev\ntags:\n  - env\n---\n\n```vks\nVK-a:\nVK-host: localhost\n```\n" }

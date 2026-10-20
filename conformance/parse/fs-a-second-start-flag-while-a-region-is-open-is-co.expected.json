@@ -7,6 +7,14 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "A"
+      }
+    ]
+  },
   "relativePath": "fs-a-second-start-flag-while-a-region-is-open-is-co.md",
   "vars": []
 }

@@ -7,6 +7,16 @@
     "artifactType": "AIAgentsConfig",
     "language": "markdown"
   },
+  "layout": {
+    "notes": "excluded too",
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "",
+        "notes": "excluded"
+      }
+    ]
+  },
   "relativePath": "reviewer.md",
   "vars": []
 }

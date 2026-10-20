@@ -377,11 +377,12 @@ fn value_newlines_are_flattened() {
 }
 
 #[test]
-fn flagged_file_is_refused_by_both() {
-    let c = "---\ntitle: a\n---\n%%oa:start%%\nhi\n%%oa:end%%\n";
+fn flagged_file_field_patch_is_byte_surgical_but_code_is_refused() {
+    // W7c: a frontmatter patch never touches the flagged body; a code patch would, so it is refused.
+    let c = "---\ntitle: a\n---\nnote\n%%oa:start%%\nhi\n%%oa:end%%\n";
     assert_eq!(
         field(c, FmField::Title, "b"),
-        Err(PatchError::Refused(Flagged))
+        Ok("---\ntitle: b\n---\nnote\n%%oa:start%%\nhi\n%%oa:end%%\n".to_owned())
     );
     assert_eq!(
         patch_code(c, P, &CodeTarget::Single, "x"),

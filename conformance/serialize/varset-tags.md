@@ -1,7 +1,9 @@
 ---
 artifactType: Variables
 title: Local Dev
-tags: [api, dev]
+tags:
+  - api
+  - dev
 ---
 
 ```vks

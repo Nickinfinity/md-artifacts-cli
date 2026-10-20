@@ -16,14 +16,14 @@ pub(crate) use blocks::{block_code_ranges, block_vks_ranges, fenceless_headings}
 pub(crate) use frontmatter::{body_range, key_of};
 
 use crate::error::{Limit, VKS_LIMIT, VarsError};
-use crate::model::{ParsedArtifact, ParsedBlock, ParsedVar};
+use crate::model::{Layout, ParsedArtifact, ParsedBlock, ParsedVar, PayloadKind};
 use crate::registry::{ArtifactType, type_for_dir};
 use crate::vks::{MAX_BLOCK_DEFAULTS, VksValue};
-use flags::FlaggedRegion;
+use flags::FlagScan;
 use text::js_trim;
 
 /// Fence language reported for a flag-delimited or bare-body payload (the note's own markdown).
-const PAYLOAD_LANG: &str = "markdown";
+pub(crate) const PAYLOAD_LANG: &str = "markdown";
 
 /// True when the frontmatter-stripped body holds at least one flagged region (spec §7). The
 /// engine never rewrites such a file: text outside the flags would be lost (W-7).
@@ -103,6 +103,7 @@ struct Payload {
     vars: Vec<ParsedVar>,
     blocks: Vec<ParsedBlock>,
     vars_error: Option<VarsError>,
+    layout: Layout,
 }
 
 /// Parse one artifact file's decoded `content`; `path` is vault-relative POSIX
@@ -121,11 +122,11 @@ pub fn parse_from_content(content: &str, path: &str) -> ParsedArtifact {
     let mut fm = frontmatter::parse(content, default);
 
     // Flags win over fences; flag-less files take the classic path unchanged.
-    let regions = flags::extract_flagged_regions(frontmatter::strip(content));
-    let payload = if regions.is_empty() {
+    let scan = flags::scan_flags(frontmatter::strip(content));
+    let payload = if scan.regions.is_empty() {
         unflagged(content, fm.artifact_type)
     } else {
-        flagged(&regions, content)
+        flagged(scan, content)
     };
     if fm.language.as_deref().is_none_or(str::is_empty) && payload.fence_lang.is_some() {
         fm.language = payload.fence_lang;
@@ -139,6 +140,7 @@ pub fn parse_from_content(content: &str, path: &str) -> ParsedArtifact {
         vars: payload.vars,
         blocks: payload.blocks,
         vars_error: payload.vars_error,
+        layout: payload.layout,
     }
 }
 
@@ -195,6 +197,7 @@ fn fenced(content: &str) -> Payload {
         vars,
         blocks: blocks::parse_blocks(content),
         vars_error,
+        layout: Layout::default(),
     }
 }
 
@@ -218,13 +221,18 @@ fn unflagged(content: &str, ty: ArtifactType) -> Payload {
         vars,
         blocks: vec![],
         vars_error,
+        layout: Layout {
+            payload: PayloadKind::Bare,
+            ..Layout::default()
+        },
     }
 }
 
 /// A flag-delimited payload: region content is the artifact, verbatim. One region is a single-block
 /// file; two or more become blocks. Vars are detected per region and overlaid with the file's
 /// defaults; a defaults error goes on the artifact only (blocks keep `""` defaults, no error).
-fn flagged(regions: &[FlaggedRegion], content: &str) -> Payload {
+fn flagged(scan: FlagScan, content: &str) -> Payload {
+    let regions = &scan.regions;
     let mut defaults = fence::parse_vars(content);
     // Every block gets every default (TS parity), so output is regions x defaults: refuse the
     // overlay past the cap, before it is built. Same path as a failed defaults fence.
@@ -263,6 +271,11 @@ fn flagged(regions: &[FlaggedRegion], content: &str) -> Payload {
         vars,
         blocks,
         vars_error,
+        layout: Layout {
+            payload: PayloadKind::Flags,
+            regions: scan.layouts,
+            notes: scan.notes,
+        },
     }
 }
 
@@ -271,10 +284,16 @@ mod tests {
     use super::*;
     use crate::error::{VKS_SYNTAX, VarsError};
 
-    fn region(name: &str, content: &str) -> FlaggedRegion {
-        FlaggedRegion {
-            name: name.into(),
-            content: content.into(),
+    fn scan(regions: &[(&str, &str)]) -> FlagScan {
+        FlagScan {
+            regions: regions
+                .iter()
+                .map(|(n, c)| flags::FlaggedRegion {
+                    name: (*n).into(),
+                    content: (*c).into(),
+                })
+                .collect(),
+            ..FlagScan::default()
         }
     }
 
@@ -314,7 +333,7 @@ mod tests {
 
     #[test]
     fn one_flagged_region_is_a_single_block_file() {
-        let p = flagged(&[region("r", "Hi <VK-a>")], "");
+        let p = flagged(scan(&[("r", "Hi <VK-a>")]), "");
         assert_eq!(p.code, "Hi <VK-a>");
         assert_eq!(p.fence_lang.as_deref(), Some("markdown"));
         assert!(p.blocks.is_empty());
@@ -324,10 +343,7 @@ mod tests {
     #[test]
     fn two_flagged_regions_become_blocks_with_file_defaults_overlaid() {
         let content = "```vks\nVK-a=1\nVK-b=2\n```\n";
-        let p = flagged(
-            &[region("one", "x <VK-a>"), region("two", "y <VK-c>")],
-            content,
-        );
+        let p = flagged(scan(&[("one", "x <VK-a>"), ("two", "y <VK-c>")]), content);
         assert_eq!(p.blocks.len(), 2);
         assert_eq!(p.blocks[0].heading, "one");
         assert_eq!(p.blocks[1].fence_lang.as_deref(), Some("markdown"));

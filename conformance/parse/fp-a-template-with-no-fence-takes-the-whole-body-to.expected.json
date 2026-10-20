@@ -8,6 +8,9 @@
     "language": "markdown",
     "title": "Readme"
   },
+  "layout": {
+    "payload": "bare"
+  },
   "relativePath": "readme.md",
   "vars": [
     {

@@ -7,6 +7,15 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "",
+        "rule": true
+      }
+    ]
+  },
   "relativePath": "fs-is-ordinary-content-now-only-is-the-marker-rule.md",
   "vars": []
 }

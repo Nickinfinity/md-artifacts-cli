@@ -7,6 +7,14 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": ""
+      }
+    ]
+  },
   "relativePath": "fs-a-tilde-fence-is-not-closed-by-a-backtick-fence.md",
   "vars": []
 }

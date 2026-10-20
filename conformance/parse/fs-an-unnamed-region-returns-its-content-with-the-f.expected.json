@@ -7,6 +7,16 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "notes": "Notes below.",
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "",
+        "notes": "Notes above."
+      }
+    ]
+  },
   "relativePath": "fs-an-unnamed-region-returns-its-content-with-the-f.md",
   "vars": [
     {

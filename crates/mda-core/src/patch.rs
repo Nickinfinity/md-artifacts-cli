@@ -84,9 +84,7 @@ pub fn patch_field(
     field: FmField,
     value: &str,
 ) -> Result<String, PatchError> {
-    if is_flagged(content) {
-        return Err(PatchError::Refused(Refusal::Flagged));
-    }
+    // Frontmatter bytes only, so a flagged body is safe (W7c; `patch_code` still refuses it).
     let bad = PatchError::Unrepresentable(field.as_str());
     let range = body_range(content).ok_or(PatchError::Refused(Refusal::NoFrontmatter))?;
     let v = single_line(value);

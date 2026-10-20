@@ -8,11 +8,11 @@ extension today; MCP later reuses the framing). `mda serve` implements it.
 > warning-code tables below are **guarded** by `crates/mda/tests/protocol_doc.rs`: they must stay
 > set-equal to `system.ops`, `ALL_CODES` and the render warning codes, or the gate fails.
 
-**Protocol version:** `1.0`
+**Protocol version:** `1.1`
 
 **Max line:** `16777216` bytes
 
-Frozen at engine-port W7 (2026-10-17). Within major `1` every change is additive (§7).
+Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` added at engine W7c (2026-10-19, §7.1). Within major `1` every change is additive (§7).
 
 ## 1. Transport
 
@@ -47,11 +47,11 @@ Frozen at engine-port W7 (2026-10-17). Within major `1` every change is additive
 The first request must be `initialize`:
 
 ```json
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.0"}}
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":"1.1"}}
 ```
 
 - `params.protocol` is `"MAJOR.MINOR"`; other keys (e.g. `clientInfo`) are tolerated and ignored.
-- Result: `{"protocol":"1.0","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
+- Result: `{"protocol":"1.1","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
   per type `type, dir, contexts, defaultEnabled, writesFile, outputNameKey?, multiBlock, language?`.
 - A missing or non-string `protocol` → −32000 `op.bad_request` (no `reason`).
 - The major is the text before the first `.`; a different major → −32000 `protocol.version_mismatch`
@@ -236,6 +236,13 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
   that has it.
 - Responses may gain fields; clients ignore fields they do not know.
 - A breaking change bumps the major; the engine refuses a different major at `initialize`.
+
+### 7.1 Minor versions
+
+| Minor | Engine | Added |
+|---|---|---|
+| `1.0` | 0.7.0 | the frozen surface |
+| `1.1` | 0.8.0 | Lossless rewrite (format spec §7.6). **Response:** `artifact.read` gains `layout` (absent = fenced). **Request:** the `artifact.create` / `artifact.update` model gains `layout` and `paths`. **Behaviour:** `artifact.update` rewrites a flagged file when the model's `layout.payload` is `flags`, and an index file when the model carries its `paths`; otherwise the 1.0 refusal `artifact.not_serializable{reason}` stands, so a 1.0 client can never erase notes or `paths`. A frontmatter `artifact.patch` on a flagged file now succeeds (byte-surgical). No method, code or param key was added or removed. Emitted bytes changed (tags and `paths` as block lists, `tags` last); the file format is versioned by the format spec, not here |
 
 ## 8. Notifications
 

@@ -8,6 +8,9 @@
     "index": true,
     "language": "markdown"
   },
+  "layout": {
+    "payload": "bare"
+  },
   "relativePath": "multi-index/hostile-index.md",
   "vars": []
 }

@@ -5,9 +5,10 @@
 use std::path::Path;
 
 use mda_core::error::Refusal;
-use mda_core::model::{ArtifactModel, ParsedArtifact};
-use mda_core::parse::{decode, is_flagged, parse_from_content};
+use mda_core::model::{ArtifactModel, ParsedArtifact, PayloadKind};
+use mda_core::parse::{decode, parse_from_content};
 use mda_core::patch::{CodeTarget, FmField, PatchError, patch_code, patch_field};
+use mda_core::registry::ArtifactType;
 use mda_core::serialize::{SerializeError, serialize};
 use mda_vault::{Root, content_hash, create_new, delete as vault_delete, read_bounded, replace};
 
@@ -258,9 +259,10 @@ pub fn update(ctx: &Ctx, req: UpdateRequest) -> Result<WriteResponse, OpError> {
     })
 }
 
-/// The one rewrite path (X-12): read bounded → hash check → refuse flagged / index / varsError →
-/// `edit` → serialize + guard → replace. Shared by `artifact.update` and every `vars.*` edit, so
-/// lossy UTF-8 (#35), no BOM (#36) and legacy → YAML (W-3) hold for all of them.
+/// The one rewrite path (X-12): read bounded → hash check → refuse varsError → `edit` →
+/// serialize + guard → replace. Shared by `artifact.update` and every `vars.*` edit, so lossy
+/// UTF-8 (#35), no BOM (#36) and legacy → YAML (W-3) hold for all of them. Since W7c a flagged or
+/// index file is rewritten when the model carries its layout / `paths` (spec §7.6).
 pub(crate) fn rewrite(
     root: &Root,
     path: &str,
@@ -269,17 +271,26 @@ pub(crate) fn rewrite(
 ) -> Result<WriteResponse, OpError> {
     let bytes = read_checked(root, path, expected)?;
     let content = decode(&bytes);
-    if is_flagged(&content) {
-        return Err(not_serializable(Refusal::Flagged));
-    }
     let cur = parse_from_content(&content, path);
-    if cur.frontmatter.index == Some(true) {
-        return Err(not_serializable(Refusal::Index));
+    let flagged = cur.layout.payload == PayloadKind::Flags;
+    let fm = &cur.frontmatter;
+    let paths = fm.index == Some(true) && fm.paths.as_ref().is_some_and(|p| !p.is_empty());
+    // A Variables file's content is its vks fence (spec §3): flags there cannot be written back.
+    if flagged && fm.artifact_type == ArtifactType::Variables {
+        return Err(not_serializable(Refusal::Flagged));
     }
     if cur.vars_error.is_some() || cur.blocks.iter().any(|b| b.vars_error.is_some()) {
         return Err(OpError::new(error::ARTIFACT_VARS_INVALID).with("path", path));
     }
     let model = edit(cur)?;
+    // A 1.0 client never sends `layout` / `paths`: its model would silently drop the notes, flags
+    // or `paths`, so such a rewrite stays refused, as it was before W7c (W-7).
+    if flagged && model.layout.payload != PayloadKind::Flags {
+        return Err(not_serializable(Refusal::Flagged));
+    }
+    if paths && model.paths.is_empty() {
+        return Err(not_serializable(Refusal::Index));
+    }
     let text = serialize(&model, max_bytes()).map_err(|e| map_serialize(e, path))?;
     replace(
         root,

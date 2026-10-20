@@ -7,9 +7,12 @@
 //! MDA_TEST_VAULT=/path/to/vault cargo test -p mda --test vault_local -- --ignored
 //! ```
 //!
-//! Expectations are the TS parser's output for each file, generated locally (gitignored) by
-//! `docs/plans/engine-port/conformance-gen/gen-parse.mjs --vault …`; `MDA_TEST_VAULT_EXPECTED`
-//! overrides their default location `docs/plans/engine-port/vault-expected/`.
+//! Expectations are generated locally (gitignored) by
+//! `docs/plans/engine-port/conformance-gen/gen-vault-rust.py --vault … --ext …`: the engine's own read,
+//! since the vault's vks bodies are YAML and the TS parser reads those as no vars. Each file is still
+//! checked against TS there; the manifest records `deviates_from_ts` per file. Regenerate after the
+//! vault changes (it is a reviewed snapshot). `MDA_TEST_VAULT_EXPECTED` overrides their default
+//! location `docs/plans/engine-port/vault-expected/`.
 #![allow(clippy::panic, clippy::expect_used, clippy::unwrap_used)] // reason: test fails loudly
 
 mod common;

@@ -83,7 +83,9 @@ pub fn prefill(ctx: &Ctx, req: PrefillRequest) -> Result<ArtifactModel, OpError>
         env: String::new(),
         target: String::new(),
         index: false,
+        paths: vec![],
         blocks: vec![],
+        layout: Default::default(),
     };
     let mapped = map_language_id(req.language_id.as_deref().unwrap_or(""));
     let language = match req.source {

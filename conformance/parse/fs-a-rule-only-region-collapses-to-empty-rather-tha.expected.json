@@ -7,6 +7,15 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "",
+        "rule": true
+      }
+    ]
+  },
   "relativePath": "fs-a-rule-only-region-collapses-to-empty-rather-tha.md",
   "vars": []
 }

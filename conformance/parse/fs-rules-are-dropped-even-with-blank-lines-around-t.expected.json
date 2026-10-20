@@ -7,6 +7,15 @@
     "artifactType": "AIPrompt",
     "language": "markdown"
   },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "Dev",
+        "rule": true
+      }
+    ]
+  },
   "relativePath": "fs-rules-are-dropped-even-with-blank-lines-around-t.md",
   "vars": []
 }
