@@ -1,0 +1,4 @@
+# Default reviewer for every PR in this repo.
+# NOTE: GitHub never requests the PR author to review their own PR,
+# so your own PRs still need an admin merge (gh pr merge --admin).
+* @Nickinfinity
