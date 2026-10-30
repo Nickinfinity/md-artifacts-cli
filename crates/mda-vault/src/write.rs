@@ -15,14 +15,25 @@ static TMP_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 /// Write `bytes` to a hidden same-directory temp file, fsync it, hand it to `publish`, and always
 /// remove it afterwards (success or failure). The name never ends in `.md`, so listings skip it.
-fn with_temp(
+pub(crate) fn with_temp(
     parent: &Path,
     name: &OsStr,
     bytes: &[u8],
     publish: impl FnOnce(&Path) -> io::Result<()>,
 ) -> io::Result<()> {
+    // The target name is capped at 64 bytes here: a 255-byte name plus the suffix would exceed the
+    // file-system name limit and fail a write whose target name is valid.
     let mut tmp_name = std::ffi::OsString::from(".");
-    tmp_name.push(name);
+    let mut len = 0;
+    let prefix: String = name
+        .to_string_lossy()
+        .chars()
+        .take_while(|c| {
+            len += c.len_utf8();
+            len <= 64
+        })
+        .collect();
+    tmp_name.push(prefix);
     let n = TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
     tmp_name.push(format!(".mda-tmp-{}-{n}", std::process::id()));
     let tmp = parent.join(tmp_name);
@@ -42,7 +53,7 @@ fn with_temp(
 }
 
 /// Make the rename/link durable. No-op off unix (directories cannot be opened there).
-fn sync_dir(parent: &Path) {
+pub(crate) fn sync_dir(parent: &Path) {
     #[cfg(unix)]
     if let Ok(d) = std::fs::File::open(parent) {
         let _ = d.sync_all();
@@ -52,7 +63,10 @@ fn sync_dir(parent: &Path) {
 }
 
 /// Split a contained target into (parent, file name); a root-level or empty path is refused.
-fn split(path: &Path, rel: &Path) -> Result<(std::path::PathBuf, std::ffi::OsString), VaultError> {
+pub(crate) fn split(
+    path: &Path,
+    rel: &Path,
+) -> Result<(std::path::PathBuf, std::ffi::OsString), VaultError> {
     match (path.parent(), path.file_name()) {
         (Some(p), Some(n)) => Ok((p.to_path_buf(), n.to_os_string())),
         _ => Err(VaultError::OutsideRoot {
@@ -142,7 +156,7 @@ pub fn replace(
     Ok(())
 }
 
-fn check_hash(path: &Path, current: &[u8], expected: &str) -> Result<(), VaultError> {
+pub(crate) fn check_hash(path: &Path, current: &[u8], expected: &str) -> Result<(), VaultError> {
     let actual = content_hash(current);
     if actual == expected {
         return Ok(());

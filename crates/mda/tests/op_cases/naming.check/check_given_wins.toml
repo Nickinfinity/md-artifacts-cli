@@ -1,0 +1,2 @@
+params = { type = "Snippet", title = "Other", fileName = "mine" }
+expect = { fileName = "mine", ok = true }

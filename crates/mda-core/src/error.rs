@@ -301,13 +301,15 @@ pub const NAMING_CONTROL_CHAR: &str = "naming.control_char";
 pub const NAMING_RESERVED: &str = "naming.reserved";
 /// An output file name longer than 255 bytes. Param `max`.
 pub const NAMING_TOO_LONG: &str = "naming.too_long";
+/// A vault file-name stem that already ends in `.md` (`x.md.md`; spec §14). No params.
+pub const NAMING_MD_EXTENSION: &str = "naming.md_extension";
 
 /// Every `naming.*` code, for the `ALL_CODES` contract pin in `mda-ops`.
 ///
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_core::error::NAMING_CODES.len(), 8);
+/// assert_eq!(mda_core::error::NAMING_CODES.len(), 9);
 /// ```
 pub const NAMING_CODES: &[&str] = &[
     NAMING_PATH_INJECTION,
@@ -318,6 +320,7 @@ pub const NAMING_CODES: &[&str] = &[
     NAMING_CONTROL_CHAR,
     NAMING_RESERVED,
     NAMING_TOO_LONG,
+    NAMING_MD_EXTENSION,
 ];
 
 /// Render warning: a variable with no effective value, a missing field, or a field of a string.

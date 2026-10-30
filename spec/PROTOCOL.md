@@ -8,11 +8,11 @@ extension today; MCP later reuses the framing). `mda serve` implements it.
 > warning-code tables below are **guarded** by `crates/mda/tests/protocol_doc.rs`: they must stay
 > set-equal to `system.ops`, `ALL_CODES` and the render warning codes, or the gate fails.
 
-**Protocol version:** `2.1`
+**Protocol version:** `2.2`
 
 **Max line:** `16777216` bytes
 
-Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` (W7c) and `1.2` (W7d) were additive minors; `2.0` (W7e, 2026-10-20, §7.2) is the first major; `2.1` (ER-3, 2026-10-29) an additive minor. Within a major every change is additive (§7).
+Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` (W7c) and `1.2` (W7d) were additive minors; `2.0` (W7e, 2026-10-20, §7.2) is the first major; `2.1` (ER-3, 2026-10-29) and `2.2` (ER-4 + ER-6, 2026-10-30) additive minors. Within a major every change is additive (§7).
 
 ## 1. Transport
 
@@ -51,7 +51,7 @@ The first request must be `initialize`:
 ```
 
 - `params.protocol` is `"MAJOR.MINOR"`; other keys (e.g. `clientInfo`) are tolerated and ignored.
-- Result: `{"protocol":"2.1","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
+- Result: `{"protocol":"2.2","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
   per type `type, dir, contexts, defaultEnabled, writesFile, outputNameKey?, multiBlock, language?`.
 - A missing or non-string `protocol` → −32000 `op.bad_request` (no `reason`).
 - The major is the text before the first `.`; a different major → −32000 `protocol.version_mismatch`
@@ -73,6 +73,7 @@ the op's cases, which double as examples (§9).
 | `artifact.patch` | [`crates/mda/tests/op_cases/artifact.patch/`](../crates/mda/tests/op_cases/artifact.patch/) |
 | `artifact.prefill` | [`crates/mda/tests/op_cases/artifact.prefill/`](../crates/mda/tests/op_cases/artifact.prefill/) |
 | `artifact.read` | [`crates/mda/tests/op_cases/artifact.read/`](../crates/mda/tests/op_cases/artifact.read/) |
+| `artifact.rename` | [`crates/mda/tests/op_cases/artifact.rename/`](../crates/mda/tests/op_cases/artifact.rename/) |
 | `artifact.render` | [`crates/mda/tests/op_cases/artifact.render/`](../crates/mda/tests/op_cases/artifact.render/) |
 | `artifact.tree` | [`crates/mda/tests/op_cases/artifact.tree/`](../crates/mda/tests/op_cases/artifact.tree/) |
 | `artifact.update` | [`crates/mda/tests/op_cases/artifact.update/`](../crates/mda/tests/op_cases/artifact.update/) |
@@ -83,6 +84,7 @@ the op's cases, which double as examples (§9).
 | `index.run` | [`crates/mda/tests/op_cases/index.run/`](../crates/mda/tests/op_cases/index.run/) |
 | `migrate.frontmatter.apply` | [`crates/mda/tests/op_cases/migrate.frontmatter.apply/`](../crates/mda/tests/op_cases/migrate.frontmatter.apply/) |
 | `migrate.frontmatter.plan` | [`crates/mda/tests/op_cases/migrate.frontmatter.plan/`](../crates/mda/tests/op_cases/migrate.frontmatter.plan/) |
+| `naming.check` | [`crates/mda/tests/op_cases/naming.check/`](../crates/mda/tests/op_cases/naming.check/) |
 | `render.text` | [`crates/mda/tests/op_cases/render.text/`](../crates/mda/tests/op_cases/render.text/) |
 | `system.ops` | [`crates/mda/tests/op_cases/system.ops/`](../crates/mda/tests/op_cases/system.ops/) |
 | `system.version` | [`crates/mda/tests/op_cases/system.version/`](../crates/mda/tests/op_cases/system.version/) |
@@ -182,6 +184,7 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `naming.control_char` | — |
 | `naming.reserved` | — |
 | `naming.too_long` | `max` |
+| `naming.md_extension` | — |
 | `vks.syntax` | `line`, `rule`, `var?` |
 | `vks.indent` | `line`, `var?` |
 | `vks.bad_key` | `line`, `key`, `var?` |
@@ -203,6 +206,8 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `vars.fenceless_section` | `heading` |
 | `vars.mixed_file` | — |
 | `vars.untagged_defaults` | `info` |
+| `rename.index_link` | `index`, `link` |
+| `rename.links_unchecked` | `limit?`, `max?` |
 | `migrate.up_to_date` | — |
 | `migrate.leading_blank` | — |
 | `migrate.quoted_type` | `value` |
@@ -244,6 +249,7 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 | `1.2` | 0.9.0 | Defaults fence ```` ```yaml VKs ```` (format spec §9; ```` ```vks ```` no longer read). **Response:** a defaults fence's `fenceLang`, and a Variables file's hoisted `frontmatter.language`, are `"yaml VKs"` (were `"vks"`). **Code:** `vars.untagged_defaults{info}` (a `vault.validate` warning). Emitted bytes: every defaults fence opens ```` ```yaml VKs ```` |
 | `2.0` | 0.10.0 | **Breaking** (§7.2): the legacy `KEY=value` variables dialect is gone, with everything that existed only for it |
 | `2.1` | 0.11.0 | `containsEscape` widened (§11): any terminal control — C0 except TAB and LF (a CR directly before LF is exempt), DEL, C1 U+0080–U+009F — not only ESC. No method, field or code added. The CRLF exemption is looser than a client's "C0 except TAB" predicate |
+| `2.2` | 0.12.0 | Vault file names and rename (format spec §14). **Methods:** `naming.check` (pure: the stem rule and the default stem), `artifact.rename` (move within a type directory, verbatim or from a model, never overwriting; `warnings`). **Codes:** `naming.md_extension`; warnings `rename.index_link{index, link}`, `rename.links_unchecked{limit?, max?}`. **Behaviour:** `artifact.create`, `index.create`, `vars.file.new` and `varsets.save` refuse a stem that breaks §14.1 (leading dot, `.md` ending, reserved, …) — they accepted some before; a Variables file's default name is truncated to a 252-byte stem instead of `naming.too_long`; `naming.control_char` includes C1 (also for output names). Writes of names over ~220 bytes no longer fail with `io.failed` |
 
 ### 7.2 What 2.0 removed
 

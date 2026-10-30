@@ -1,0 +1,2 @@
+params = { type = "Snippet", fileName = "a:b" }
+expect = { fileName = "a:b", ok = false, error = { code = "naming.illegal_char", params = {} } }

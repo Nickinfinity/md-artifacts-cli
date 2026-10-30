@@ -386,12 +386,32 @@ fn w6_codes_exact_json() {
             OpError::new(VARS_UNTAGGED_DEFAULTS).with("info", "yaml"),
             serde_json::json!({"code": "vars.untagged_defaults", "params": {"info": "yaml"}}),
         ),
+        (
+            OpError::new(NAMING_MD_EXTENSION),
+            serde_json::json!({"code": "naming.md_extension", "params": {}}),
+        ),
+        (
+            OpError::new(RENAME_INDEX_LINK)
+                .with("index", "Templates/index.md")
+                .with("link", "sub/a"),
+            serde_json::json!({"code": "rename.index_link", "params": {"index": "Templates/index.md", "link": "sub/a"}}),
+        ),
+        (
+            OpError::new(RENAME_LINKS_UNCHECKED)
+                .with("limit", "files")
+                .with("max", "10000"),
+            serde_json::json!({"code": "rename.links_unchecked", "params": {"limit": "files", "max": "10000"}}),
+        ),
+        (
+            OpError::new(RENAME_LINKS_UNCHECKED),
+            serde_json::json!({"code": "rename.links_unchecked", "params": {}}),
+        ),
     ];
     for (e, want) in cases {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 75);
+    assert_eq!(ALL_CODES.len(), 78);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE

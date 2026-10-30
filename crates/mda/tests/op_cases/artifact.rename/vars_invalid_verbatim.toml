@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Snippets/bad-vars.md", expectedHash = "eb75aaf201a5107eba9f45e58d3c91cee417c68013e7db39c001023f2918bd23", newPath = "Snippets/b.md" }
+expect = { path = "Snippets/b.md", hash = "eb75aaf201a5107eba9f45e58d3c91cee417c68013e7db39c001023f2918bd23", warnings = [] }
+expect_files = { "Snippets/bad-vars.md" = false }

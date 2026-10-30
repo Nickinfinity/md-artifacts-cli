@@ -6,7 +6,7 @@ use std::path::Path;
 
 use mda_core::model::{ArtifactModel, ModelBlock};
 use mda_core::multi_index::safe_rel_path;
-use mda_core::naming::{MAX_NAME_BYTES, NameError, node_ext, node_stem, slugify};
+use mda_core::naming::{MAX_NAME_BYTES, NameError, node_ext, node_stem, slugify, validate_stem};
 use mda_core::registry::{ArtifactType, OutputNameKey};
 use mda_core::serialize::serialize;
 use mda_vault::{contain, content_hash, create_new};
@@ -129,6 +129,7 @@ fn derive_link(norm: &str, used: &mut HashSet<String>) -> Result<String, OpError
     if dirs_long || file.len() + ".md".len() > MAX_NAME_BYTES {
         return Err(NameError::TooLong.into());
     }
+    validate_stem(file)?;
     used.insert(link.clone());
     Ok(link)
 }

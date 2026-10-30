@@ -2,8 +2,8 @@
 
 use crate::registry::{OpSpec, typed};
 use crate::{
-    artifact, artifact_write, index, index_create, migrate, prefill, render, system, types,
-    validate, vars, varsets, vault, write_file,
+    artifact, artifact_rename, artifact_write, index, index_create, migrate, naming, prefill,
+    render, system, types, validate, vars, varsets, vault, write_file,
 };
 
 pub(crate) static OPS: &[OpSpec] = &[
@@ -31,6 +31,11 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "artifact.read",
         summary: "Parse one artifact file",
         handler: |c, v| typed(c, v, artifact::read),
+    },
+    OpSpec {
+        name: "artifact.rename",
+        summary: "Move an artifact file to a new name in its type directory",
+        handler: |c, v| typed(c, v, artifact_rename::rename),
     },
     OpSpec {
         name: "artifact.render",
@@ -81,6 +86,11 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "migrate.frontmatter.plan",
         summary: "List files whose frontmatter type: needs migrating",
         handler: |c, v| typed(c, v, migrate::frontmatter_plan),
+    },
+    OpSpec {
+        name: "naming.check",
+        summary: "Check a vault file name, or derive the default one",
+        handler: |c, v| typed(c, v, naming::check),
     },
     OpSpec {
         name: "render.text",

@@ -16,6 +16,7 @@ mod english;
 mod index;
 mod input;
 mod migrate;
+mod naming;
 pub mod print;
 mod vars;
 mod varsets;
@@ -77,6 +78,9 @@ pub enum Command {
     /// Migrate legacy vault files (plan writes nothing).
     #[command(subcommand)]
     Migrate(migrate::MigrateCmd),
+    /// Check a vault file name, or derive the default one, before writing.
+    #[command(subcommand)]
+    Naming(naming::NamingCmd),
     /// Run any operation by dotted name with raw JSON params (default `{}`).
     Call {
         /// Dotted op name, e.g. `system.ops`.
@@ -178,6 +182,7 @@ fn request(cmd: Command, ctx: &mda_ops::Ctx) -> Option<(String, Result<Value, Op
         Command::Vars(cmd) => return Some(vars::vars_request(cmd)),
         Command::Varsets(cmd) => return Some(varsets::varsets_request(cmd)),
         Command::Migrate(cmd) => return Some(migrate::migrate_request(cmd, ctx)),
+        Command::Naming(cmd) => return Some(naming::naming_request(cmd)),
         Command::Render(RenderCmd::Text { file, values }) => (
             "render.text".to_owned(),
             input::render_text_params(&file, values),

@@ -5,14 +5,14 @@
 use std::path::Path;
 
 use mda_core::error::Refusal;
-use mda_core::model::{ArtifactModel, ParsedArtifact, PayloadKind};
-use mda_core::parse::{decode, parse_from_content};
+use mda_core::model::ArtifactModel;
+use mda_core::parse::decode;
 use mda_core::patch::{CodeTarget, FmField, PatchError, patch_code, patch_field};
-use mda_core::registry::ArtifactType;
 use mda_core::serialize::{SerializeError, serialize};
-use mda_vault::{Root, content_hash, create_new, delete as vault_delete, read_bounded, replace};
+use mda_vault::{content_hash, create_new, delete as vault_delete, replace};
 
 use crate::artifact::{MAX_ARTIFACT_BYTES, artifact_path, bad_path, root_of};
+use crate::artifact_rewrite::{read_checked, rewrite};
 use crate::error::vault_error;
 use crate::write_file::exists_actual;
 use crate::{Ctx, OpError, error};
@@ -185,26 +185,11 @@ fn map_patch(e: PatchError) -> OpError {
     }
 }
 
-fn not_serializable(r: Refusal) -> OpError {
+pub(crate) fn not_serializable(r: Refusal) -> OpError {
     OpError::new(error::ARTIFACT_NOT_SERIALIZABLE).with("reason", r.as_str())
 }
 
-/// The file's bytes, read bounded, whose hash must be `expected` — checked before anything is
-/// parsed, so a file another client changed reports `file.conflict`, not a refusal.
-fn read_checked(root: &Root, path: &str, expected: &str) -> Result<Vec<u8>, OpError> {
-    let bytes = read_bounded(root, Path::new(path), MAX_ARTIFACT_BYTES)
-        .map_err(|e| vault_error(e, root))?;
-    let actual = content_hash(&bytes);
-    if actual != expected {
-        return Err(OpError::new(error::FILE_CONFLICT)
-            .with("path", path)
-            .with("expected", expected)
-            .with("actual", actual));
-    }
-    Ok(bytes)
-}
-
-fn written(path: String, text: &str) -> WriteResponse {
+pub(crate) fn written(path: String, text: &str) -> WriteResponse {
     WriteResponse {
         hash: content_hash(text.as_bytes()),
         path,
@@ -226,6 +211,9 @@ pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
     if artifact_path(&req.path)? != req.model.artifact_type {
         return Err(bad_path(&req.path));
     }
+    // D-7/D-8: only the last segment's stem is name-checked, and only on a new name.
+    let file = req.path.rsplit('/').next().unwrap_or_default();
+    mda_core::naming::validate_stem(file.strip_suffix(".md").unwrap_or(file))?;
     let text = serialize(&req.model, max_bytes()).map_err(|e| map_serialize(e, &req.path))?;
     let rel = Path::new(&req.path);
     create_new(root, rel, text.as_bytes()).map_err(|e| exists_actual(root, rel, e))?;
@@ -257,50 +245,6 @@ pub fn update(ctx: &Ctx, req: UpdateRequest) -> Result<WriteResponse, OpError> {
             Err(bad_path(&path))
         }
     })
-}
-
-/// The one rewrite path (X-12): read bounded → hash check → refuse varsError → `edit` →
-/// serialize + guard → replace. Shared by `artifact.update` and every `vars.*` edit, so lossy
-/// UTF-8 (#35), no BOM (#36) and legacy → YAML (W-3) hold for all of them. Since W7c a flagged or
-/// index file is rewritten when the model carries its layout / `paths` (spec §7.6).
-pub(crate) fn rewrite(
-    root: &Root,
-    path: &str,
-    expected: &str,
-    edit: impl FnOnce(ParsedArtifact) -> Result<ArtifactModel, OpError>,
-) -> Result<WriteResponse, OpError> {
-    let bytes = read_checked(root, path, expected)?;
-    let content = decode(&bytes);
-    let cur = parse_from_content(&content, path);
-    let flagged = cur.layout.payload == PayloadKind::Flags;
-    let fm = &cur.frontmatter;
-    let paths = fm.index == Some(true) && fm.paths.as_ref().is_some_and(|p| !p.is_empty());
-    // A Variables file's content is its vks fence (spec §3): flags there cannot be written back.
-    if flagged && fm.artifact_type == ArtifactType::Variables {
-        return Err(not_serializable(Refusal::Flagged));
-    }
-    if cur.vars_error.is_some() || cur.blocks.iter().any(|b| b.vars_error.is_some()) {
-        return Err(OpError::new(error::ARTIFACT_VARS_INVALID).with("path", path));
-    }
-    let model = edit(cur)?;
-    // A 1.0 client never sends `layout` / `paths`: its model would silently drop the notes, flags
-    // or `paths`, so such a rewrite stays refused, as it was before W7c (W-7).
-    if flagged && model.layout.payload != PayloadKind::Flags {
-        return Err(not_serializable(Refusal::Flagged));
-    }
-    if paths && model.paths.is_empty() {
-        return Err(not_serializable(Refusal::Index));
-    }
-    let text = serialize(&model, max_bytes()).map_err(|e| map_serialize(e, path))?;
-    replace(
-        root,
-        Path::new(path),
-        text.as_bytes(),
-        expected,
-        MAX_ARTIFACT_BYTES,
-    )
-    .map_err(|e| vault_error(e, root))?;
-    Ok(written(path.to_owned(), &text))
 }
 
 /// `artifact.patch`: one byte-surgical edit, when the file's hash is `expectedHash`.

@@ -35,7 +35,7 @@ client (CLI, VS Code extension, TUI, MCP) sees vault content only through the en
 | Emission | `mda-core/src/serialize/` (`mod.rs`; flags and bare bodies `payload.rs`; the round-trip guard `guard.rs`) |
 | Artifact types, directories, per-type properties | `mda-core/src/registry.rs` |
 | Language names, fence aliases, file extensions | `mda-core/src/language.rs` |
-| Output file names (whole-file types) | `mda-core/src/naming.rs` |
+| Output file names (whole-file types), vault file-name stems, the default slug (§14) | `mda-core/src/naming.rs` |
 | Index links and vault-authored relative paths | `mda-core/src/multi_index.rs` (`safe_rel_path`) |
 
 Parse and validation failures are reported as **error codes with parameters** (e.g.
@@ -288,7 +288,7 @@ supplies.
   value containing `/`, `\`, `..` or NUL is **rejected, never sanitised** (`naming.path_injection`).
   The final name is also validated, first failure wins: more than 255 bytes; empty; a leading or trailing
   space; a **trailing** dot (or all dots — a leading dot is allowed: `.env`, `.cursorrules`); any of
-  `\ / : * ? " < > |`; a C0 or DEL character; a Windows reserved name, also as the stem before the first
+  `\ / : * ? " < > |`; a control character (C0, DEL or C1 — C1 since engine 0.12.0); a Windows reserved name, also as the stem before the first
   dot (`CON.txt`), case-insensitive (W3 R-6, R-7, R-16, R-25(3, 21); the reserved-stem and leading-dot
   rules differ from the extension's input box).
 
@@ -961,7 +961,60 @@ and description, var name and every string inside its value; a match keeps its a
   sub-set's unmatched variables are the artifact's minus its matched ones.
 - **Apply** returns the new values and one change per var: `filled` (old value absent or `""`), `overridden`, `kept`.
   Structured values are applied whole. Nothing is written.
-- **Save** creates `Variables/<slug>.md` (or under a given `Variables/` subdirectory); the file name is `slugify(title)`, falling
-  back to `untitled`, and must pass the §5.1 name rules. An existing file is never overwritten. Empty values are kept (§3).
+- **Save** creates `Variables/<slug>.md` (or under a given `Variables/` subdirectory); the stem is the default stem of the
+  title (§14.1: slugified, at most 252 bytes, `untitled` when empty) and must pass the vault stem rule (§14.1). An existing file is never overwritten. Empty values are kept (§3).
 - **Render text** fills `<VK-…>` tokens in free text with values: the same response, rules and limits as rendering an
   artifact (§4.1, §10), with no file and no vault.
+
+## 14. Vault file names and renames *(ruled — engine client-requests plan W2, 2026-10-29; ER-4, ER-6)*
+
+### 14.1 The stem rule
+
+A vault file is `<dir>/<stem>.md`. Every write that **creates a name** checks the **stem** of the last segment (the
+`.md` excluded): `artifact.create`, the `newPath` of `artifact.rename`, the files `index.create` derives, and the
+Variables files `vars.file.new` / `varsets.save` create. Directory segments keep the path rules (§8.3) and are not
+name-checked. Updating, patching or deleting an existing file never checks its name, so no file a user already has
+is stranded. The rule **rejects, never fixes**. Checks run **in this order**; the first failure decides the code:
+
+| # | Rejected | Code |
+|---|---|---|
+| 1 | `<stem>.md` longer than 255 bytes (a stem over 252 bytes) | `naming.too_long{max: 255}` |
+| 2 | empty after trimming | `naming.empty` |
+| 3 | a leading or trailing space | `naming.edge_space` |
+| 4 | a **leading or trailing** dot (`.hidden`, `trail.`) | `naming.edge_dot` |
+| 5 | any of `\ / : * ? " < > \|` | `naming.illegal_char` |
+| 6 | a control character: C0, DEL or C1 | `naming.control_char` |
+| 7 | a Windows reserved name, whole or before the first dot (`CON`, `con.txt`), case-insensitive | `naming.reserved` |
+| 8 | ends in `.md`, ASCII case-insensitive (`x.md` would be `x.md.md`) | `naming.md_extension` |
+
+Unicode letters are allowed in a typed stem (`café`, `日本語`). Obsidian's link characters `# ^ [ ]` are allowed
+(Obsidian allows the file; it warns only about links to it). The rule differs from the output-name rule (§5.1) in
+the leading dot, the 252-byte stem and `naming.md_extension`.
+
+**Default stem** of a title: `slugify(title)` (ASCII letters and digits, lower case, other runs → `-`), truncated
+to 252 bytes, trailing `-` trimmed, `untitled` when empty (`Button Group` → `button-group`, `Café` → `caf`,
+`日本` → `untitled`). A default that fails the rule (`Con` → `con`) is reported, never altered. `naming.check`
+answers both questions without a vault: a given `fileName` is checked as given; without one the default stem of
+`title` is derived and checked.
+
+### 14.2 Rename
+
+`artifact.rename` moves `path` to `newPath` **in the same type directory** (sub-folders allowed). `newPath` obeys
+the artifact path rules and the stem rule; a target outside the type directory, also through an in-vault symlink,
+is `artifact.bad_path`; `newPath == path` is `op.bad_request`. Every path rule is checked before the content hash
+(`file.conflict`). An existing target is never overwritten (`file.exists`). Without a model the bytes move
+verbatim (the hash is unchanged, the file is never parsed); with a model the moved file is written from it with
+exactly the guards of `artifact.update`. The new file is published by hard link before the old one is removed, so
+a crash leaves the old file, or both, never neither. A rename that changes only letter case on a
+case-insensitive file system renames in place.
+
+### 14.3 Links on rename
+
+- **Template-index links** (§8.2) to the old path are **reported, never rewritten**: one warning
+  `rename.index_link{index, link}` per (index, link) — `index` the index's vault path, `link` the raw link
+  target (alias and anchor stripped). Only the old path's type directory is searched (a link resolves only
+  below its index's own directory, §8.3), with the bounded walk (§13.2 caps); the comparison is ASCII
+  case-insensitive. A walk that stops early adds one `rename.links_unchecked` (`limit`, `max` when a cap
+  stopped it); the rename itself has succeeded.
+- **Obsidian wikilinks** in other notes are neither scanned, rewritten nor reported. Obsidian resolves them by
+  name and rewrites them only for renames made inside Obsidian.

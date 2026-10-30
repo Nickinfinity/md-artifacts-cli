@@ -2,14 +2,18 @@
 //! here and reached through [`dispatch`]: by the CLI, by `mda serve`, and later by the TUI and MCP.
 
 pub mod artifact;
+pub mod artifact_rename;
+mod artifact_rewrite;
 pub mod artifact_write;
 pub mod error;
 pub mod index;
 pub mod index_create;
 pub mod migrate;
+pub mod naming;
 mod ops_list;
 pub mod prefill;
 pub mod registry;
+mod rename_links;
 pub mod render;
 pub mod system;
 pub mod types;
@@ -29,6 +33,6 @@ pub use registry::{Ctx, OpSpec, Source, check_names, dispatch, dispatch_in, ops,
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_ops::PROTOCOL, "2.1");
+/// assert_eq!(mda_ops::PROTOCOL, "2.2");
 /// ```
-pub const PROTOCOL: &str = "2.1";
+pub const PROTOCOL: &str = "2.2";

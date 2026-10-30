@@ -6,13 +6,14 @@ use mda_vault::{Root, VaultError};
 
 pub use mda_core::error::{
     ARTIFACT_UNREPRESENTABLE, MIGRATE_LEADING_BLANK, MIGRATE_QUOTED_TYPE, NAMING_CONTROL_CHAR,
-    NAMING_EDGE_DOT, NAMING_EDGE_SPACE, NAMING_EMPTY, NAMING_ILLEGAL_CHAR, NAMING_PATH_INJECTION,
-    NAMING_RESERVED, NAMING_TOO_LONG, PATH_ABSOLUTE, PATH_BACKSLASH, PATH_CODES, PATH_CONTROL_CHAR,
-    PATH_DRIVE_OR_SCHEME, PATH_EMPTY, PATH_PARENT_SEGMENT, RENDER_EACH_NOT_LIST, RENDER_JOIN_EMPTY,
-    RENDER_JOIN_RECORD, RENDER_NOT_SCALAR, RENDER_SELF_NESTED, RENDER_UNKNOWN_VAR,
-    RENDER_UNMATCHED_END, RENDER_UNTERMINATED, RENDER_WARNING_CODES, VKS_BAD_KEY, VKS_CONTROL_CHAR,
-    VKS_DUPLICATE_KEY, VKS_INDENT, VKS_INLINE_COMMENT, VKS_LIMIT, VKS_MIXED_DIALECT,
-    VKS_MIXED_LIST, VKS_SYNTAX, VKS_UNREPRESENTABLE, VKS_UNSUPPORTED,
+    NAMING_EDGE_DOT, NAMING_EDGE_SPACE, NAMING_EMPTY, NAMING_ILLEGAL_CHAR, NAMING_MD_EXTENSION,
+    NAMING_PATH_INJECTION, NAMING_RESERVED, NAMING_TOO_LONG, PATH_ABSOLUTE, PATH_BACKSLASH,
+    PATH_CODES, PATH_CONTROL_CHAR, PATH_DRIVE_OR_SCHEME, PATH_EMPTY, PATH_PARENT_SEGMENT,
+    RENDER_EACH_NOT_LIST, RENDER_JOIN_EMPTY, RENDER_JOIN_RECORD, RENDER_NOT_SCALAR,
+    RENDER_SELF_NESTED, RENDER_UNKNOWN_VAR, RENDER_UNMATCHED_END, RENDER_UNTERMINATED,
+    RENDER_WARNING_CODES, VKS_BAD_KEY, VKS_CONTROL_CHAR, VKS_DUPLICATE_KEY, VKS_INDENT,
+    VKS_INLINE_COMMENT, VKS_LIMIT, VKS_MIXED_DIALECT, VKS_MIXED_LIST, VKS_SYNTAX,
+    VKS_UNREPRESENTABLE, VKS_UNSUPPORTED,
 };
 
 /// The only error shape clients see: a stable code plus string parameters, never prose.
@@ -142,6 +143,12 @@ pub const VARS_MIXED_FILE: &str = "vars.mixed_file";
 /// Validate warning: a fence holding `VK-` keys that is not a ```` ```yaml VKs ```` defaults fence, so
 /// its values are not read (W7d, spec §9). Param `info` (its info string, e.g. `yaml`, `vks`).
 pub const VARS_UNTAGGED_DEFAULTS: &str = "vars.untagged_defaults";
+/// `artifact.rename` warning: a template index links the old path (spec §14.3). Params `index` (its vault
+/// path), `link` (the raw link text).
+pub const RENAME_INDEX_LINK: &str = "rename.index_link";
+/// `artifact.rename` warning: the index-link scan stopped early, so links may be missed (spec §14.3).
+/// Params `limit`, `max` when a walk cap stopped it; none otherwise.
+pub const RENAME_LINKS_UNCHECKED: &str = "rename.links_unchecked";
 /// Transport: a protocol line is not valid JSON (−32700, `id: null`; spec PROTOCOL §4, S-20). No params.
 pub const PROTOCOL_PARSE_ERROR: &str = "protocol.parse_error";
 /// Transport: a protocol line exceeds the frame cap (−32600, `id: null`; S-8, S-21). Param `max` (bytes).
@@ -195,6 +202,7 @@ pub const ALL_CODES: &[&str] = &[
     NAMING_CONTROL_CHAR,
     NAMING_RESERVED,
     NAMING_TOO_LONG,
+    NAMING_MD_EXTENSION,
     ARTIFACT_NOT_WHOLE_FILE,
     ARTIFACT_MULTI_BLOCK,
     ARTIFACT_IS_INDEX,
@@ -227,6 +235,8 @@ pub const ALL_CODES: &[&str] = &[
     VARS_FENCELESS_SECTION,
     VARS_MIXED_FILE,
     VARS_UNTAGGED_DEFAULTS,
+    RENAME_INDEX_LINK,
+    RENAME_LINKS_UNCHECKED,
     PROTOCOL_PARSE_ERROR,
     PROTOCOL_LINE_TOO_LONG,
     PROTOCOL_ALREADY_INITIALIZED,

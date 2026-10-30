@@ -213,7 +213,7 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "mda"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "clap",
  "log",
@@ -225,7 +225,7 @@ dependencies = [
 
 [[package]]
 name = "mda-core"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "regex",
  "serde",
@@ -235,7 +235,7 @@ dependencies = [
 
 [[package]]
 name = "mda-ops"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "log",
  "mda-core",
@@ -247,7 +247,7 @@ dependencies = [
 
 [[package]]
 name = "mda-vault"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "log",
  "mda-core",

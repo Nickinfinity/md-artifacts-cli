@@ -5,14 +5,15 @@
 use std::path::Path;
 
 use mda_core::model::ArtifactModel;
-use mda_core::naming::{slugify, validate_name};
+use mda_core::naming::{default_stem, validate_stem};
 use mda_core::parse::text::js_trim;
 use mda_core::serialize::serialize;
 use mda_core::variables::{self, EditError};
 use mda_vault::{Root, content_hash, create_new};
 
 use crate::artifact::{artifact_path, bad_path, root_of, segments};
-use crate::artifact_write::{WriteResponse, map_serialize, max_bytes, rewrite};
+use crate::artifact_rewrite::rewrite;
+use crate::artifact_write::{WriteResponse, map_serialize, max_bytes};
 use crate::write_file::exists_actual;
 use crate::{ArtifactType, Ctx, OpError, error, index_create};
 
@@ -58,13 +59,9 @@ pub(crate) fn create_variables_file(
     if segs.first() != Some(&ArtifactType::Variables.info().dir) {
         return Err(bad_path(dir));
     }
-    let mut slug = slugify(&model.title);
-    if slug.is_empty() {
-        slug = "untitled".to_owned();
-    }
-    let name = format!("{slug}.md");
-    validate_name(&name)?;
-    let path = format!("{dir}/{name}");
+    let stem = default_stem(&model.title);
+    validate_stem(&stem)?;
+    let path = format!("{dir}/{stem}.md");
     let text = serialize(&model, max_bytes()).map_err(|e| map_serialize(e, &path))?;
     let rel = Path::new(&path);
     create_new(root, rel, text.as_bytes()).map_err(|e| exists_actual(root, rel, e))?;

@@ -126,6 +126,20 @@ pub enum ArtifactCmd {
         #[arg(long = "file-name")]
         file_name: Option<String>,
     },
+    /// Move an artifact file to a new name in its type directory, when its hash is `--hash`; never
+    /// overwrites. With `--model`, the moved file is rewritten from that model.
+    Rename {
+        /// Vault-relative path.
+        path: String,
+        /// The new vault-relative path, in the same type directory.
+        new_path: String,
+        /// The content hash last read.
+        #[arg(long)]
+        hash: String,
+        /// An `ArtifactModel` JSON file (`-` = stdin) to write at the new path.
+        #[arg(long)]
+        model: Option<String>,
+    },
     /// Delete an artifact file, when its hash is `--hash`.
     #[command(name = "rm", alias = "delete")]
     Delete {
@@ -157,6 +171,25 @@ pub(super) fn artifact_request(cmd: ArtifactCmd) -> (String, Result<Value, OpErr
             "artifact.update".to_owned(),
             model(&m).map(|m| json!({ "path": path, "expectedHash": hash, "model": m })),
         ),
+        ArtifactCmd::Rename {
+            path,
+            new_path,
+            hash,
+            model: m,
+        } => {
+            let base = json!({ "path": path, "expectedHash": hash, "newPath": new_path });
+            let p = match m {
+                None => Ok(base),
+                Some(m) => model(&m).map(|m| {
+                    let mut p = base;
+                    if let Some(o) = p.as_object_mut() {
+                        o.insert("model".into(), m);
+                    }
+                    p
+                }),
+            };
+            ("artifact.rename".to_owned(), p)
+        }
         ArtifactCmd::Delete { path, hash } => (
             "artifact.delete".to_owned(),
             Ok(json!({ "path": path, "expectedHash": hash })),

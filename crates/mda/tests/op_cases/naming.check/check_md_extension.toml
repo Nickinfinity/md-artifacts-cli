@@ -1,0 +1,2 @@
+params = { type = "Snippet", fileName = "x.md" }
+expect = { fileName = "x.md", ok = false, error = { code = "naming.md_extension", params = {} } }

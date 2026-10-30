@@ -3,7 +3,12 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-29): ER-3 landed (MAC-16)** — `containsEscape` flags every terminal control (C0 but TAB/LF, CRLF
+> **Status (2026-10-30): ER-4 + ER-6 landed (MAC-17, MAC-18)** — vault file names: one stem rule
+> `mda_core::naming::validate_stem` (spec §14.1; `naming.md_extension`, leading dot refused, C1 is `naming.control_char`) on every
+> name-creating write, `default_stem` (252-byte slug); `naming.check` (pure); `artifact.rename` (verbatim or with a model, no clobber,
+> `mda_vault::rename_new` publishes by hard link; index links warned `rename.index_link`, never rewritten; wikilinks untouched);
+> protocol **2.2**, engine `0.12.0`.
+> **ER-3 landed (MAC-16)** — `containsEscape` flags every terminal control (C0 but TAB/LF, CRLF
 > exempt; DEL; C1), one predicate `mda_core::render::has_terminal_control`; protocol **2.1**, engine `0.11.0`.
 > **W7e landed (2026-10-20)** — the legacy `KEY=value` dialect is gone: defaults bodies are YAML only (a `K=v` line is
 > `vks.mixed_dialect`), no unfenced `vars:` section, `migrate.vks.*` / `mda migrate vks` / `migrate.unfenced_vars` removed; protocol
@@ -27,7 +32,7 @@ disagree, and fix this file in the same change.
 > `walk.limit`; conformance kind `migrate` (35 cases); fixture `vault_migrate/`.
 > **W5 landed (MAC-8)** — Variables-file edits: `mda-core/src/variables.rs` (sub-set addressing, shape
 > transitions, the name rule), ten `vars.*` ops (`mda-ops/src/vars.rs` + `vars/requests.rs`, through the shared
-> `artifact_write::rewrite`), `mda vars …` (`cli/vars.rs`), the emitter's 64 KiB vks body cap, conformance kind `idempotent`
+> `artifact_rewrite::rewrite`), `mda vars …` (`cli/vars.rs`), the emitter's 64 KiB vks body cap, conformance kind `idempotent`
 > (5 cases). **W5b landed (MAC-9)** — the bounded `Variables/` walk (`mda_vault::walk_md`: never follows symlinked dirs, caps depth 32 /
 > 10 000 entries / 64 MiB), `vars.list|search`, `varsets.match|apply|save` (`mda-core/src/varset/`), `render.text`; `mda vars list|search`,
 > `mda varsets …`, `mda render text`. **W4 landed (MAC-7).** The workspace exists: `mda-core` (model, type registry, parse incl.
@@ -122,7 +127,7 @@ md-artifacts-cli/
 │   │       ├── serialize/     # THE .md emitter: mod.rs · payload.rs (flags, bare bodies; W7c) · guard.rs (round-trip guard, from_parsed)
 │   │       ├── patch.rs       # surgical in-place edits
 │   │       ├── render/        # token substitution + the directive engine (paths, each/end, join, limits)
-│   │       ├── naming.rs      # slugify, file names, whole-file output names
+│   │       ├── naming.rs      # slugify, output names, the vault stem rule + default stem (§14.1)
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
 │   │       ├── varset/        # shapes, sub-sets, search text; score.rs: scoring, order, apply (W5b)
 │   │       ├── variables.rs   # Variables-file edits: sub-sets, vars, name rule, shapes (W5)
@@ -134,6 +139,7 @@ md-artifacts-cli/
 │   │       ├── error.rs       # VaultError (mapped to OpError codes in mda-ops)
 │   │       ├── contain.rs     # THE containment rule (canonicalize + component compare)
 │   │       ├── write.rs       # atomic write (same-dir temp → fsync → rename) + content hash check
+│   │       ├── rename.rs      # `rename_new`: no-clobber move (hard link, then unlink; case-only alias)
 │   │       ├── read.rs        # bounded reads (size limit before reading); `file_len` (W6)
 │   │       ├── config.rs      # machine config (known vaults, default) + <vault>/.mda/config.toml
 │   │       ├── vault.rs       # inspect / select / create default dirs (create only, never delete)
@@ -144,6 +150,9 @@ md-artifacts-cli/
 │   │       ├── registry.rs    # Ctx, OpSpec, dispatch, the typed adapter
 │   │       ├── ops_list.rs    # THE registration list: one line per op
 │   │       ├── error.rs       # OpError { code, params } — the ONLY error shape clients see
+│   │       ├── artifact_write.rs · artifact_rewrite.rs  # create/update/patch/delete · the one rewrite path (`prepare`, `rewrite`)
+│   │       ├── artifact_rename.rs · rename_links.rs  # artifact.rename · index links to a path (warnings)
+│   │       ├── naming.rs      # naming.check
 │   │       ├── render.rs · write_file.rs · prefill.rs  # artifact.render / write_file / prefill (W3)
 │   │       ├── index.rs · index_create.rs  # index.plan / run / create (W3b)
 │   │       ├── vars.rs        # vars.file/meta/subset/var edits (W5); vars/{requests,list,scan}.rs (W5b: list, search, the walk collector)
@@ -159,7 +168,7 @@ md-artifacts-cli/
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
-├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.1) — orchestrator-owned
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.2) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
 ├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
@@ -205,7 +214,7 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
-- **Authority: `spec/PROTOCOL.md`** (protocol `2.1`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1` additive (ER-3)). Its method, error-code and warning-code
+- **Authority: `spec/PROTOCOL.md`** (protocol `2.2`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`/`2.2` additive (ER-3; ER-4 + ER-6)). Its method, error-code and warning-code
   tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
   `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
@@ -263,7 +272,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | The vks codec | `mda-core/src/vks/` |
 | `vks.*` codes | `mda-core/src/error.rs` (listed in `mda-ops` `ALL_CODES`) |
 | JS trim / line split / decoding | `mda-core/src/parse/text.rs` |
-| Slugs and file names | `mda-core/src/naming.rs` |
+| Slugs, file names, the vault stem rule | `mda-core/src/naming.rs` (`validate_stem`, `default_stem`) |
 | Vault-authored relative paths (index links, `paths:`) | `mda-core/src/multi_index.rs` — `safe_rel_path` |
 | Variables-file edits (addressing, shape transitions, names) | `mda-core/src/variables.rs` |
 | The bounded walk (caps, symlink rule, starts) | `mda-vault/src/listing.rs` (`walk_md`) |
@@ -334,7 +343,7 @@ through a `serve` NDJSON session (asserting every stdout line is JSON).
 - The case files double as the protocol's examples in `spec/PROTOCOL.md` (§3 links each op's folder; §9 the grammar).
 - **Protocol tests:** `tests/serve.rs` + `tests/serve_ids.rs` (in-process framing, ids, 🔒 sinks), `tests/serve_e2e.rs` (real
   binary: long session under trace, pipelined backpressure, EOF, kill during write — a characterization pin; atomicity is
-  `write.rs` `with_temp`). `// ponytail:` a SIGKILL leaves a hidden `.<name>.mda-tmp-*` temp (never listed); cleanup later.
+  `write.rs` `with_temp`). `// ponytail:` a SIGKILL leaves a hidden `.<name≤64 bytes>.mda-tmp-*` temp (never listed); cleanup later.
 
 ## Debug mode *(W0)*
 
@@ -368,7 +377,7 @@ analysis:
   the engine reports it in the render response (`containsEscape`),
   so every client can apply the same rule. The CLI's human `render` refuses it
   (`render.contains_escape`); `--json` returns the response unchanged.
-- **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete`,
+- **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete|rename`,
   `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled`, `vars.file.new`, `vars.meta.tags`,
   `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`.
 

@@ -3,7 +3,7 @@
 
 use crate::error::{
     NAMING_CONTROL_CHAR, NAMING_EDGE_DOT, NAMING_EDGE_SPACE, NAMING_EMPTY, NAMING_ILLEGAL_CHAR,
-    NAMING_PATH_INJECTION, NAMING_RESERVED, NAMING_TOO_LONG,
+    NAMING_MD_EXTENSION, NAMING_PATH_INJECTION, NAMING_RESERVED, NAMING_TOO_LONG,
 };
 use crate::language::{ext_for_lang, normalize_lang_id};
 use crate::model::ParsedArtifact;
@@ -55,6 +55,7 @@ impl NameField {
 /// assert_eq!(NameError::ControlChar.code(), "naming.control_char");
 /// assert_eq!(NameError::Reserved.code(), "naming.reserved");
 /// assert_eq!(NameError::TooLong.code(), "naming.too_long");
+/// assert_eq!(NameError::MdExtension.code(), "naming.md_extension");
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NameError {
@@ -66,6 +67,7 @@ pub enum NameError {
     ControlChar,
     Reserved,
     TooLong,
+    MdExtension,
 }
 
 impl NameError {
@@ -80,6 +82,7 @@ impl NameError {
             Self::ControlChar => NAMING_CONTROL_CHAR,
             Self::Reserved => NAMING_RESERVED,
             Self::TooLong => NAMING_TOO_LONG,
+            Self::MdExtension => NAMING_MD_EXTENSION,
         }
     }
 }
@@ -183,19 +186,13 @@ fn agent_name(p: &ParsedArtifact, typed: &str) -> Result<String, NameError> {
     })
 }
 
-/// Validate a final file name; first failure wins: length, empty, edge space, edge dot, illegal
-/// characters, control characters, reserved device names (whole name or stem before the first
-/// `.`, an R-6 deviation from the whole-name TS rule). Length is bytes (R-7).
-///
-/// # Examples
-///
-/// ```
-/// use mda_core::naming::{validate_name, NameError};
-/// assert_eq!(validate_name("Button.tsx"), Ok(()));
-/// assert_eq!(validate_name("CON.txt"), Err(NameError::Reserved));
-/// ```
-pub fn validate_name(name: &str) -> Result<(), NameError> {
-    if name.len() > MAX_NAME_BYTES {
+/// Longest vault file-name stem, in bytes: `stem.md` must fit in [`MAX_NAME_BYTES`].
+const MAX_STEM_BYTES: usize = MAX_NAME_BYTES - 3;
+
+/// The one ordered checker behind [`validate_name`] and [`validate_stem`]; first failure wins.
+/// `vault` adds the vault-only rules: a leading dot (hidden file) and a `.md` ending (`x.md.md`).
+fn check(name: &str, max: usize, vault: bool) -> Result<(), NameError> {
+    if name.len() > max {
         return Err(NameError::TooLong);
     }
     if js_trim(name).is_empty() {
@@ -204,13 +201,13 @@ pub fn validate_name(name: &str) -> Result<(), NameError> {
     if name.starts_with(' ') || name.ends_with(' ') {
         return Err(NameError::EdgeSpace);
     }
-    if name.ends_with('.') {
+    if name.ends_with('.') || (vault && name.starts_with('.')) {
         return Err(NameError::EdgeDot);
     }
     if name.contains(['\\', '/', ':', '*', '?', '"', '<', '>', '|']) {
         return Err(NameError::IllegalChar);
     }
-    if name.chars().any(|c| c.is_ascii_control()) {
+    if name.chars().any(char::is_control) {
         return Err(NameError::ControlChar);
     }
     let stem = name.split('.').next().unwrap_or(name).to_ascii_lowercase();
@@ -221,7 +218,65 @@ pub fn validate_name(name: &str) -> Result<(), NameError> {
     if numbered || ["con", "prn", "aux", "nul"].contains(&stem.as_str()) {
         return Err(NameError::Reserved);
     }
+    if vault && name.to_ascii_lowercase().ends_with(".md") {
+        return Err(NameError::MdExtension);
+    }
     Ok(())
+}
+
+/// Validate a final output file name; first failure wins: length, empty, edge space, edge dot
+/// (trailing), illegal characters, control characters (C0, DEL, C1), reserved device names (whole
+/// name or stem before the first `.`, an R-6 deviation from the whole-name TS rule). Length is
+/// bytes (R-7).
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::naming::{validate_name, NameError};
+/// assert_eq!(validate_name("Button.tsx"), Ok(()));
+/// assert_eq!(validate_name("CON.txt"), Err(NameError::Reserved));
+/// ```
+pub fn validate_name(name: &str) -> Result<(), NameError> {
+    check(name, MAX_NAME_BYTES, false)
+}
+
+/// Validate a vault file-name **stem** (`.md` excluded): [`validate_name`]'s rules, plus a leading
+/// dot is refused (hidden file) and a stem ending `.md` (any case) is refused (`x.md.md`). The
+/// length cap is 252 bytes so `stem.md` fits 255. Check the stem, not the joined name: `trail.`
+/// plus `.md` would pass as `trail..md`.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::naming::{validate_stem, NameError};
+/// assert_eq!(validate_stem("café"), Ok(()));
+/// assert_eq!(validate_stem(".hidden"), Err(NameError::EdgeDot));
+/// assert_eq!(validate_stem("x.MD"), Err(NameError::MdExtension));
+/// ```
+pub fn validate_stem(stem: &str) -> Result<(), NameError> {
+    check(stem, MAX_STEM_BYTES, true)
+}
+
+/// The default vault stem for a title: [`slugify`], cut to 252 bytes (slug is ASCII, so any byte
+/// cut is a char boundary), trailing `-` trimmed, `untitled` when empty. Not validated: a result
+/// like `con` is for [`validate_stem`] to refuse (reject, never sanitise).
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::naming::default_stem;
+/// assert_eq!(default_stem("Button Group"), "button-group");
+/// assert_eq!(default_stem("日本"), "untitled");
+/// ```
+pub fn default_stem(title: &str) -> String {
+    let mut s = slugify(title);
+    s.truncate(MAX_STEM_BYTES);
+    s.truncate(s.trim_end_matches('-').len());
+    if s.is_empty() {
+        "untitled".to_owned()
+    } else {
+        s
+    }
 }
 
 /// Reject a name input containing `/`, `\`, NUL or `..` (a substring test, so `a..b` fails).

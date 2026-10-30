@@ -111,6 +111,7 @@ pub fn success(op: &str, v: &Value) -> String {
             || matches!(
                 op,
                 "artifact.create"
+                    | "artifact.rename"
                     | "artifact.update"
                     | "artifact.patch"
                     | "artifact.write_file"
@@ -120,6 +121,15 @@ pub fn success(op: &str, v: &Value) -> String {
             format!("wrote {}  {}", s(v, "path"), s(v, "hash"))
         }
         "artifact.delete" => format!("deleted {}", s(v, "path")),
+        // The name is client text: escaped, and a refusal carries its code and English.
+        "naming.check" => match v["error"].as_object() {
+            None => s(v, "fileName"),
+            Some(e) => format!(
+                "{}: {}",
+                s(v, "fileName"),
+                coded_value(e["code"].as_str().unwrap_or("?"), &e["params"])
+            ),
+        },
         "vars.list" | "vars.search" | "varsets.match" | "varsets.apply" => {
             super::varsets::success(op, v).unwrap_or_default()
         }

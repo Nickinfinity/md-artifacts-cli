@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Snippets/hello.md", expectedHash = "0000000000000000000000000000000000000000000000000000000000000000", newPath = "Snippets/b.md" }
+expect_error = "file.conflict"
+expect_files = { "Snippets/hello.md" = "---\nartifactType: Snippet\ntitle: Hello\ndescription: Fixture snippet\ntags: [fixture]\n---\n\n```bash\necho <VK-greeting> <VK-name>\n```\n\nvars:\n```yaml VKs\nVK-greeting: marker-7f3a\n```\n", "Snippets/b.md" = false }

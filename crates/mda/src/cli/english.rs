@@ -49,6 +49,8 @@ pub fn english(code: &str) -> Option<&'static str> {
         VARS_UNTAGGED_DEFAULTS => {
             "a fence holds VK- keys but is not tagged ```yaml VKs, so its values are not read"
         }
+        RENAME_INDEX_LINK => "an index links the old name",
+        RENAME_LINKS_UNCHECKED => "index links not checked",
         VARS_MIXED_FILE => {
             "a variables fence sits before the first ## section; edits refuse this file"
         }
@@ -74,16 +76,15 @@ pub fn english(code: &str) -> Option<&'static str> {
         RENDER_CONTAINS_ESCAPE => {
             "rendered output contains terminal control characters; use --json to receive it"
         }
-        NAMING_PATH_INJECTION => "the output file name contains a path separator, \"..\", or NUL",
-        NAMING_EMPTY => "the output file name is empty",
-        NAMING_EDGE_SPACE => "the output file name starts or ends with a space",
-        NAMING_EDGE_DOT => "the output file name ends with a dot",
-        NAMING_ILLEGAL_CHAR => {
-            "the output file name contains an illegal character (\\ / : * ? \" < > |)"
-        }
-        NAMING_CONTROL_CHAR => "the output file name contains a control character",
-        NAMING_RESERVED => "the output file name is a reserved system name",
-        NAMING_TOO_LONG => "the output file name is longer than 255 bytes",
+        NAMING_PATH_INJECTION => "the file name contains a path separator, \"..\", or NUL",
+        NAMING_EMPTY => "the file name is empty",
+        NAMING_EDGE_SPACE => "the file name starts or ends with a space",
+        NAMING_EDGE_DOT => "the file name starts or ends with a dot",
+        NAMING_ILLEGAL_CHAR => "the file name contains an illegal character (\\ / : * ? \" < > |)",
+        NAMING_CONTROL_CHAR => "the file name contains a control character",
+        NAMING_RESERVED => "the file name is a reserved system name",
+        NAMING_TOO_LONG => "the file name is longer than 255 bytes",
+        NAMING_MD_EXTENSION => "the file name already ends in .md",
         ARTIFACT_NOT_WHOLE_FILE => "this artifact type does not write a file",
         ARTIFACT_MULTI_BLOCK => "a whole-file artifact must have a single block",
         ARTIFACT_IS_INDEX => "a template index is run, not written",

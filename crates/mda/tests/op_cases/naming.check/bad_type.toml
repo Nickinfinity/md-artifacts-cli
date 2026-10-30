@@ -1,0 +1,2 @@
+params = { type = "Nope", title = "x" }
+expect_error = "op.bad_request"

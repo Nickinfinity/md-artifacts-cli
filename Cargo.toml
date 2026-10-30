@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/mda-core", "crates/mda-vault", "crates/mda-ops", "crates/mda"]
 
 [workspace.package]
-version = "0.11.0"
+version = "0.12.0"
 edition = "2024"
 rust-version = "1.97"
 

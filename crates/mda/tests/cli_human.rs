@@ -132,9 +132,10 @@ fn new_with_escape_in_path_prints_no_raw_escape() {
         ],
         MODEL.as_bytes(),
     );
-    assert_eq!(out.status.code(), Some(0), "{:?}", out.stderr);
+    assert_eq!(out.status.code(), Some(1), "{:?}", out.stderr);
     assert!(!out.stdout.contains(&0x1b), "{:?}", out.stdout);
     assert!(!out.stderr.contains(&0x1b), "{:?}", out.stderr);
+    assert!(!d.join("Templates").join("e\x1bvil.md").exists());
     std::fs::remove_dir_all(d).unwrap();
 }
 

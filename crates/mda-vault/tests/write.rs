@@ -52,6 +52,18 @@ fn create_writes_bytes() {
     no_temp(&t.vault().join("Templates"));
 }
 
+// A 255-byte name is valid; the temp name built from it must not exceed the file-system limit.
+#[test]
+fn create_and_replace_a_255_byte_name() {
+    let t = Tmp::new("longname");
+    let r = t.root();
+    let rel = format!("Templates/{}.md", "a".repeat(252));
+    create_new(&r, Path::new(&rel), b"x").unwrap();
+    replace(&r, Path::new(&rel), b"y", &content_hash(b"x"), MAX).unwrap();
+    assert_eq!(fs::read(t.vault().join(&rel)).unwrap(), b"y");
+    no_temp(&t.vault().join("Templates"));
+}
+
 #[test]
 fn create_twice_is_exists_and_keeps_bytes() {
     let t = Tmp::new("twice");
