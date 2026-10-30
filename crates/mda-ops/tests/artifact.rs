@@ -33,6 +33,7 @@ impl Vault {
         fs::create_dir_all(p.parent().unwrap()).unwrap();
         fs::write(p, body).unwrap();
     }
+    #[cfg(unix)]
     fn outside(&self, name: &str) -> PathBuf {
         let d = self.dir.with_file_name(format!(
             "{}-out",

@@ -5,6 +5,7 @@ mod common;
 use common::{copy_tree, run};
 
 const VAULT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/vault");
+#[cfg(unix)]
 const HELLO: &str = "ec08b1ff85244ca852728e7bf761ccb8cfcaf796abd9ddfef6e5f8aef5082c1e";
 const WIDGET: &str = "dfb8eaca9f611de341f5176b4e6bc16256a221a5f0b89bbf812aaa96e1abc6a0";
 

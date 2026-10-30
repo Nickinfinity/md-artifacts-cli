@@ -44,6 +44,7 @@ fn skipped_code(r: &ApplyResult) -> (&'static str, &BTreeMap<String, String>) {
     }
 }
 
+#[cfg(unix)]
 fn assert_no_abs(params: &BTreeMap<String, String>, base: &Path) {
     for v in params.values() {
         assert!(!Path::new(v).is_absolute(), "absolute param {v}");

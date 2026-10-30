@@ -20,6 +20,7 @@ impl Tmp {
     fn v(&self, rel: &str) -> PathBuf {
         self.0.join("vault").join(rel)
     }
+    #[cfg(unix)]
     fn out(&self, rel: &str) -> PathBuf {
         self.0.join("outside").join(rel)
     }

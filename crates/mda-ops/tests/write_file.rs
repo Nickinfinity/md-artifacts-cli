@@ -3,7 +3,9 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)] // reason: tests
 
 use std::fs;
-use std::path::{Path, PathBuf};
+#[cfg(unix)]
+use std::path::Path;
+use std::path::PathBuf;
 
 use mda_ops::artifact_write::{CreateRequest, create};
 use mda_ops::write_file::{WriteFileRequest, write_file};
@@ -68,6 +70,7 @@ impl Env {
     }
 }
 
+#[cfg(unix)]
 fn outside(name: &str) -> PathBuf {
     tmp(name, "outside")
 }

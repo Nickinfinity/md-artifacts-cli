@@ -31,6 +31,7 @@ fn assert_no_abs(e: &OpError, root: &Path) {
     }
 }
 
+#[cfg(unix)]
 fn names(dir: &Path) -> Vec<String> {
     let mut v: Vec<String> = fs::read_dir(dir)
         .unwrap()

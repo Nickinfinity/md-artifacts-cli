@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use mda_ops::vars::{ListRequest, SearchRequest, list, search};
 use mda_ops::{Ctx, OpError, Root};
 
+#[cfg(unix)]
 const MARKER: &str = "SECRET-MARKER-7731";
 
 fn vault(name: &str) -> (PathBuf, Ctx) {

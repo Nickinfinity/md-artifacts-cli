@@ -5,7 +5,9 @@
 use std::fs;
 use std::path::PathBuf;
 
-use mda_vault::{DirState, Root, VaultError, create_type_dir, dir_state, validate_vault};
+#[cfg(unix)]
+use mda_vault::{DirState, dir_state};
+use mda_vault::{Root, VaultError, create_type_dir, validate_vault};
 
 /// Fresh temp dir, removed on drop (std only).
 struct Tmp(PathBuf);
