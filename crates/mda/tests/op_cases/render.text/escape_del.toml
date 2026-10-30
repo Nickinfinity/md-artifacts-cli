@@ -1,0 +1,2 @@
+params = { text = "a\u007fb" }
+expect = { output = "a\u007fb", warnings = [], containsEscape = true }

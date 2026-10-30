@@ -825,8 +825,9 @@ const users = [
 - **Warning codes** (each with `line` and `name` or `path`; one per code and token): `render.unknown_var`,
   `render.each_not_list`, `render.unterminated`, `render.unmatched_end`, `render.self_nested`,
   `render.not_scalar`, `render.join_record`, `render.join_empty`.
-- The render result also reports whether the output contains an `ESC` character, so terminal clients
-  can refuse it uniformly.
+- The render result also reports whether the output contains a terminal control (`containsEscape`: any C0
+  control except TAB and LF — a CR directly before LF is exempt — DEL, or any C1 control U+0080–U+009F), so
+  terminal clients can refuse it uniformly.
 
 ---
 

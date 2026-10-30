@@ -238,6 +238,34 @@ fn contains_escape_flag() {
 }
 
 #[test]
+fn terminal_control_predicate_table() {
+    use mda_core::render::has_terminal_control as f;
+    for s in [
+        "a\u{9b}31mb",
+        "\u{85}",
+        "\u{80}",
+        "\u{9f}",
+        "a\rb",
+        "a\r",
+        "a\r\r\nb",
+        "\0",
+        "\u{f}",
+        "\u{7f}",
+        "\u{1b}",
+    ] {
+        assert!(f(s), "{s:?}");
+    }
+    for s in ["a\tb", "a\nb", "a\r\nb", "", "é", "\u{a0}", "\u{2028}"] {
+        assert!(!f(s), "{s:?}");
+    }
+    assert!(
+        render("a\u{9b}31mb", &[], &Values::new())
+            .unwrap()
+            .contains_escape
+    );
+}
+
+#[test]
 fn output_limit_refuses_and_boundary_passes() {
     let big = vals(&[("VK-v", s(&"a".repeat(64 * 1024)))]);
     let err = render(&"<VK-v>".repeat(17), &[], &big).unwrap_err();

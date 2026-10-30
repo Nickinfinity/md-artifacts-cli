@@ -3,7 +3,9 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-20): W7e landed** — the legacy `KEY=value` dialect is gone: defaults bodies are YAML only (a `K=v` line is
+> **Status (2026-10-29): ER-3 landed (MAC-16)** — `containsEscape` flags every terminal control (C0 but TAB/LF, CRLF
+> exempt; DEL; C1), one predicate `mda_core::render::has_terminal_control`; protocol **2.1**, engine `0.11.0`.
+> **W7e landed (2026-10-20)** — the legacy `KEY=value` dialect is gone: defaults bodies are YAML only (a `K=v` line is
 > `vks.mixed_dialect`), no unfenced `vars:` section, `migrate.vks.*` / `mda migrate vks` / `migrate.unfenced_vars` removed; protocol
 > **2.0** (first major, PROTOCOL §7.2), engine `0.10.0`.
 > **W7d landed (MAC-13)** — the defaults fence is ```` ```yaml VKs ```` (Obsidian highlights YAML; `VKs` keeps it
@@ -157,7 +159,7 @@ md-artifacts-cli/
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
-├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.0) — orchestrator-owned
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.1) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
 ├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
@@ -203,7 +205,7 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
-- **Authority: `spec/PROTOCOL.md`** (protocol `2.0`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e). Its method, error-code and warning-code
+- **Authority: `spec/PROTOCOL.md`** (protocol `2.1`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1` additive (ER-3)). Its method, error-code and warning-code
   tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
   `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
@@ -362,7 +364,8 @@ analysis:
 - **No panics on input:** `#![forbid(unsafe_code)]`; `unwrap`/`expect`/`panic!` denied outside tests.
 - **stdout discipline** in `serve`/`mcp` (above): a stray byte breaks every client.
 - **Terminal safety for rendered output:** clients that send rendered text to a terminal refuse
-  content containing `ESC` (`\x1b`); the engine reports it in the render response (`containsEscape`),
+  content containing a terminal control (C0 except TAB/LF, a CR before LF exempt; DEL; C1 — `has_terminal_control`);
+  the engine reports it in the render response (`containsEscape`),
   so every client can apply the same rule. The CLI's human `render` refuses it
   (`render.contains_escape`); `--json` returns the response unchanged.
 - **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete`,

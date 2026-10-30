@@ -58,8 +58,8 @@ impl Warning {
     }
 }
 
-/// A successful render: the text, its warnings, and whether the text holds an ESC character
-/// (terminal clients refuse it, D-11).
+/// A successful render: the text, its warnings, and whether the text holds a terminal control
+/// (see [`has_terminal_control`]; terminal clients refuse it).
 ///
 /// # Examples
 ///
@@ -90,6 +90,26 @@ pub enum RenderError {
     Limit(LimitExceeded),
 }
 
+/// True when `s` holds a terminal control: any `char::is_control` (C0, DEL, C1) except TAB, LF and
+/// a CR directly followed by LF (CRLF vault files keep their `\r`; a bare CR rewrites the line).
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::render::has_terminal_control;
+/// assert!(has_terminal_control("a\u{9b}31m") && has_terminal_control("a\rb"));
+/// assert!(!has_terminal_control("a\r\nb\t"));
+/// ```
+pub fn has_terminal_control(s: &str) -> bool {
+    let mut it = s.chars().peekable();
+    while let Some(c) = it.next() {
+        if c.is_control() && c != '\t' && c != '\n' && !(c == '\r' && it.peek() == Some(&'\n')) {
+            return true;
+        }
+    }
+    false
+}
+
 /// Render `code` with the defaults in `vars` and the client's `values` (spec §4.1, §10).
 ///
 /// # Examples
@@ -98,6 +118,8 @@ pub enum RenderError {
 /// use mda_core::{model::ParsedVar, render::{Values, render}};
 /// let r = render("echo <VK-a>", &[ParsedVar::text("VK-a", "x")], &Values::new()).unwrap();
 /// assert!(!r.contains_escape);
+/// let c1 = Values::from([("VK-a".to_owned(), mda_core::vks::VksValue::Str("\u{9b}".into()))]);
+/// assert!(render("echo <VK-a>", &[], &c1).unwrap().contains_escape); // C1 counts, not only ESC
 /// ```
 pub fn render(code: &str, vars: &[ParsedVar], values: &Values) -> Result<Rendered, LimitExceeded> {
     let table = resolve::Table::new(vars, code, values);
@@ -107,7 +129,7 @@ pub fn render(code: &str, vars: &[ParsedVar], values: &Values) -> Result<Rendere
     eval::eval(code, &toks, &table, &mut budget, &mut warnings)?;
     let output = budget.out;
     Ok(Rendered {
-        contains_escape: output.contains('\u{1b}'),
+        contains_escape: has_terminal_control(&output),
         output,
         warnings: warnings.into_sorted(),
     })

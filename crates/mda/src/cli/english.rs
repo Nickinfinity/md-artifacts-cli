@@ -72,7 +72,7 @@ pub fn english(code: &str) -> Option<&'static str> {
         ARTIFACT_NOT_SERIALIZABLE => "this file cannot be rewritten by the engine",
         RENDER_LIMIT => "rendering exceeds a size limit",
         RENDER_CONTAINS_ESCAPE => {
-            "rendered output contains an ESC character; use --json to receive it"
+            "rendered output contains terminal control characters; use --json to receive it"
         }
         NAMING_PATH_INJECTION => "the output file name contains a path separator, \"..\", or NUL",
         NAMING_EMPTY => "the output file name is empty",

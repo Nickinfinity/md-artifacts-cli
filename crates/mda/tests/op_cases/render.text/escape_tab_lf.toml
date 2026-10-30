@@ -1,0 +1,2 @@
+params = { text = "a\tb\nc" }
+expect = { output = "a\tb\nc", warnings = [], containsEscape = false }

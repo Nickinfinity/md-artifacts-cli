@@ -21,7 +21,7 @@ fn coded_line<'a>(code: &str, params: impl Iterator<Item = (&'a String, &'a Stri
 }
 
 /// A refusal of a successful response the human CLI will not print (R-2: rendered output holding
-/// ESC); `None` to print it.
+/// a terminal control, `containsEscape`); `None` to print it.
 ///
 /// # Examples
 ///
@@ -29,7 +29,6 @@ fn coded_line<'a>(code: &str, params: impl Iterator<Item = (&'a String, &'a Stri
 /// let _ = mda::cli::print::refuse("system.ops", &serde_json::json!({}));
 /// ```
 pub fn refuse(op: &str, v: &Value) -> Option<OpError> {
-    // ponytail: refuses ESC only; C1 U+009B (single-char CSI) passes — R-25(15); refuse C1 too if a terminal client needs it.
     // write_file output goes to a file, so only render can reach the terminal.
     (matches!(op, "artifact.render" | "render.text") && v["containsEscape"] == true)
         .then(|| OpError::new(mda_ops::error::RENDER_CONTAINS_ESCAPE))

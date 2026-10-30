@@ -8,11 +8,11 @@ extension today; MCP later reuses the framing). `mda serve` implements it.
 > warning-code tables below are **guarded** by `crates/mda/tests/protocol_doc.rs`: they must stay
 > set-equal to `system.ops`, `ALL_CODES` and the render warning codes, or the gate fails.
 
-**Protocol version:** `2.0`
+**Protocol version:** `2.1`
 
 **Max line:** `16777216` bytes
 
-Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` (W7c) and `1.2` (W7d) were additive minors; `2.0` (W7e, 2026-10-20, §7.2) is the first major. Within a major every change is additive (§7).
+Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` (W7c) and `1.2` (W7d) were additive minors; `2.0` (W7e, 2026-10-20, §7.2) is the first major; `2.1` (ER-3, 2026-10-29) an additive minor. Within a major every change is additive (§7).
 
 ## 1. Transport
 
@@ -51,7 +51,7 @@ The first request must be `initialize`:
 ```
 
 - `params.protocol` is `"MAJOR.MINOR"`; other keys (e.g. `clientInfo`) are tolerated and ignored.
-- Result: `{"protocol":"2.0","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
+- Result: `{"protocol":"2.1","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
   per type `type, dir, contexts, defaultEnabled, writesFile, outputNameKey?, multiBlock, language?`.
 - A missing or non-string `protocol` → −32000 `op.bad_request` (no `reason`).
 - The major is the text before the first `.`; a different major → −32000 `protocol.version_mismatch`
@@ -243,6 +243,7 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 | `1.1` | 0.8.0 | Lossless rewrite (format spec §7.6). **Response:** `artifact.read` gains `layout` (absent = fenced). **Request:** the `artifact.create` / `artifact.update` model gains `layout` and `paths`. **Behaviour:** `artifact.update` rewrites a flagged file when the model's `layout.payload` is `flags`, and an index file when the model carries its `paths`; otherwise the 1.0 refusal `artifact.not_serializable{reason}` stands, so a 1.0 client can never erase notes or `paths`. A frontmatter `artifact.patch` on a flagged file now succeeds (byte-surgical). No method, code or param key was added or removed. Emitted bytes changed (tags and `paths` as block lists, `tags` last); the file format is versioned by the format spec, not here |
 | `1.2` | 0.9.0 | Defaults fence ```` ```yaml VKs ```` (format spec §9; ```` ```vks ```` no longer read). **Response:** a defaults fence's `fenceLang`, and a Variables file's hoisted `frontmatter.language`, are `"yaml VKs"` (were `"vks"`). **Code:** `vars.untagged_defaults{info}` (a `vault.validate` warning). Emitted bytes: every defaults fence opens ```` ```yaml VKs ```` |
 | `2.0` | 0.10.0 | **Breaking** (§7.2): the legacy `KEY=value` variables dialect is gone, with everything that existed only for it |
+| `2.1` | 0.11.0 | `containsEscape` widened (§11): any terminal control — C0 except TAB and LF (a CR directly before LF is exempt), DEL, C1 U+0080–U+009F — not only ESC. No method, field or code added. The CRLF exemption is looser than a client's "C0 except TAB" predicate |
 
 ### 7.2 What 2.0 removed
 
@@ -277,6 +278,12 @@ config dir and workspace.
 engine's semver.
 
 ## 11. Client notes
+
+**`containsEscape`** (`artifact.render`, `render.text`, `artifact.write_file`, `index.run`) is `true` when the output holds a
+terminal control: any Unicode `Cc` character (C0 U+0000–U+001F, DEL U+007F, C1 U+0080–U+009F) except TAB, LF, and a CR
+**directly followed by LF** (CRLF vault files). A bare CR (`a\rb`, a final `a\r`) counts; so does the first CR of `\r\r\n`.
+Since `2.1`; in `2.0` it meant ESC only. Clients that send rendered text to a terminal refuse it; the human CLI `render` does
+(`render.contains_escape`).
 
 Names used by the extension's cutover plan that are not methods, mapped to the real op:
 

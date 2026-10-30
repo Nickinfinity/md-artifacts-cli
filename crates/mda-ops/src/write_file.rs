@@ -41,7 +41,7 @@ pub struct WriteFileRequest {
 }
 
 /// What `artifact.write_file` wrote: the workspace-relative path, the written bytes' hash, the
-/// render warnings and whether the bytes hold an ESC character.
+/// render warnings and whether the bytes hold a terminal control (`has_terminal_control`).
 ///
 /// # Examples
 ///

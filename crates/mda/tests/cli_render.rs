@@ -159,3 +159,15 @@ fn prefill_file_builds_target_model() {
     assert_eq!(l[0]["target"], "CLAUDE.md");
     std::fs::remove_dir_all(d).unwrap();
 }
+
+#[test]
+fn render_text_refuses_c1_and_bare_cr() {
+    for input in ["a\u{9b}31m", "a\rb"] {
+        let o = run(&["render", "text", "-"], input.as_bytes());
+        let err = String::from_utf8_lossy(&o.stderr);
+        assert_eq!(o.status.code(), Some(1), "{input:?}");
+        assert!(o.stdout.is_empty(), "{input:?}");
+        assert!(err.starts_with("render.contains_escape:"), "{err}");
+        assert!(!err.contains('\u{9b}') && !err.contains('\r'), "{err:?}");
+    }
+}

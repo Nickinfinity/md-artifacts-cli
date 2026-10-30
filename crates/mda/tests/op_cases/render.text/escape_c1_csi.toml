@@ -1,0 +1,2 @@
+params = { text = "a\u009b31mb" }
+expect = { output = "a\u009b31mb", warnings = [], containsEscape = true }

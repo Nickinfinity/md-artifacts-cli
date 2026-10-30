@@ -84,7 +84,8 @@ pub const ARTIFACT_NOT_SERIALIZABLE: &str = "artifact.not_serializable";
 /// A render expansion limit was reached; the whole render is refused. Params `limit`
 /// (`output_bytes` | `iterations` | `steps` | `depth`), `max`.
 pub const RENDER_LIMIT: &str = "render.limit";
-/// The human CLI refuses to print rendered output holding an ESC character (`--json` returns it).
+/// The human CLI refuses to print rendered output holding a terminal control (C0 but TAB/LF/CRLF, DEL,
+/// C1; `--json` returns it).
 pub const RENDER_CONTAINS_ESCAPE: &str = "render.contains_escape";
 /// `artifact.write_file` on a type that does not write a file. Param `type`.
 pub const ARTIFACT_NOT_WHOLE_FILE: &str = "artifact.not_whole_file";

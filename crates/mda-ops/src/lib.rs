@@ -29,6 +29,6 @@ pub use registry::{Ctx, OpSpec, Source, check_names, dispatch, dispatch_in, ops,
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_ops::PROTOCOL, "2.0");
+/// assert_eq!(mda_ops::PROTOCOL, "2.1");
 /// ```
-pub const PROTOCOL: &str = "2.0";
+pub const PROTOCOL: &str = "2.1";
