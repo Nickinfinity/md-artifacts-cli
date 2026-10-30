@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/component.md", fileName = "../x" }
+expect_error = "naming.path_injection"
+expect_error_params = { field = "fileName" }

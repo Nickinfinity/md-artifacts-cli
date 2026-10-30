@@ -3,11 +3,14 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-30): ER-4 + ER-6 landed (MAC-17, MAC-18)** — vault file names: one stem rule
+> **Status (2026-10-30): ER-7 + ER-5 landed (MAC-19, MAC-20)** — `join` on `artifact.render` / `render.text` joins a rendered
+> Command into one line or refuses `render.unjoinable{line, reason}` (never guesses; the scanner `mda-core/src/render/join.rs`,
+> spec §4.3), response `joined: true`; `naming.output` (the write_file output name, nothing written); protocol **2.3**, engine `0.13.0`.
+> **ER-4 + ER-6 landed (MAC-17, MAC-18)** — vault file names: one stem rule
 > `mda_core::naming::validate_stem` (spec §14.1; `naming.md_extension`, leading dot refused, C1 is `naming.control_char`) on every
 > name-creating write, `default_stem` (252-byte slug); `naming.check` (pure); `artifact.rename` (verbatim or with a model, no clobber,
 > `mda_vault::rename_new` publishes by hard link; index links warned `rename.index_link`, never rewritten; wikilinks untouched);
-> protocol **2.2**, engine `0.12.0`.
+> protocol 2.2, engine `0.12.0`.
 > **ER-3 landed (MAC-16)** — `containsEscape` flags every terminal control (C0 but TAB/LF, CRLF
 > exempt; DEL; C1), one predicate `mda_core::render::has_terminal_control`; protocol **2.1**, engine `0.11.0`.
 > **W7e landed (2026-10-20)** — the legacy `KEY=value` dialect is gone: defaults bodies are YAML only (a `K=v` line is
@@ -152,7 +155,7 @@ md-artifacts-cli/
 │   │       ├── error.rs       # OpError { code, params } — the ONLY error shape clients see
 │   │       ├── artifact_write.rs · artifact_rewrite.rs  # create/update/patch/delete · the one rewrite path (`prepare`, `rewrite`)
 │   │       ├── artifact_rename.rs · rename_links.rs  # artifact.rename · index links to a path (warnings)
-│   │       ├── naming.rs      # naming.check
+│   │       ├── naming.rs      # naming.check, naming.output
 │   │       ├── render.rs · write_file.rs · prefill.rs  # artifact.render / write_file / prefill (W3)
 │   │       ├── index.rs · index_create.rs  # index.plan / run / create (W3b)
 │   │       ├── vars.rs        # vars.file/meta/subset/var edits (W5); vars/{requests,list,scan}.rs (W5b: list, search, the walk collector)
@@ -168,7 +171,7 @@ md-artifacts-cli/
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
-├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.2) — orchestrator-owned
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.3) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
 ├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
@@ -214,7 +217,7 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
-- **Authority: `spec/PROTOCOL.md`** (protocol `2.2`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`/`2.2` additive (ER-3; ER-4 + ER-6)). Its method, error-code and warning-code
+- **Authority: `spec/PROTOCOL.md`** (protocol `2.3`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`–`2.3` additive (ER-3; ER-4 + ER-6; ER-7 + ER-5)). Its method, error-code and warning-code
   tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
   `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
@@ -269,6 +272,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | `<VK-…>` token grammar | `mda-core/src/parse/tokens.rs` (`TOKEN_PATTERN`) |
 | The defaults fence info string (`yaml VKs`) | `mda-core/src/parse/fence.rs` (`DEFAULTS_INFO`) |
 | Token substitution, directives, expansion limits | `mda-core/src/render/` (tokenizes only through `TOKEN_PATTERN`) |
+| Joining a Command into one line (techniques, the refusal scanner) | `mda-core/src/render/join.rs` |
 | The vks codec | `mda-core/src/vks/` |
 | `vks.*` codes | `mda-core/src/error.rs` (listed in `mda-ops` `ALL_CODES`) |
 | JS trim / line split / decoding | `mda-core/src/parse/text.rs` |

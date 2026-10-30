@@ -29,6 +29,7 @@ fn req(code: Option<String>, values: Values) -> RenderRequest {
         block: None,
         code,
         values,
+        join: None,
     }
 }
 
@@ -72,4 +73,36 @@ fn bad_values_fail_before_the_file_is_read() {
     let e = render(&c, r).unwrap_err();
     assert_eq!(e.code, "vks.control_char");
     no_abs(&e, &canon);
+}
+
+#[test]
+fn join_limit_counts_the_joined_bytes() {
+    use mda_core::vks::VksList;
+    use mda_ops::render::{TextRequest, text};
+    let mut v = Values::new();
+    v.insert(
+        "VK-u".into(),
+        VksValue::List(VksList::Strings(vec!["i".into(); 1000])),
+    );
+    v.insert("VK-g".into(), VksValue::Str("g".repeat(1046)));
+    let mk = |join| TextRequest {
+        text: "<VK-each:u>\n<VK-g>\n<VK-end:u>".into(),
+        values: v.clone(),
+        join,
+    };
+    // Rendered fits; the ` && ` separators push the joined text over the cap.
+    let plain = text(&Ctx::new(None), mk(None)).unwrap();
+    assert_eq!(plain.output.len(), 1_047_000);
+    // The refused joined length: 1000 lines of 1046 bytes, 999 separators of 4 bytes (` && `).
+    let joined_len = 1000 * 1046 + 999 * 4;
+    assert_eq!(joined_len, 1_049_996);
+    assert!(plain.output.len() <= mda_core::render::MAX_OUTPUT_BYTES);
+    assert!(joined_len > mda_core::render::MAX_OUTPUT_BYTES);
+    let e = text(
+        &Ctx::new(None),
+        mk(Some(mda_core::render::JoinTechnique::And)),
+    )
+    .unwrap_err();
+    assert_eq!(e.code, "render.limit");
+    assert_eq!(e.params["limit"], "output_bytes");
 }

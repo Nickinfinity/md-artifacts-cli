@@ -93,6 +93,11 @@ pub(crate) static OPS: &[OpSpec] = &[
         handler: |c, v| typed(c, v, naming::check),
     },
     OpSpec {
+        name: "naming.output",
+        summary: "The output file name a whole-file artifact would write",
+        handler: |c, v| typed(c, v, naming::output),
+    },
+    OpSpec {
         name: "render.text",
         summary: "Fill tokens in text with values (no artifact)",
         handler: |c, v| typed(c, v, render::text),

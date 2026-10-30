@@ -101,6 +101,9 @@ pub enum RenderCmd {
         /// Values as a JSON object (file, or `-` for stdin).
         #[arg(long)]
         values: Option<String>,
+        /// Join the lines into one command: and, seq, continuation, pwsh, cmd.
+        #[arg(long)]
+        join: Option<String>,
     },
 }
 
@@ -183,9 +186,9 @@ fn request(cmd: Command, ctx: &mda_ops::Ctx) -> Option<(String, Result<Value, Op
         Command::Varsets(cmd) => return Some(varsets::varsets_request(cmd)),
         Command::Migrate(cmd) => return Some(migrate::migrate_request(cmd, ctx)),
         Command::Naming(cmd) => return Some(naming::naming_request(cmd)),
-        Command::Render(RenderCmd::Text { file, values }) => (
+        Command::Render(RenderCmd::Text { file, values, join }) => (
             "render.text".to_owned(),
-            input::render_text_params(&file, values),
+            input::render_text_params(&file, values, join),
         ),
         Command::System(SystemCmd::Version) => ("system.version".to_owned(), Ok(json!({}))),
         Command::System(SystemCmd::Ops) => ("system.ops".to_owned(), Ok(json!({}))),

@@ -88,6 +88,11 @@ pub const RENDER_LIMIT: &str = "render.limit";
 /// The human CLI refuses to print rendered output holding a terminal control (C0 but TAB/LF/CRLF, DEL,
 /// C1; `--json` returns it).
 pub const RENDER_CONTAINS_ESCAPE: &str = "render.contains_escape";
+/// A render with `join` whose output cannot be joined into one line safely (format spec §4.3). Params
+/// `line` (1-based rendered-output line; `0` for a multi-line value), `reason` (`heredoc` | `comment` |
+/// `open_quote` | `trailing_operator` | `block_keyword` | `multiline_value`), `name` (the variable, for
+/// `multiline_value` only).
+pub const RENDER_UNJOINABLE: &str = "render.unjoinable";
 /// `artifact.write_file` on a type that does not write a file. Param `type`.
 pub const ARTIFACT_NOT_WHOLE_FILE: &str = "artifact.not_whole_file";
 /// `artifact.write_file` on a whole-file artifact with more than one block. Param `count`.
@@ -194,6 +199,7 @@ pub const ALL_CODES: &[&str] = &[
     ARTIFACT_NOT_SERIALIZABLE,
     RENDER_LIMIT,
     RENDER_CONTAINS_ESCAPE,
+    RENDER_UNJOINABLE,
     NAMING_PATH_INJECTION,
     NAMING_EMPTY,
     NAMING_EDGE_SPACE,

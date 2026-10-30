@@ -69,9 +69,13 @@ pub(crate) fn render_params(
     block: Option<usize>,
     code_file: Option<String>,
     values: Option<String>,
+    join: Option<String>,
 ) -> Result<Value, OpError> {
     let mut p = Map::new();
     p.insert("path".into(), json!(path));
+    if let Some(j) = join {
+        p.insert("join".into(), json!(j));
+    }
     if let Some(b) = block {
         p.insert("block".into(), json!(b));
     }
@@ -159,12 +163,19 @@ pub(crate) fn read_array(p: &str) -> Result<Value, OpError> {
 }
 
 /// `render.text` params: the text (file, or `-` for stdin) and optional values (a JSON object file).
-pub(crate) fn render_text_params(file: &str, values: Option<String>) -> Result<Value, OpError> {
+pub(crate) fn render_text_params(
+    file: &str,
+    values: Option<String>,
+    join: Option<String>,
+) -> Result<Value, OpError> {
     if file == "-" && values.as_deref() == Some("-") {
         return Err(bad_request("file and values both read stdin"));
     }
     let mut p = Map::new();
     p.insert("text".into(), json!(read_input(file)?));
+    if let Some(j) = join {
+        p.insert("join".into(), json!(j));
+    }
     if let Some(f) = values {
         p.insert("values".into(), read_object(&f)?);
     }

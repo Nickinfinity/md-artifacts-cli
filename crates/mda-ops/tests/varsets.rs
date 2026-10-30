@@ -41,7 +41,11 @@ fn m(path: &str) -> MatchRequest {
 }
 
 fn text_req(text: String, values: Values) -> TextRequest {
-    TextRequest { text, values }
+    TextRequest {
+        text,
+        values,
+        join: None,
+    }
 }
 
 #[test]
@@ -231,6 +235,7 @@ fn save_list_match_apply_render_agree() {
         TextRequest {
             text: "<VK-host>/<VK-path>".into(),
             values: a.values,
+            join: None,
         },
     )
     .unwrap();

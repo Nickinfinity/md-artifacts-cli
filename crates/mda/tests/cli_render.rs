@@ -171,3 +171,54 @@ fn render_text_refuses_c1_and_bare_cr() {
         assert!(!err.contains('\u{9b}') && !err.contains('\r'), "{err:?}");
     }
 }
+
+#[test]
+fn render_text_join_prints_one_line_and_refuses_unjoinable() {
+    let o = run(&["render", "text", "-", "--join", "and"], b"a\nb\n");
+    assert_eq!(
+        (o.status.code(), o.stdout.as_slice()),
+        (Some(0), &b"a && b\n"[..])
+    );
+    let o = run(&["render", "text", "-", "--join", "and"], b"a\n# x\n");
+    let err = String::from_utf8_lossy(&o.stderr);
+    assert_eq!(o.status.code(), Some(1));
+    assert!(
+        o.stdout.is_empty() && err.starts_with("render.unjoinable:"),
+        "{err}"
+    );
+    let o = run(&["render", "text", "-", "--join", "nope"], b"a");
+    assert_eq!(o.status.code(), Some(1));
+}
+
+#[test]
+fn artifact_render_join_flag() {
+    let o = run(
+        &[
+            "--vault",
+            VAULT,
+            "artifact",
+            "render",
+            "Snippets/hello.md",
+            "--code-file",
+            "-",
+            "--join",
+            "seq",
+        ],
+        b"a\nb",
+    );
+    assert_eq!(
+        (o.status.code(), o.stdout.as_slice()),
+        (Some(0), &b"a ; b\n"[..]),
+        "{:?}",
+        o.stderr
+    );
+}
+
+#[test]
+fn render_text_join_still_refuses_contains_escape() {
+    let o = run(&["render", "text", "-", "--join", "and"], b"a\rb\nc");
+    let err = String::from_utf8_lossy(&o.stderr);
+    assert_eq!(o.status.code(), Some(1));
+    assert!(o.stdout.is_empty(), "{:?}", o.stdout);
+    assert!(err.starts_with("render.contains_escape:"), "{err}");
+}

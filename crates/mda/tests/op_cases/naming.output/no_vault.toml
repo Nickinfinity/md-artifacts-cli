@@ -1,0 +1,2 @@
+params = { path = "Templates/component.md" }
+expect_error = "vault.not_selected"

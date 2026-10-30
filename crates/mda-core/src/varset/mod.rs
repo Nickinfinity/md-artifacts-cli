@@ -169,7 +169,7 @@ fn var_text(v: &ParsedVar) -> String {
     parts.join(" ")
 }
 
-fn leaves<'a>(v: &'a VksValue, out: &mut Vec<&'a str>) {
+pub(crate) fn leaves<'a>(v: &'a VksValue, out: &mut Vec<&'a str>) {
     match v {
         VksValue::Str(s) => out.push(s),
         VksValue::List(VksList::Strings(l)) => out.extend(l.iter().map(String::as_str)),

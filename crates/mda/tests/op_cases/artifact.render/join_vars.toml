@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Snippets/hello.md", code = "a <VK-name>\nb <VK-name>\nc", values = { "VK-name" = "bob" }, join = "and" }
+expect = { output = "a bob && b bob && c", warnings = [], containsEscape = false, joined = true }

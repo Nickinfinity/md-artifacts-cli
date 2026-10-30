@@ -387,6 +387,19 @@ fn w6_codes_exact_json() {
             serde_json::json!({"code": "vars.untagged_defaults", "params": {"info": "yaml"}}),
         ),
         (
+            OpError::new(RENDER_UNJOINABLE)
+                .with("line", "2")
+                .with("reason", "comment"),
+            serde_json::json!({"code": "render.unjoinable", "params": {"line": "2", "reason": "comment"}}),
+        ),
+        (
+            OpError::new(RENDER_UNJOINABLE)
+                .with("line", "0")
+                .with("reason", "multiline_value")
+                .with("name", "VK-a"),
+            serde_json::json!({"code": "render.unjoinable", "params": {"line": "0", "reason": "multiline_value", "name": "VK-a"}}),
+        ),
+        (
             OpError::new(NAMING_MD_EXTENSION),
             serde_json::json!({"code": "naming.md_extension", "params": {}}),
         ),
@@ -411,7 +424,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 78);
+    assert_eq!(ALL_CODES.len(), 79);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE

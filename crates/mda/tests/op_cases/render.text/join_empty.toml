@@ -1,0 +1,2 @@
+params = { text = "", join = "and" }
+expect = { output = "", warnings = [], containsEscape = false, joined = true }

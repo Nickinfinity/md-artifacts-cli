@@ -121,6 +121,7 @@ pub fn success(op: &str, v: &Value) -> String {
             format!("wrote {}  {}", s(v, "path"), s(v, "hash"))
         }
         "artifact.delete" => format!("deleted {}", s(v, "path")),
+        "naming.output" => s(v, "fileName"),
         // The name is client text: escaped, and a refusal carries its code and English.
         "naming.check" => match v["error"].as_object() {
             None => s(v, "fileName"),

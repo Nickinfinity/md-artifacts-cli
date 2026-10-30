@@ -83,6 +83,9 @@ pub enum ArtifactCmd {
         /// Values as a JSON object (file, or `-` for stdin).
         #[arg(long)]
         values: Option<String>,
+        /// Join the lines into one command: and, seq, continuation, pwsh, cmd.
+        #[arg(long)]
+        join: Option<String>,
     },
     /// Render a whole-file artifact (Template, AIAgentsConfig) into a workspace folder.
     #[command(name = "write-file")]
@@ -224,9 +227,10 @@ fn w3_request(cmd: ArtifactCmd) -> (String, Result<Value, OpError>) {
             block,
             code_file,
             values,
+            join,
         } => (
             "artifact.render".to_owned(),
-            input::render_params(path, block, code_file, values),
+            input::render_params(path, block, code_file, values, join),
         ),
         ArtifactCmd::WriteFile {
             path,

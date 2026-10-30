@@ -1,7 +1,10 @@
 //! `artifact.render`: render one artifact (or one block, or unsaved code for it) with the client's
 //! values. Pure apart from the bounded read; nothing is written.
 
-use mda_core::render::{RenderError, Rendered, Values, check_values, render_artifact};
+use mda_core::render::{
+    JoinError, JoinTechnique, RenderError, Rendered, Unjoinable, Values, check_join_values,
+    check_values, has_terminal_control, join_lines, select_block,
+};
 
 use crate::artifact::{MAX_ARTIFACT_BYTES, artifact_path, load, root_of};
 use crate::{Ctx, OpError, error};
@@ -26,6 +29,9 @@ pub struct RenderRequest {
     pub code: Option<String>,
     #[serde(default)]
     pub values: Values,
+    /// Join the rendered lines into one command line (`render.unjoinable` when not provably safe).
+    #[serde(default)]
+    pub join: Option<JoinTechnique>,
 }
 
 /// Map a core render refusal to its code: `artifact.block_not_found{block}` (`""` when no block was
@@ -57,7 +63,7 @@ pub fn render_error(e: RenderError) -> OpError {
 ///
 /// ```
 /// use mda_ops::{Ctx, render};
-/// let req = render::RenderRequest { path: "Snippets/a.md".into(), block: None, code: None, values: Default::default() };
+/// let req = render::RenderRequest { path: "Snippets/a.md".into(), block: None, code: None, values: Default::default(), join: None };
 /// assert_eq!(render::render(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn render(ctx: &Ctx, req: RenderRequest) -> Result<Rendered, OpError> {
@@ -75,7 +81,46 @@ pub fn render(ctx: &Ctx, req: RenderRequest) -> Result<Rendered, OpError> {
     }
     check_values(&req.values)?;
     let art = load(root, &req.path)?.artifact;
-    render_artifact(&art, req.block, req.code.as_deref(), &req.values).map_err(render_error)
+    let (body, vars) = select_block(&art, req.block).map_err(render_error)?;
+    let code = req.code.as_deref().unwrap_or(body);
+    if req.join.is_some() {
+        check_join_values(code, vars, &req.values).map_err(unjoinable_error)?;
+    }
+    let r = mda_core::render::render(code, vars, &req.values)
+        .map_err(|l| render_error(RenderError::Limit(l)))?;
+    finish(r, req.join)
+}
+
+/// `render.unjoinable{line, reason, name?}` from the scanner's refusal.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::render::{UnjoinReason, Unjoinable};
+/// let e = mda_ops::render::unjoinable_error(Unjoinable { line: 2, reason: UnjoinReason::Comment, name: None });
+/// assert_eq!((e.code, e.params["line"].as_str(), e.params["reason"].as_str()), ("render.unjoinable", "2", "comment"));
+/// ```
+pub fn unjoinable_error(u: Unjoinable) -> OpError {
+    let e = OpError::new(error::RENDER_UNJOINABLE)
+        .with("line", u.line.to_string())
+        .with("reason", u.reason.as_str());
+    match u.name {
+        Some(n) => e.with("name", n),
+        None => e,
+    }
+}
+
+/// Apply `join` (when sent) to a finished render: the one place `joined` becomes true, and only
+/// after every kept line passed the scanner.
+fn finish(mut r: Rendered, join: Option<JoinTechnique>) -> Result<Rendered, OpError> {
+    let Some(t) = join else { return Ok(r) };
+    r.output = join_lines(&r.output, t).map_err(|e| match e {
+        JoinError::Unjoinable(u) => unjoinable_error(u),
+        JoinError::Limit(l) => render_error(RenderError::Limit(l)),
+    })?;
+    r.contains_escape = has_terminal_control(&r.output);
+    r.joined = true;
+    Ok(r)
 }
 
 /// `render.text` params: free text and the client's values (no artifact, no vault).
@@ -92,6 +137,9 @@ pub struct TextRequest {
     pub text: String,
     #[serde(default)]
     pub values: Values,
+    /// As on `artifact.render`.
+    #[serde(default)]
+    pub join: Option<JoinTechnique>,
 }
 
 /// `render.text`: fill `<VK-…>` tokens in `text` (X-7) — the `artifact.render` response, every render
@@ -101,7 +149,7 @@ pub struct TextRequest {
 ///
 /// ```
 /// use mda_ops::{Ctx, render};
-/// let req = render::TextRequest { text: "plain".into(), values: Default::default() };
+/// let req = render::TextRequest { text: "plain".into(), values: Default::default(), join: None };
 /// assert!(!render::text(&Ctx::new(None), req).unwrap().contains_escape);
 /// ```
 pub fn text(ctx: &Ctx, req: TextRequest) -> Result<Rendered, OpError> {
@@ -114,8 +162,12 @@ pub fn text(ctx: &Ctx, req: TextRequest) -> Result<Rendered, OpError> {
             .with("max", MAX_ARTIFACT_BYTES.to_string()));
     }
     check_values(&req.values)?;
-    mda_core::render::render(&req.text, &[], &req.values)
-        .map_err(|l| render_error(RenderError::Limit(l)))
+    if req.join.is_some() {
+        check_join_values(&req.text, &[], &req.values).map_err(unjoinable_error)?;
+    }
+    let r = mda_core::render::render(&req.text, &[], &req.values)
+        .map_err(|l| render_error(RenderError::Limit(l)))?;
+    finish(r, req.join)
 }
 
 #[cfg(test)]

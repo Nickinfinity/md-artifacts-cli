@@ -1,0 +1,3 @@
+params = { text = "if x; then\necho a\nfi", join = "and" }
+expect_error = "render.unjoinable"
+expect_error_params = { line = "1", reason = "block_keyword" }

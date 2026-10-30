@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Snippets/hello.md", join = "nope" }
+expect_error = "op.bad_request"

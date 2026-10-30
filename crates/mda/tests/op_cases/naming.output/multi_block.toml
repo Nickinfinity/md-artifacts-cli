@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "AIAgentsConf/multi.md" }
+expect_error = "artifact.multi_block"
+expect_error_params = { count = "2" }

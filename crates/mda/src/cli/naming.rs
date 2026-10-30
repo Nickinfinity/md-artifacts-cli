@@ -18,15 +18,33 @@ pub enum NamingCmd {
         #[arg(long = "file-name")]
         file_name: Option<String>,
     },
+    /// The output file name a whole-file artifact would write (nothing is written).
+    Output {
+        /// Vault-relative path.
+        path: String,
+        /// The name the user typed.
+        #[arg(long = "file-name")]
+        file_name: Option<String>,
+    },
 }
 
 /// The op and params an `mda naming` subcommand stands for.
 pub(super) fn naming_request(cmd: NamingCmd) -> (String, Result<Value, OpError>) {
-    let NamingCmd::Check {
-        artifact_type,
-        title,
-        file_name,
-    } = cmd;
+    let (artifact_type, title, file_name) = match cmd {
+        NamingCmd::Check {
+            artifact_type,
+            title,
+            file_name,
+        } => (artifact_type, title, file_name),
+        NamingCmd::Output { path, file_name } => {
+            let mut p = Map::new();
+            p.insert("path".into(), json!(path));
+            if let Some(f) = file_name {
+                p.insert("fileName".into(), json!(f));
+            }
+            return ("naming.output".to_owned(), Ok(Value::Object(p)));
+        }
+    };
     let mut p = Map::new();
     p.insert("type".into(), json!(artifact_type));
     if let Some(t) = title {

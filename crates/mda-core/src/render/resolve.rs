@@ -100,6 +100,11 @@ impl<'v> Table<'v> {
         Self(t)
     }
 
+    /// The effective value of root `name` (typed non-empty, else default), if any.
+    pub(super) fn root(&self, name: &str) -> Option<&'v VksValue> {
+        self.0.get(name).copied()
+    }
+
     /// Where `path` starts: the innermost open loop whose path is a segment-prefix of it (the
     /// remainder is relative to that loop's item), else the global root. Returns the start node,
     /// the segments still to walk, and whether it is global (Choice-eligible).

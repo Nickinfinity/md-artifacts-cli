@@ -4,6 +4,7 @@
 
 mod budget;
 mod eval;
+mod join;
 mod loops;
 mod resolve;
 mod scan;
@@ -12,6 +13,8 @@ use std::collections::BTreeMap;
 
 use crate::error::{LimitExceeded, VarsError};
 use crate::model::{ParsedArtifact, ParsedVar};
+
+pub use join::{JoinError, JoinTechnique, UnjoinReason, Unjoinable, check_join_values, join_lines};
 
 /// Largest rendered output, checked before every append.
 pub const MAX_OUTPUT_BYTES: usize = 1 << 20;
@@ -58,15 +61,17 @@ impl Warning {
     }
 }
 
-/// A successful render: the text, its warnings, and whether the text holds a terminal control
-/// (see [`has_terminal_control`]; terminal clients refuse it).
+/// A successful render: the text, its warnings, whether the text holds a terminal control
+/// (see [`has_terminal_control`]; terminal clients refuse it), and whether it was joined into one
+/// line ([`join_lines`]; `joined` is absent from the JSON unless true).
 ///
 /// # Examples
 ///
 /// ```
 /// use mda_core::render::Rendered;
-/// let r = Rendered { output: "x".into(), warnings: vec![], contains_escape: false };
-/// assert!(serde_json::to_string(&r).unwrap().contains(r#""containsEscape":false"#));
+/// let r = Rendered { output: "x".into(), warnings: vec![], contains_escape: false, joined: false };
+/// let json = serde_json::to_string(&r).unwrap();
+/// assert!(json.contains(r#""containsEscape":false"#) && !json.contains("joined"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -74,6 +79,8 @@ pub struct Rendered {
     pub output: String,
     pub warnings: Vec<Warning>,
     pub contains_escape: bool,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub joined: bool,
 }
 
 /// Why [`render_artifact`] produced nothing.
@@ -132,6 +139,7 @@ pub fn render(code: &str, vars: &[ParsedVar], values: &Values) -> Result<Rendere
         contains_escape: has_terminal_control(&output),
         output,
         warnings: warnings.into_sorted(),
+        joined: false,
     })
 }
 

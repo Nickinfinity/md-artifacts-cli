@@ -256,6 +256,35 @@ it as an unclosed element and swallows every block after it.
 
 This is a **rendering** concern only: the engine resolves every spelling identically.
 
+### 4.3 Joining a Command into one line *(ruled — engine client-requests plan W3, 2026-10-30; ER-7)*
+
+A render request may carry **`join`**: `and` (` && `), `seq` (` ; `), `continuation` (` \` + LF between lines), `pwsh`
+(` ; `) or `cmd` (` & `). PowerShell 7+ and `cmd.exe` stop-at-failure use `and` (the same bytes). The join runs on the
+**rendered output**, after directives and loops: split into lines (LF; one `\r` before LF dropped), each line trimmed,
+blank lines dropped, every kept line checked, then joined. A bare CR inside a line is not a separator and stays
+(`containsEscape` flags it). One line comes back unchanged; only blank lines give `""`. The response then carries
+`joined: true` (absent when `join` was not sent), and `containsEscape` is computed on the joined text.
+
+The engine **never guesses**: a line it cannot prove joinable refuses the whole render with
+`render.unjoinable{line, reason}`. `line` is the 1-based line of the **rendered output**, blank lines counted (unlike
+render warnings, which cite template lines). Reasons, first match per line:
+
+| Reason | The line… |
+|---|---|
+| `heredoc` | holds an unquoted `<<`, or ends `@'` / `@"` (a PowerShell here-string) |
+| `comment` | has an unquoted `#` at its start, after whitespace, or after one of `; & \| ( ) { } < >`; or starts with `rem` / `::` (any case; also `rem.`, `rem/`, `rem:`), has `rem` right after `&`, `&&`, `\|`, `\|\|` or `(`, or starts with `:` (a `cmd` label) |
+| `open_quote` | ends inside `'…'`, `"…"` or an unquoted backtick; or holds an odd number of `"` as `cmd` counts them (`cmd` quotes end with the line, `\` and `'` do not quote, `^` escapes the next character outside a quote) |
+| `trailing_operator` | ends with `\`, `` ` ``, `^`, `&&`, `\|\|`, `\|`, `&` or `;` |
+| `block_keyword` | starts with one of `if then else elif fi for while until do done case esac select function foreach try catch finally switch` (its leading letters, any case), or starts or ends with `{ } ( )` |
+
+Quotes follow POSIX rules (`'…'` has no escapes; `"…"` honours `\`; a bare `\` escapes the next character); the
+scanner stops at the first unquoted comment. Before rendering, a used variable whose effective value holds a line
+feed anywhere (a string, a list item, a record field) is refused as `render.unjoinable{line: "0", reason:
+"multiline_value", name}`: it would silently become two commands. The rules are one set for every technique and
+over-refuse on purpose — the scanner is a line scanner, not a shell parser (PowerShell backtick escapes, `cmd`'s `'`,
+`'it''s'` and a POSIX `\"` are refused). A joined output over the output-size limit (§10, 1 MiB) is `render.limit{limit:
+"output_bytes"}`.
+
 ---
 
 ## 5. Artifact types

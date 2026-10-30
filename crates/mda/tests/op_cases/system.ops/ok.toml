@@ -67,6 +67,10 @@ name = "naming.check"
 summary = "Check a vault file name, or derive the default one"
 
 [[expect.ops]]
+name = "naming.output"
+summary = "The output file name a whole-file artifact would write"
+
+[[expect.ops]]
 name = "render.text"
 summary = "Fill tokens in text with values (no artifact)"
 

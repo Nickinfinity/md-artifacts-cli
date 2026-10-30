@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Snippets/hello.md", code = "a\n# x", join = "and" }
+expect_error = "render.unjoinable"
+expect_error_params = { line = "2", reason = "comment" }

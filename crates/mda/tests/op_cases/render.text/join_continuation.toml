@@ -1,0 +1,2 @@
+params = { text = "a\nb\nc", join = "continuation" }
+expect = { output = "a \\\nb \\\nc", warnings = [], containsEscape = false, joined = true }

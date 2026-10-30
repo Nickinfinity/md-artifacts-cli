@@ -76,6 +76,7 @@ pub fn english(code: &str) -> Option<&'static str> {
         RENDER_CONTAINS_ESCAPE => {
             "rendered output contains terminal control characters; use --json to receive it"
         }
+        RENDER_UNJOINABLE => "the command cannot be joined into one line safely",
         NAMING_PATH_INJECTION => "the file name contains a path separator, \"..\", or NUL",
         NAMING_EMPTY => "the file name is empty",
         NAMING_EDGE_SPACE => "the file name starts or ends with a space",
