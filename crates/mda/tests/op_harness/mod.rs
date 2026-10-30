@@ -398,7 +398,14 @@ fn check_files(
                 let g = got
                     .as_deref()
                     .map(|g| String::from_utf8_lossy(g).into_owned());
-                g.is_some_and(|g| parse(&g).is_some() && parse(&g) == parse(&subst_str(b, &fwd)))
+                g.is_some_and(|g| {
+                    let w = subst_str(b, &fwd);
+                    // A deliberately corrupt file does not parse: it must stay byte-identical.
+                    match (parse(&g), parse(&w)) {
+                        (Some(a), Some(b)) => a == b,
+                        _ => g == w,
+                    }
+                })
             }
             FileExpect::Bytes(b) => got.as_deref().is_some_and(|g| {
                 let (g, w) = (String::from_utf8_lossy(g), subst_str(b, pairs));

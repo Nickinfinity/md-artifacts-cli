@@ -84,7 +84,9 @@ fn use_under_flag_switches_root_and_source() {
     )
     .unwrap();
     assert_eq!(ctx.source.get(), Source::Default);
-    assert_eq!(ctx.root.borrow().as_ref().unwrap().path(), b.as_path());
+    // `Root` stays canonical by design (D-33); `b` is the plain form.
+    let root = ctx.root.borrow();
+    assert_eq!(mda_ops::plain_path(root.as_ref().unwrap().path()), b);
 }
 
 #[test]
