@@ -23,7 +23,7 @@
 //!
 //! Windows: harness roots are the plain form the engine returns (`plain_path`, no `\\?\`); strings
 //! containing a substituted root are compared after `norm_path` (`\` -> `/`) on both sides;
-//! `machine_config` is seeded with forward-slash roots and `expect_config_files` `.toml` files are
+//! `machine_config` is seeded with the plain roots, backslashes escaped, and `expect_config_files` `.toml` files are
 //! compared as parsed TOML (the writer picks `'...'` for backslashes), strings through `norm_path`.
 #![allow(
     dead_code,
@@ -262,18 +262,19 @@ pub fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
         let s = |p: &Option<PathBuf>| p.as_ref().map(|p| p.display().to_string());
         let (vs, ws_s, cs) = (s(&copy), s(&ws), cfg.display().to_string());
         let ms = cfg.join("missing").display().to_string(); // never created
-        let other = if cfg!(windows) { "C:/other" } else { "/other" };
+        let other = if cfg!(windows) { r"C:\other" } else { "/other" };
         let mut pairs: Vec<(&str, &str)> =
             vec![("$CONFIG", &cs), ("$MISSING", &ms), ("$OTHER", other)];
         pairs.extend(vs.as_deref().map(|v| ("$VAULT", v)));
         pairs.extend(ws_s.as_deref().map(|w| ("$WORKSPACE", w)));
         if let Some(m) = &case.machine_config {
-            // forward slashes: a `C:\..` root would be an invalid TOML basic-string escape
-            let fwd: Vec<(&str, String)> = pairs
+            // real plain spelling, escaped for a TOML basic string (`\` -> `\\`): the engine's
+            // exact-string match against `canon()` needs the same bytes it would store
+            let esc: Vec<(&str, String)> = pairs
                 .iter()
-                .map(|(k, v)| (*k, v.replace('\\', "/")))
+                .map(|(k, v)| (*k, v.replace('\\', "\\\\")))
                 .collect();
-            let fwd: Vec<(&str, &str)> = fwd.iter().map(|(k, v)| (*k, v.as_str())).collect();
+            let fwd: Vec<(&str, &str)> = esc.iter().map(|(k, v)| (*k, v.as_str())).collect();
             fs::write(cfg.join("config.toml"), subst_str(m, &fwd)).unwrap();
         }
         let roots: Vec<&str> = pairs.iter().map(|p| p.1).collect();

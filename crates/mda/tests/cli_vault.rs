@@ -27,8 +27,10 @@ fn select_relative_path_stores_absolute() {
     let out = run_with(cmd, &["vault", "select", "v"], b"");
     assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
     let toml = std::fs::read_to_string(cfg.join("config.toml")).unwrap();
-    let want = parent.join("v").canonicalize().unwrap();
-    assert!(toml.contains(want.to_str().unwrap()), "{toml}");
+    // parsed: the writer picks `'...'` for backslashes, so the text form differs per OS
+    let want = mda_ops::plain_path(&parent.join("v").canonicalize().unwrap());
+    let t: toml::Table = toml::from_str(&toml).unwrap();
+    assert_eq!(t["default"].as_str(), want.to_str(), "{toml}");
     assert!(
         String::from_utf8(out.stdout)
             .unwrap()

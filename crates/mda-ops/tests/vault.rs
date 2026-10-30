@@ -18,11 +18,12 @@ fn tmp(name: &str) -> PathBuf {
     d
 }
 
-/// A bare Obsidian vault (`.obsidian/` only), returned canonical.
+/// A bare Obsidian vault (`.obsidian/` only), returned canonical in its plain form.
 fn bare(name: &str) -> PathBuf {
     let d = tmp(name);
     fs::create_dir_all(d.join(".obsidian")).unwrap();
-    d.canonicalize().unwrap()
+    // plain form: what the engine returns (D-33); `Root::new` canonicalizes again
+    mda_ops::plain_path(&d.canonicalize().unwrap())
 }
 
 fn sel(path: &Path) -> SelectRequest {
@@ -219,14 +220,14 @@ fn select_then_enable_then_list_agree() {
 fn stored_canonical_spelling_lists_plain_and_matches() {
     let v = bare("stored-canon");
     let cfg = tmp("stored-canon-cfg");
-    let stored = v.display().to_string();
+    let stored = v.canonicalize().unwrap().display().to_string();
     fs::write(
         cfg.join("config.toml"),
         format!("default = '{stored}'\nvaults = ['{stored}']\n"),
     )
     .unwrap();
     let ctx = Ctx::new(None).with_config_dir(cfg.clone());
-    let plain = mda_ops::plain_path(&v).display().to_string();
+    let plain = v.display().to_string(); // `bare` is plain already
     let l = dispatch(&ctx, "vault.list", json!({})).unwrap();
     assert_eq!(l["default"], plain);
     assert_eq!(l["vaults"][0]["path"], plain);

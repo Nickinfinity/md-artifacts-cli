@@ -11,7 +11,7 @@ fn select_then_tree_then_config_get() {
     let _ = std::fs::remove_dir_all(&base);
     let (vault, cfg) = (base.join("v"), base.join("cfg"));
     std::fs::create_dir_all(vault.join(".obsidian")).unwrap();
-    let vault = vault.canonicalize().unwrap();
+    let vault = mda_ops::plain_path(&vault.canonicalize().unwrap());
     std::fs::create_dir_all(&cfg).unwrap();
     let cfg = cfg.canonicalize().unwrap();
     let req = |id: u32, m: &str, p: serde_json::Value| {
