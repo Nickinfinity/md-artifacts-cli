@@ -35,6 +35,16 @@ impl Drop for Tmp {
     }
 }
 
+/// A Unix-looking absolute literal made absolute on the running OS (`/x` -> `C:/x` on Windows,
+/// where `/x` has no drive and is rightly refused). Component compare treats `/` and `\` alike.
+fn abs(unix: &str) -> String {
+    if cfg!(windows) {
+        format!("C:{unix}")
+    } else {
+        unix.to_string()
+    }
+}
+
 fn env_of<'a>(pairs: &'a [(&'a str, &'a str)]) -> impl Fn(&str) -> Option<OsString> + 'a {
     move |k| {
         pairs
@@ -85,7 +95,26 @@ fn config_dir_table() {
         ("macos", vec![("HOME", "rel")], None),
     ];
     for (os, env, want) in cases {
-        assert_eq!(config_dir(os, env_of(&env)), want, "{os} {env:?}");
+        // Only the Unix-style literals (leading `/`) are rewritten; `rel`, `""` and Windows ones stay.
+        let env: Vec<(&str, String)> = env
+            .iter()
+            .map(|(k, v)| {
+                (
+                    *k,
+                    if v.starts_with('/') {
+                        abs(v)
+                    } else {
+                        (*v).into()
+                    },
+                )
+            })
+            .collect();
+        let want = want.map(|w| match w.to_str() {
+            Some(u) if u.starts_with('/') => PathBuf::from(abs(u)),
+            _ => w,
+        });
+        let pairs: Vec<(&str, &str)> = env.iter().map(|(k, v)| (*k, v.as_str())).collect();
+        assert_eq!(config_dir(os, env_of(&pairs)), want, "{os} {env:?}");
     }
 }
 
@@ -109,12 +138,14 @@ fn read_machine_missing_and_valid() {
     let dir = t.p("c");
     fs::create_dir_all(&dir).unwrap();
     assert_eq!(read_machine(&dir).unwrap(), MachineConfig::default()); // dir, no file
-    let bytes = b"default = \"/v\"\nvaults = [\"/v\"]\nx = 1\n";
-    fs::write(cfg_path(&dir), bytes).unwrap();
+    // `/` is valid in a TOML basic string and absolute on both OSes once given a drive.
+    let v = abs("/v");
+    let bytes = format!("default = \"{v}\"\nvaults = [\"{v}\"]\nx = 1\n").into_bytes();
+    fs::write(cfg_path(&dir), &bytes).unwrap();
     let c = read_machine(&dir).unwrap();
-    assert_eq!(c.default.as_deref(), Some("/v"));
-    assert_eq!(c.vaults, vec!["/v".to_string()]);
-    assert_eq!(c.hash, Some(content_hash(bytes)));
+    assert_eq!(c.default.as_deref(), Some(v.as_str()));
+    assert_eq!(c.vaults, vec![v.clone()]);
+    assert_eq!(c.hash, Some(content_hash(&bytes)));
     assert_eq!(c.rest["x"].as_integer(), Some(1));
 }
 
@@ -145,15 +176,16 @@ fn read_machine_rejects_bad_files() {
 fn write_machine_round_trip() {
     let t = Tmp::new("wm");
     let dir = t.p("new/cfg"); // missing dir is created
+    let v = abs("/v");
     let cfg = MachineConfig {
-        default: Some("/v".into()),
-        vaults: vec!["/v".into()],
+        default: Some(v.clone()),
+        vaults: vec![v.clone()],
         ..Default::default()
     };
     write_machine(&dir, &cfg).unwrap();
     assert_eq!(
         fs::read(cfg_path(&dir)).unwrap(),
-        b"default = \"/v\"\nvaults = [\"/v\"]\n"
+        format!("default = \"{v}\"\nvaults = [\"{v}\"]\n").into_bytes()
     );
     let mut back = read_machine(&dir).unwrap();
     assert_eq!(back.default, cfg.default);
@@ -161,7 +193,7 @@ fn write_machine_round_trip() {
     write_machine(&dir, &back).unwrap();
     assert_eq!(
         fs::read(cfg_path(&dir)).unwrap(),
-        b"default = \"/v\"\nvaults = [\"/v\"]\nx = 1\n"
+        format!("default = \"{v}\"\nvaults = [\"{v}\"]\nx = 1\n").into_bytes()
     );
 }
 

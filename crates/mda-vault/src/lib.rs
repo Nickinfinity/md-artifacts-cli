@@ -12,7 +12,7 @@ mod rename;
 mod vault;
 mod write;
 
-pub use contain::{Root, contain};
+pub use contain::{Root, contain, plain_path};
 pub use error::{VaultError, WalkLimit};
 pub use listing::{DirListing, MAX_WALK_BYTES, MAX_WALK_DEPTH, MAX_WALK_FILES, list_dir, walk_md};
 pub use read::{file_len, read_bounded};

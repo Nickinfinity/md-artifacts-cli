@@ -14,14 +14,17 @@
 //! `<cfg>/config.toml` before the leg; `expect_config_files` (cfg-relative) is asserted after it.
 //! `vault_flag = false` copies the fixture (and sets `$VAULT`) without passing it as `--vault`.
 //! `$VAULT` (canonical vault copy), `$CONFIG` (canonical config dir), `$WORKSPACE` and `$MISSING` (an
-//! absolute path under the config dir that is never created) are replaced in
+//! absolute path under the config dir that is never created) and `$OTHER` (an absolute path on the
+//! running OS that need not exist: `/other`, `C:/other` on Windows) are replaced in
 //! `params`, `expect`, `machine_config`, `expect_error_params` and every expected file's bytes.
 //!
 //! Error params (W7, S-23): `expect_error_params` (needs `expect_error`) is compared for equality
 //! with the error's `params` (`data.params` on the wire) on every leg.
 //!
-//! Windows: strings containing a substituted root are compared after `norm_path` (`\` -> `/`, `\\?\`
-//! dropped) on both sides; `machine_config` is seeded with forward-slash roots.
+//! Windows: harness roots are the plain form the engine returns (`plain_path`, no `\\?\`); strings
+//! containing a substituted root are compared after `norm_path` (`\` -> `/`) on both sides;
+//! `machine_config` is seeded with forward-slash roots and `expect_config_files` `.toml` files are
+//! compared as parsed TOML (the writer picks `'...'` for backslashes), strings through `norm_path`.
 #![allow(
     dead_code,
     clippy::panic,
@@ -235,7 +238,8 @@ fn leg_dir(op: &str, name: &str, leg: &str, kind: &str, seed: Option<&Path>) -> 
         Some(s) => common::copy_tree(s, &d),
         None => fs::create_dir_all(&d).unwrap(),
     }
-    d.canonicalize().unwrap()
+    // The plain form is what the engine returns and stores (D-33); a `\\?\` root would never match.
+    mda_ops::plain_path(&d.canonicalize().unwrap())
 }
 
 /// Failure strings (each naming case and leg) for one case.
@@ -258,7 +262,9 @@ pub fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
         let s = |p: &Option<PathBuf>| p.as_ref().map(|p| p.display().to_string());
         let (vs, ws_s, cs) = (s(&copy), s(&ws), cfg.display().to_string());
         let ms = cfg.join("missing").display().to_string(); // never created
-        let mut pairs: Vec<(&str, &str)> = vec![("$CONFIG", &cs), ("$MISSING", &ms)];
+        let other = if cfg!(windows) { "C:/other" } else { "/other" };
+        let mut pairs: Vec<(&str, &str)> =
+            vec![("$CONFIG", &cs), ("$MISSING", &ms), ("$OTHER", other)];
         pairs.extend(vs.as_deref().map(|v| ("$VAULT", v)));
         pairs.extend(ws_s.as_deref().map(|w| ("$WORKSPACE", w)));
         if let Some(m) = &case.machine_config {
@@ -380,6 +386,19 @@ fn check_files(
         let got = path.as_ref().and_then(|p| fs::read(p).ok());
         let roots: Vec<&str> = pairs.iter().map(|p| p.1).collect();
         let ok = match want {
+            FileExpect::Bytes(b) if cfg!(windows) && label == "expect_config_files" => {
+                // Windows roots hold `\`: expected side seeded with `/`, both parsed and normalized.
+                let fwd: Vec<(&str, String)> = pairs
+                    .iter()
+                    .map(|(k, v)| (*k, v.replace('\\', "/")))
+                    .collect();
+                let fwd: Vec<(&str, &str)> = fwd.iter().map(|(k, v)| (*k, v.as_str())).collect();
+                let parse = |t: &str| toml_norm(t);
+                let g = got
+                    .as_deref()
+                    .map(|g| String::from_utf8_lossy(g).into_owned());
+                g.is_some_and(|g| parse(&g).is_some() && parse(&g) == parse(&subst_str(b, &fwd)))
+            }
             FileExpect::Bytes(b) => got.as_deref().is_some_and(|g| {
                 let (g, w) = (String::from_utf8_lossy(g), subst_str(b, pairs));
                 let n = |t: &str| norm_roots(&Value::String(t.into()), &roots);
@@ -399,9 +418,23 @@ fn check_files(
     fails
 }
 
-/// `\` -> `/` and a `\\?\` verbatim prefix dropped, so Windows spellings of one path compare equal.
+/// `text` parsed as TOML with every string through `norm_path`; `None` if it does not parse.
+fn toml_norm(text: &str) -> Option<Value> {
+    fn walk(v: Value) -> Value {
+        match v {
+            Value::String(s) => Value::String(norm_path(&s)),
+            Value::Array(a) => Value::Array(a.into_iter().map(walk).collect()),
+            Value::Object(m) => Value::Object(m.into_iter().map(|(k, x)| (k, walk(x))).collect()),
+            other => other,
+        }
+    }
+    let t: toml::Table = toml::from_str(text).ok()?;
+    Some(walk(serde_json::to_value(t).ok()?))
+}
+
+/// `\` -> `/`. A `\\?\` prefix is deliberately kept: a leaked verbatim root must NOT equal the plain one (D-33).
 pub fn norm_path(s: &str) -> String {
-    s.strip_prefix(r"\\?\").unwrap_or(s).replace('\\', "/")
+    s.replace('\\', "/")
 }
 
 /// `norm_path` applied to every string that contains one of `roots` (either spelling), at any depth.
@@ -433,7 +466,10 @@ mod tests {
     #[test]
     fn norm_path_unifies_windows_spellings() {
         assert_eq!(norm_path(r"C:\Users\x\out"), "C:/Users/x/out");
-        assert_eq!(norm_path(r"\\?\C:\Users\x\out"), "C:/Users/x/out");
+        assert_ne!(
+            norm_path(r"\\?\C:\Users\x\out"),
+            norm_path(r"C:\Users\x\out")
+        );
     }
 
     #[test]

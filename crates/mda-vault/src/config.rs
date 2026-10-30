@@ -103,8 +103,9 @@ impl VaultConfig {
 ///
 /// ```
 /// use mda_vault::config::config_dir;
-/// let d = config_dir("linux", |k| (k == "MDA_CONFIG_DIR").then(|| "/cfg".into()));
-/// assert_eq!(d, Some(std::path::PathBuf::from("/cfg")));
+/// let cfg = std::env::temp_dir(); // absolute on every OS
+/// let d = config_dir("linux", |k| (k == "MDA_CONFIG_DIR").then(|| cfg.clone().into_os_string()));
+/// assert_eq!(d, Some(cfg));
 /// ```
 pub fn config_dir(os: &str, env: impl Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
     let get = |k: &str| env(k).filter(|v| !v.is_empty());

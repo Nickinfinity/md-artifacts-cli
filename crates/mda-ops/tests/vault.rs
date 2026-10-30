@@ -212,3 +212,26 @@ fn select_then_enable_then_list_agree() {
     assert_eq!(list["default"], json!(path));
     assert_eq!(list["vaults"], json!([{"path": path, "available": true}]));
 }
+
+/// An old config holding the canonical (on Windows `\\?\`) spelling: `list` shows the plain form,
+/// `use` finds it, `select` does not add a duplicate. Trivially equal off Windows.
+#[test]
+fn stored_canonical_spelling_lists_plain_and_matches() {
+    let v = bare("stored-canon");
+    let cfg = tmp("stored-canon-cfg");
+    let stored = v.display().to_string();
+    fs::write(
+        cfg.join("config.toml"),
+        format!("default = '{stored}'\nvaults = ['{stored}']\n"),
+    )
+    .unwrap();
+    let ctx = Ctx::new(None).with_config_dir(cfg.clone());
+    let plain = mda_ops::plain_path(&v).display().to_string();
+    let l = dispatch(&ctx, "vault.list", json!({})).unwrap();
+    assert_eq!(l["default"], plain);
+    assert_eq!(l["vaults"][0]["path"], plain);
+    dispatch(&ctx, "vault.use", json!({"path": plain})).unwrap();
+    dispatch(&ctx, "vault.select", json!({"path": plain})).unwrap();
+    let l = dispatch(&ctx, "vault.list", json!({})).unwrap();
+    assert_eq!(l["vaults"].as_array().unwrap().len(), 1);
+}

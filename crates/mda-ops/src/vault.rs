@@ -8,7 +8,7 @@ use mda_core::registry::TYPES;
 use mda_vault::config::{MACHINE_FILE, MAX_VAULTS, MachineConfig, read_machine, write_machine};
 use mda_vault::{DirState, VaultError, create_type_dir, dir_state, validate_vault};
 
-use crate::error::vault_error;
+use crate::error::{shown, vault_error};
 use crate::{ArtifactType, Ctx, OpError, Root, Source, error};
 
 pub use mda_vault::config::config_dir;
@@ -141,7 +141,7 @@ pub fn resolve(flag: Option<&Path>, config_dir: Option<PathBuf>) -> Result<Ctx, 
 /// Adopt the stored default, or record why not (V-3): never fails the process, never writes.
 fn load_default(ctx: &Ctx) {
     let Some(dir) = &ctx.config_dir else { return };
-    let cfg = match read_machine(dir) {
+    let cfg = match read_plain(dir) {
         Ok(c) => c,
         Err(e) => {
             ctx.default_error.replace(Some(e.into()));
@@ -165,7 +165,28 @@ fn not_absolute() -> OpError {
 fn canon(r: &Root) -> String {
     // ponytail: lossy on non-UTF-8 paths (a mangled stored path then fails to open as
     // `path.not_found`); refuse such vaults with `op.bad_request` if one ever appears.
-    r.path().display().to_string()
+    shown(r.path())
+}
+
+/// The machine file with every stored path in plain form (D-33), duplicates dropped: an old
+/// `\\?\C:\v` entry then equals `canon()`, and no `\\?\` reaches a client. The hash is the file's,
+/// so the next write (which stores the plain form) is still conflict-checked.
+fn read_plain(dir: &Path) -> Result<MachineConfig, VaultError> {
+    read_machine(dir).map(plainify)
+}
+
+/// `read_plain`'s pure part: plain form on `default` and `vaults`, first occurrence wins.
+fn plainify(mut cfg: MachineConfig) -> MachineConfig {
+    let plain = |s: &str| shown(Path::new(s));
+    cfg.default = cfg.default.as_deref().map(plain);
+    let mut seen = std::collections::HashSet::new();
+    cfg.vaults = cfg
+        .vaults
+        .iter()
+        .map(|v| plain(v))
+        .filter(|v| seen.insert(v.clone()))
+        .collect();
+    cfg
 }
 
 /// The machine config dir and its parsed file; no dir at all is `config.invalid` with `path: ""`.
@@ -174,7 +195,7 @@ fn machine(ctx: &Ctx) -> Result<(PathBuf, MachineConfig), OpError> {
         .config_dir
         .clone()
         .ok_or_else(|| OpError::new(error::CONFIG_INVALID).with("path", ""))?;
-    let cfg = read_machine(&dir)?;
+    let cfg = read_plain(&dir)?;
     Ok((dir, cfg))
 }
 
@@ -282,8 +303,9 @@ pub fn select(ctx: &Ctx, req: SelectRequest) -> Result<SelectResponse, OpError> 
     let path = canon(&root);
     // Refuse before any dir is created: a full or corrupt machine file must leave the vault alone.
     if cfg.vaults.len() >= MAX_VAULTS && !cfg.vaults.contains(&path) {
-        return Err(OpError::new(error::CONFIG_INVALID)
-            .with("path", dir.join(MACHINE_FILE).display().to_string()));
+        return Err(
+            OpError::new(error::CONFIG_INVALID).with("path", shown(&dir.join(MACHINE_FILE)))
+        );
     }
     let created = if req.create_defaults {
         create_defaults(&root)?
@@ -354,7 +376,25 @@ pub fn get(ctx: &Ctx, req: ConfigGetRequest) -> Result<ConfigGetResponse, OpErro
     Ok(ConfigGetResponse {
         vault: ctx.root.borrow().as_ref().map(canon),
         source: ctx.source.get(),
-        config_dir: ctx.config_dir.as_ref().map(|d| d.display().to_string()),
+        config_dir: ctx.config_dir.as_ref().map(|d| shown(d)),
         default_error: ctx.default_error.borrow().clone(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn stored_verbatim_paths_become_plain_and_dedupe() {
+        let cfg = MachineConfig {
+            default: Some(r"\\?\C:\v".into()),
+            vaults: vec![r"\\?\C:\v".into(), r"C:\v".into(), r"\\?\C:\v.".into()],
+            ..Default::default()
+        };
+        let p = plainify(cfg);
+        assert_eq!(p.default.as_deref(), Some(r"C:\v"));
+        // the verbatim-only name keeps its prefix (stripping would name a different directory)
+        assert_eq!(p.vaults, vec![r"C:\v".to_owned(), r"\\?\C:\v.".to_owned()]);
+    }
 }

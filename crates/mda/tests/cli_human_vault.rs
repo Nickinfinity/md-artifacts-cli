@@ -61,9 +61,11 @@ fn vault_list_marks_default_and_unavailable() {
 #[test]
 fn vault_list_escapes_esc_in_stored_path() {
     let cfg = tmpdir("esc-cfg");
+    // Absolute on the running OS (a Unix `/x` is refused on Windows); `\\\\` is one TOML backslash.
+    let abs = if cfg!(windows) { "C:\\\\x" } else { "/x" };
     std::fs::write(
         cfg.join("config.toml"),
-        "default = \"/x\\u001b[31m\"\nvaults = [\"/x\\u001b[31m\"]\n",
+        format!("default = \"{abs}\\u001b[31m\"\nvaults = [\"{abs}\\u001b[31m\"]\n"),
     )
     .unwrap();
     let out = run_cfg(&["vault", "list"], b"", &cfg);

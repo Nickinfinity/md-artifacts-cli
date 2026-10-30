@@ -58,10 +58,13 @@ fn os_config_dir_lands_inside_temp_home() {
     cmd.env_remove("MDA_CONFIG_DIR")
         .env("HOME", &home)
         .env_remove("XDG_CONFIG_HOME")
-        .env_remove("APPDATA");
+        // Windows reads APPDATA, not HOME: point it at the same temp dir.
+        .env("APPDATA", &home);
     let out = run_with(cmd, &["vault", "select", v.to_str().unwrap()], b"");
     assert_eq!(out.status.code(), Some(0), "{}", stderr(&out));
-    let rel = if cfg!(target_os = "macos") {
+    let rel = if cfg!(windows) {
+        "mda/config.toml"
+    } else if cfg!(target_os = "macos") {
         "Library/Application Support/mda/config.toml"
     } else {
         ".config/mda/config.toml"

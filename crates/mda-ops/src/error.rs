@@ -294,46 +294,45 @@ impl From<VaultError> for OpError {
     fn from(e: VaultError) -> Self {
         match e {
             VaultError::OutsideRoot { path } => {
-                Self::new(PATH_OUTSIDE_ROOT).with("path", path.display().to_string())
+                Self::new(PATH_OUTSIDE_ROOT).with("path", shown(&path))
             }
-            VaultError::NotFound { path } => {
-                Self::new(PATH_NOT_FOUND).with("path", path.display().to_string())
-            }
+            VaultError::NotFound { path } => Self::new(PATH_NOT_FOUND).with("path", shown(&path)),
             VaultError::TooLarge { path, size, max } => Self::new(FILE_TOO_LARGE)
-                .with("path", path.display().to_string())
+                .with("path", shown(&path))
                 .with("size", size.to_string())
                 .with("max", max.to_string()),
             VaultError::NotRegular { path } => {
-                Self::new(FILE_NOT_REGULAR).with("path", path.display().to_string())
+                Self::new(FILE_NOT_REGULAR).with("path", shown(&path))
             }
             VaultError::Conflict {
                 path,
                 expected,
                 actual,
             } => Self::new(FILE_CONFLICT)
-                .with("path", path.display().to_string())
+                .with("path", shown(&path))
                 .with("expected", expected)
                 .with("actual", actual),
-            VaultError::Exists { path } => {
-                Self::new(FILE_EXISTS).with("path", path.display().to_string())
-            }
-            VaultError::NotDir { path } => {
-                Self::new(PATH_NOT_DIR).with("path", path.display().to_string())
-            }
+            VaultError::Exists { path } => Self::new(FILE_EXISTS).with("path", shown(&path)),
+            VaultError::NotDir { path } => Self::new(PATH_NOT_DIR).with("path", shown(&path)),
             VaultError::NotObsidian { path } => {
-                Self::new(VAULT_NOT_OBSIDIAN).with("path", path.display().to_string())
+                Self::new(VAULT_NOT_OBSIDIAN).with("path", shown(&path))
             }
             VaultError::ConfigInvalid { path } => {
-                Self::new(CONFIG_INVALID).with("path", path.display().to_string())
+                Self::new(CONFIG_INVALID).with("path", shown(&path))
             }
             VaultError::Limit { limit, max } => Self::new(WALK_LIMIT)
                 .with("limit", limit.as_str())
                 .with("max", max.to_string()),
             VaultError::Io { path, kind } => Self::new(IO_FAILED)
-                .with("path", path.display().to_string())
+                .with("path", shown(&path))
                 .with("kind", kind.to_string()),
         }
     }
+}
+
+/// A path as a client sees it: no Windows `\\?\` prefix (`plain_path`).
+pub(crate) fn shown(p: &std::path::Path) -> String {
+    mda_vault::plain_path(p).display().to_string()
 }
 
 // A rejected client value (render `values`): the codec's `{code, params}` moved over unchanged.

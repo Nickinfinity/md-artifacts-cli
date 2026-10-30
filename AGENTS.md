@@ -291,6 +291,7 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Var-set scoring, apply, search text | `mda-core/src/varset/` |
 | The render variable rule | `mda-core/src/render/` (`variable_names`) |
 | Path containment | `mda-vault/src/contain.rs` |
+| The path form that leaves the engine (no `\\?\`) | `mda-vault/src/contain.rs` (`plain_path`) |
 | Atomic writes + content hash (`content_hash`, SHA-256) | `mda-vault/src/write.rs` |
 | Configuration files | `mda-vault/src/config.rs` |
 | Vault validation, type-dir creation | `mda-vault/src/vault.rs` (`validate_vault`, `create_type_dir`) |
