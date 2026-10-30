@@ -3,8 +3,8 @@
 //! A case file `op_cases/<op>/<case>.toml` runs through `dispatch`, `mda call --json` and a `serve`
 //! session. Each leg runs on a **fresh copy** of the case's fixture vault, and `expect_files`
 //! (vault-relative path → exact bytes, or `false` for absent) is asserted on that copy after the
-//! leg (W-13). Hash literals in cases are `shasum -a 256` of fixture bytes. Note: `= false` on a
-//! **directory** is vacuous (`fs::read` fails on a dir) — assert directories in-process.
+//! leg (W-13). Hash literals in cases are `shasum -a 256` of fixture bytes. `= false` means nothing
+//! exists there (`symlink_metadata` fails), so a directory is not absent.
 //!
 //! Workspace (R-24): a per-leg temp workspace when a case sets `workspace`,
 //! `expect_workspace_files`, or writes `$WORKSPACE` in params; asserted by `expect_workspace_files`.
@@ -13,11 +13,15 @@
 //! `MDA_CONFIG_DIR` (CLI, serve) or to the resolver (dispatch). `machine_config` is written to
 //! `<cfg>/config.toml` before the leg; `expect_config_files` (cfg-relative) is asserted after it.
 //! `vault_flag = false` copies the fixture (and sets `$VAULT`) without passing it as `--vault`.
-//! `$VAULT` (canonical vault copy), `$CONFIG` (canonical config dir) and `$WORKSPACE` are replaced in
+//! `$VAULT` (canonical vault copy), `$CONFIG` (canonical config dir), `$WORKSPACE` and `$MISSING` (an
+//! absolute path under the config dir that is never created) are replaced in
 //! `params`, `expect`, `machine_config`, `expect_error_params` and every expected file's bytes.
 //!
 //! Error params (W7, S-23): `expect_error_params` (needs `expect_error`) is compared for equality
 //! with the error's `params` (`data.params` on the wire) on every leg.
+//!
+//! Windows: strings containing a substituted root are compared after `norm_path` (`\` -> `/`, `\\?\`
+//! dropped) on both sides; `machine_config` is seeded with forward-slash roots.
 #![allow(
     dead_code,
     clippy::panic,
@@ -253,12 +257,20 @@ pub fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
         let cfg = leg_dir(op, name, leg, "-cfg", None);
         let s = |p: &Option<PathBuf>| p.as_ref().map(|p| p.display().to_string());
         let (vs, ws_s, cs) = (s(&copy), s(&ws), cfg.display().to_string());
-        let mut pairs: Vec<(&str, &str)> = vec![("$CONFIG", &cs)];
+        let ms = cfg.join("missing").display().to_string(); // never created
+        let mut pairs: Vec<(&str, &str)> = vec![("$CONFIG", &cs), ("$MISSING", &ms)];
         pairs.extend(vs.as_deref().map(|v| ("$VAULT", v)));
         pairs.extend(ws_s.as_deref().map(|w| ("$WORKSPACE", w)));
         if let Some(m) = &case.machine_config {
-            fs::write(cfg.join("config.toml"), subst_str(m, &pairs)).unwrap();
+            // forward slashes: a `C:\..` root would be an invalid TOML basic-string escape
+            let fwd: Vec<(&str, String)> = pairs
+                .iter()
+                .map(|(k, v)| (*k, v.replace('\\', "/")))
+                .collect();
+            let fwd: Vec<(&str, &str)> = fwd.iter().map(|(k, v)| (*k, v.as_str())).collect();
+            fs::write(cfg.join("config.toml"), subst_str(m, &fwd)).unwrap();
         }
+        let roots: Vec<&str> = pairs.iter().map(|p| p.1).collect();
         let params = subst(&case.params, &pairs);
         let env = Leg {
             vault: copy.as_deref(),
@@ -272,7 +284,11 @@ pub fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
         };
         let expect = case.expect.as_ref().map(|e| subst(e, &pairs));
         let ok = match (&expect, &case.expect_error) {
-            (Some(e), _) => !seen.is_err && seen.body == *e && seen.exit.is_none_or(|x| x == 0),
+            (Some(e), _) => {
+                !seen.is_err
+                    && norm_roots(&seen.body, &roots) == norm_roots(e, &roots)
+                    && seen.exit.is_none_or(|x| x == 0)
+            }
             (_, Some(c)) => {
                 seen.is_err
                     && seen.body["code"] == *c
@@ -283,7 +299,7 @@ pub fn check_case(op: &str, name: &str, case: &Case) -> Vec<String> {
                             .iter()
                             .map(|(k, v)| (k.clone(), subst_str(v, &pairs)))
                             .collect();
-                        seen.body["params"] == json!(want)
+                        norm_roots(&seen.body["params"], &roots) == norm_roots(&json!(want), &roots)
                     })
             }
             _ => false,
@@ -360,10 +376,18 @@ fn check_files(
 ) -> Vec<String> {
     let mut fails = Vec::new();
     for (rel, want) in map {
-        let got = dir.and_then(|v| fs::read(v.join(rel)).ok());
+        let path = dir.map(|v| v.join(rel));
+        let got = path.as_ref().and_then(|p| fs::read(p).ok());
+        let roots: Vec<&str> = pairs.iter().map(|p| p.1).collect();
         let ok = match want {
-            FileExpect::Bytes(b) => got.as_deref() == Some(subst_str(b, pairs).as_bytes()),
-            FileExpect::Absent(_) => got.is_none(),
+            FileExpect::Bytes(b) => got.as_deref().is_some_and(|g| {
+                let (g, w) = (String::from_utf8_lossy(g), subst_str(b, pairs));
+                let n = |t: &str| norm_roots(&Value::String(t.into()), &roots);
+                n(&g) == n(&w)
+            }),
+            // symlink_metadata: a directory (or a dangling link) is not absent, and a Windows
+            // device name is never opened
+            FileExpect::Absent(_) => path.is_none_or(|p| fs::symlink_metadata(p).is_err()),
         };
         if !ok {
             fails.push(format!(
@@ -373,4 +397,60 @@ fn check_files(
         }
     }
     fails
+}
+
+/// `\` -> `/` and a `\\?\` verbatim prefix dropped, so Windows spellings of one path compare equal.
+pub fn norm_path(s: &str) -> String {
+    s.strip_prefix(r"\\?\").unwrap_or(s).replace('\\', "/")
+}
+
+/// `norm_path` applied to every string that contains one of `roots` (either spelling), at any depth.
+/// Other strings are left alone: real backslashes exist (`join` output, render cases).
+pub fn norm_roots(v: &Value, roots: &[&str]) -> Value {
+    if !cfg!(windows) {
+        return v.clone(); // `\` is a legal file-name char elsewhere: stay byte-exact
+    }
+    match v {
+        Value::String(s) => {
+            let n = norm_path(s);
+            let hit = roots.iter().any(|r| n.contains(&norm_path(r)));
+            Value::String(if hit { n } else { s.clone() })
+        }
+        Value::Array(a) => Value::Array(a.iter().map(|x| norm_roots(x, roots)).collect()),
+        Value::Object(m) => Value::Object(
+            m.iter()
+                .map(|(k, x)| (k.clone(), norm_roots(x, roots)))
+                .collect(),
+        ),
+        other => other.clone(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn norm_path_unifies_windows_spellings() {
+        assert_eq!(norm_path(r"C:\Users\x\out"), "C:/Users/x/out");
+        assert_eq!(norm_path(r"\\?\C:\Users\x\out"), "C:/Users/x/out");
+    }
+
+    #[test]
+    #[cfg(not(windows))]
+    fn norm_roots_is_byte_exact_off_windows() {
+        let r = "/ws";
+        let (a, b) = (json!("/ws/a\\b"), json!("/ws/a/b"));
+        assert_ne!(norm_roots(&a, &[r]), norm_roots(&b, &[r]));
+    }
+
+    #[test]
+    fn absent_means_nothing_on_disk_even_a_directory() {
+        let d = std::env::temp_dir().join(format!("mda-oc-selftest-{}", std::process::id()));
+        fs::create_dir_all(d.join("sub")).unwrap();
+        let map = BTreeMap::from([("sub".to_owned(), FileExpect::Absent(false))]);
+        let fails = check_files("t", "expect_files", &map, Some(&d), &[]);
+        let _ = fs::remove_dir_all(&d);
+        assert_eq!(fails.len(), 1, "an existing directory is not absent");
+    }
 }

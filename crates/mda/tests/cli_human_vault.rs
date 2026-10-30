@@ -41,14 +41,18 @@ fn vault_inspect_and_config_get_print() {
 #[test]
 fn vault_list_marks_default_and_unavailable() {
     let cfg = tmpdir("list-cfg");
+    let gone = std::env::temp_dir()
+        .join(format!("nonexistent-mda-x-{}", std::process::id()))
+        .display()
+        .to_string();
     std::fs::write(
         cfg.join("config.toml"),
-        format!("default = {VAULT:?}\nvaults = [{VAULT:?}, \"/nonexistent-mda-x\"]\n"),
+        format!("default = {VAULT:?}\nvaults = [{VAULT:?}, {gone:?}]\n"),
     )
     .unwrap();
     let t = out_text(run_cfg(&["vault", "list"], b"", &cfg));
     assert!(t.contains(&format!("* {VAULT}")), "{t}");
-    assert!(t.contains("  /nonexistent-mda-x  (unavailable)"), "{t}");
+    assert!(t.contains(&format!("  {gone}  (unavailable)")), "{t}");
     let t = out_text(run_cfg(&["vault", "list"], b"", &tmpdir("list-empty")));
     assert_eq!(t.trim(), "no known vaults");
     std::fs::remove_dir_all(cfg).unwrap();

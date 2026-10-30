@@ -4,9 +4,10 @@
 use std::path::Path;
 
 use mda_core::model::ParsedArtifact;
+use mda_core::naming::{NameError, validate_dir_segment};
 use mda_core::parse::{decode, parse_from_content};
 use mda_core::registry::{ArtifactType, type_for_dir};
-use mda_vault::{Root, VaultError, content_hash, list_dir, read_bounded};
+use mda_vault::{DirState, Root, VaultError, content_hash, dir_state, list_dir, read_bounded};
 
 use crate::error::vault_error;
 use crate::{Ctx, OpError, error};
@@ -128,6 +129,31 @@ pub(crate) fn segments(p: &str) -> Result<Vec<&str>, ()> {
 
 pub(crate) fn bad_path(p: &str) -> OpError {
     OpError::new(error::ARTIFACT_BAD_PATH).with("path", p)
+}
+
+/// D-28: every new directory segment below `type_dir` passes `validate_dir_segment`. The pure
+/// check runs first (no filesystem touch); `Reserved` is always refused, any other failure only
+/// when the directory does not already exist (a Finder-made NFD folder keeps its files, D-8).
+pub(crate) fn check_dirs(root: &Root, type_dir: &str, dirs: &[&str]) -> Result<(), OpError> {
+    let mut prefix = type_dir.to_string();
+    for sk in dirs {
+        prefix.push('/');
+        prefix.push_str(sk);
+        let Err(e) = validate_dir_segment(sk) else {
+            continue;
+        };
+        if e == NameError::Reserved || dir_state(root, &prefix) != DirState::Present {
+            return Err(OpError::from(e).with("segment", *sk));
+        }
+    }
+    Ok(())
+}
+
+/// The segments strictly between the type dir (first) and the file (last) of `segs`.
+pub(crate) fn mid_dirs<'a>(segs: &'a [&'a str]) -> &'a [&'a str] {
+    segs.split_first()
+        .and_then(|(_, r)| r.split_last())
+        .map_or(&[], |(_, m)| m)
 }
 
 /// The session vault (owned: `select`/`use` may switch it); else the deferred default error

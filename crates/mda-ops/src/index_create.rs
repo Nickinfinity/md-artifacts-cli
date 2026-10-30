@@ -9,9 +9,9 @@ use mda_core::multi_index::safe_rel_path;
 use mda_core::naming::{MAX_NAME_BYTES, NameError, node_ext, node_stem, slugify, validate_stem};
 use mda_core::registry::{ArtifactType, OutputNameKey};
 use mda_core::serialize::serialize;
-use mda_vault::{contain, content_hash, create_new};
+use mda_vault::{Root, contain, content_hash, create_new};
 
-use crate::artifact::{bad_path, root_of, segments};
+use crate::artifact::{bad_path, check_dirs, root_of, segments};
 use crate::artifact_write::{map_serialize, max_bytes};
 use crate::error::vault_error;
 use crate::index::{BatchResponse, MAX_STEPS, StepResult, limit_error, path_error};
@@ -61,6 +61,9 @@ pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpErr
     if req.paths.len() > MAX_STEPS {
         return Err(limit_error("steps", MAX_STEPS));
     }
+    let dir_segs = segments(&req.dir).unwrap_or_default();
+    let below = dir_segs.get(1..).unwrap_or_default();
+    check_dirs(root, info.dir, below)?;
     contain(root, Path::new(&req.dir)).map_err(|e| vault_error(e, root))?;
 
     // Derive, build and serialize every file before the first write: a late rejection leaves nothing.
@@ -69,7 +72,7 @@ pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpErr
     let mut links = Vec::new();
     for raw in &req.paths {
         let norm = safe_rel_path(raw).map_err(|e| path_error(e, raw))?;
-        let link = derive_link(&norm, &mut used)?;
+        let link = derive_link(root, info.dir, below, &norm, &mut used)?;
         let model = sibling(t, &link, &norm);
         let path = format!("{}/{link}.md", req.dir);
         let text = serialize(&model, max_bytes()).map_err(|e| map_serialize(e, &path))?;
@@ -104,7 +107,13 @@ pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpErr
 
 /// The slugged link for a normalised input path, unique within `used` (the emitted set, so
 /// `a.ts, a.md, a-2.ts` give `a, a-2, a-2-2`).
-fn derive_link(norm: &str, used: &mut HashSet<String>) -> Result<String, OpError> {
+fn derive_link(
+    root: &Root,
+    type_dir: &str,
+    below: &[&str],
+    norm: &str,
+    used: &mut HashSet<String>,
+) -> Result<String, OpError> {
     let mut raw: Vec<&str> = norm.split('/').collect();
     let base = raw.pop().unwrap_or_default();
     raw.push(node_stem(base));
@@ -125,8 +134,15 @@ fn derive_link(norm: &str, used: &mut HashSet<String>) -> Result<String, OpError
     }
     // Every dir slug is a directory name; the last (with its suffix and `.md`) is the file name.
     let file = link.rsplit('/').next().unwrap_or_default();
-    let dirs_long = slugs.iter().rev().skip(1).any(|s| s.len() > MAX_NAME_BYTES);
-    if dirs_long || file.len() + ".md".len() > MAX_NAME_BYTES {
+    // D-28: the request dir's segments, then the derived dir slugs (`too_long` included).
+    let derived = slugs.split_last().map_or(&[][..], |(_, d)| d);
+    let dirs: Vec<&str> = below
+        .iter()
+        .copied()
+        .chain(derived.iter().map(String::as_str))
+        .collect();
+    check_dirs(root, type_dir, &dirs)?;
+    if file.len() + ".md".len() > MAX_NAME_BYTES {
         return Err(NameError::TooLong.into());
     }
     validate_stem(file)?;

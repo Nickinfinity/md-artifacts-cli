@@ -1,9 +1,9 @@
 vault = "vault"
 vault_flag = false
 machine_config = '''
-default = "/nonexistent-mda-w4a"
-vaults = ["/nonexistent-mda-w4a"]
+default = "$MISSING"
+vaults = ["$MISSING"]
 '''
 params = { path = "Snippets/hello.md" }
 expect_error = "vault.unavailable"
-expect_error_params = { path = "/nonexistent-mda-w4a" }
+expect_error_params = { path = "$MISSING" }

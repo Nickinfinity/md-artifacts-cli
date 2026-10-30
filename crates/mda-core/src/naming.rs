@@ -3,12 +3,18 @@
 
 use crate::error::{
     NAMING_CONTROL_CHAR, NAMING_EDGE_DOT, NAMING_EDGE_SPACE, NAMING_EMPTY, NAMING_ILLEGAL_CHAR,
-    NAMING_MD_EXTENSION, NAMING_PATH_INJECTION, NAMING_RESERVED, NAMING_TOO_LONG,
+    NAMING_MD_EXTENSION, NAMING_NOT_NFC, NAMING_PATH_INJECTION, NAMING_RESERVED, NAMING_TOO_LONG,
 };
 use crate::language::{ext_for_lang, normalize_lang_id};
 use crate::model::ParsedArtifact;
 use crate::parse::text::js_trim;
 use crate::registry::OutputNameKey;
+use reserved::is_reserved;
+use unicode_normalization::is_nfc;
+
+mod reserved;
+mod slug;
+pub use slug::slugify;
 
 /// Longest output file name, in bytes.
 pub const MAX_NAME_BYTES: usize = 255;
@@ -56,6 +62,7 @@ impl NameField {
 /// assert_eq!(NameError::Reserved.code(), "naming.reserved");
 /// assert_eq!(NameError::TooLong.code(), "naming.too_long");
 /// assert_eq!(NameError::MdExtension.code(), "naming.md_extension");
+/// assert_eq!(NameError::NotNfc.code(), "naming.not_nfc");
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NameError {
@@ -68,6 +75,7 @@ pub enum NameError {
     Reserved,
     TooLong,
     MdExtension,
+    NotNfc,
 }
 
 impl NameError {
@@ -83,6 +91,7 @@ impl NameError {
             Self::Reserved => NAMING_RESERVED,
             Self::TooLong => NAMING_TOO_LONG,
             Self::MdExtension => NAMING_MD_EXTENSION,
+            Self::NotNfc => NAMING_NOT_NFC,
         }
     }
 }
@@ -189,9 +198,24 @@ fn agent_name(p: &ParsedArtifact, typed: &str) -> Result<String, NameError> {
 /// Longest vault file-name stem, in bytes: `stem.md` must fit in [`MAX_NAME_BYTES`].
 const MAX_STEM_BYTES: usize = MAX_NAME_BYTES - 3;
 
-/// The one ordered checker behind [`validate_name`] and [`validate_stem`]; first failure wins.
-/// `vault` adds the vault-only rules: a leading dot (hidden file) and a `.md` ending (`x.md.md`).
-fn check(name: &str, max: usize, vault: bool) -> Result<(), NameError> {
+/// Which name the shared checker is judging.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Mode {
+    Output,
+    Stem,
+    Dir,
+}
+
+/// Invisible format characters refused in vault names (spec §14.1 row 6); ZWNJ/ZWJ stay allowed.
+fn is_format_char(c: char) -> bool {
+    matches!(c, '\u{200b}' | '\u{200e}' | '\u{200f}' | '\u{202a}'..='\u{202e}'
+        | '\u{2066}'..='\u{2069}' | '\u{feff}' | '\u{2028}' | '\u{2029}')
+}
+
+/// The one ordered checker behind [`validate_name`], [`validate_stem`] and
+/// [`validate_dir_segment`]; first failure wins. Vault modes add format characters and NFC;
+/// `Stem` also refuses a leading dot and a `.md` ending (`x.md.md`).
+fn check(name: &str, max: usize, mode: Mode) -> Result<(), NameError> {
     if name.len() > max {
         return Err(NameError::TooLong);
     }
@@ -201,24 +225,26 @@ fn check(name: &str, max: usize, vault: bool) -> Result<(), NameError> {
     if name.starts_with(' ') || name.ends_with(' ') {
         return Err(NameError::EdgeSpace);
     }
-    if name.ends_with('.') || (vault && name.starts_with('.')) {
+    if name.ends_with('.') || (mode == Mode::Stem && name.starts_with('.')) {
         return Err(NameError::EdgeDot);
     }
     if name.contains(['\\', '/', ':', '*', '?', '"', '<', '>', '|']) {
         return Err(NameError::IllegalChar);
     }
-    if name.chars().any(char::is_control) {
+    let vault = mode != Mode::Output;
+    if name
+        .chars()
+        .any(|c| c.is_control() || (vault && is_format_char(c)))
+    {
         return Err(NameError::ControlChar);
     }
-    let stem = name.split('.').next().unwrap_or(name).to_ascii_lowercase();
-    let n = stem
-        .strip_prefix("com")
-        .or_else(|| stem.strip_prefix("lpt"));
-    let numbered = n.is_some_and(|d| matches!(d.as_bytes(), [b'1'..=b'9']));
-    if numbered || ["con", "prn", "aux", "nul"].contains(&stem.as_str()) {
+    if vault && !is_nfc(name) {
+        return Err(NameError::NotNfc);
+    }
+    if is_reserved(name) {
         return Err(NameError::Reserved);
     }
-    if vault && name.to_ascii_lowercase().ends_with(".md") {
+    if mode == Mode::Stem && name.to_ascii_lowercase().ends_with(".md") {
         return Err(NameError::MdExtension);
     }
     Ok(())
@@ -237,7 +263,7 @@ fn check(name: &str, max: usize, vault: bool) -> Result<(), NameError> {
 /// assert_eq!(validate_name("CON.txt"), Err(NameError::Reserved));
 /// ```
 pub fn validate_name(name: &str) -> Result<(), NameError> {
-    check(name, MAX_NAME_BYTES, false)
+    check(name, MAX_NAME_BYTES, Mode::Output)
 }
 
 /// Validate a vault file-name **stem** (`.md` excluded): [`validate_name`]'s rules, plus a leading
@@ -254,11 +280,22 @@ pub fn validate_name(name: &str) -> Result<(), NameError> {
 /// assert_eq!(validate_stem("x.MD"), Err(NameError::MdExtension));
 /// ```
 pub fn validate_stem(stem: &str) -> Result<(), NameError> {
-    check(stem, MAX_STEM_BYTES, true)
+    check(stem, MAX_STEM_BYTES, Mode::Stem)
 }
 
-/// The default vault stem for a title: [`slugify`], cut to 252 bytes (slug is ASCII, so any byte
-/// cut is a char boundary), trailing `-` trimmed, `untitled` when empty. Not validated: a result
+/// Validate a new **directory segment** of a vault path (spec §14.1a): the stem rule without `md_extension`,
+/// and a leading dot allowed.
+///
+/// # Examples
+///
+/// ```
+/// assert!(mda_core::naming::validate_dir_segment("sub").is_ok());
+/// ```
+pub fn validate_dir_segment(seg: &str) -> Result<(), NameError> {
+    check(seg, MAX_NAME_BYTES, Mode::Dir)
+}
+
+/// The default vault stem for a title: [`slugify`], cut to 252 bytes on a char boundary, trailing `-` trimmed, `untitled` when empty. Not validated: a result
 /// like `con` is for [`validate_stem`] to refuse (reject, never sanitise).
 ///
 /// # Examples
@@ -266,11 +303,11 @@ pub fn validate_stem(stem: &str) -> Result<(), NameError> {
 /// ```
 /// use mda_core::naming::default_stem;
 /// assert_eq!(default_stem("Button Group"), "button-group");
-/// assert_eq!(default_stem("日本"), "untitled");
+/// assert_eq!(default_stem("日本"), "日本");
 /// ```
 pub fn default_stem(title: &str) -> String {
     let mut s = slugify(title);
-    s.truncate(MAX_STEM_BYTES);
+    s.truncate(s.floor_char_boundary(MAX_STEM_BYTES));
     s.truncate(s.trim_end_matches('-').len());
     if s.is_empty() {
         "untitled".to_owned()
@@ -293,27 +330,6 @@ pub fn check_injection(value: &str, field: NameField) -> Result<(), NameError> {
         return Err(NameError::PathInjection(field));
     }
     Ok(())
-}
-
-/// A file-system-safe slug: lowercased (Unicode-aware), every run of characters outside ASCII
-/// `[a-z0-9]` collapsed to one `-`, edge dashes trimmed (TS `slugify`). Empty when nothing is left.
-///
-/// # Examples
-///
-/// ```
-/// let _ = mda_core::naming::slugify("Button Group");
-/// ```
-pub fn slugify(s: &str) -> String {
-    let mut out = String::new();
-    for c in s.to_lowercase().chars() {
-        if c.is_ascii_lowercase() || c.is_ascii_digit() {
-            out.push(c);
-        } else if !out.is_empty() && !out.ends_with('-') {
-            out.push('-');
-        }
-    }
-    out.truncate(out.trim_end_matches('-').len());
-    out
 }
 
 /// Node `path.parse(name).name`: the text before the last dot, unless that dot starts the name.
@@ -346,3 +362,26 @@ pub fn node_ext(name: &str) -> &str {
         _ => "",
     }
 }
+
+/// Stems the rule accepts; T4.2 creates each on disk.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::naming::{ACCEPTED_STEMS, validate_stem};
+/// assert!(ACCEPTED_STEMS.iter().all(|s| validate_stem(s).is_ok()));
+/// ```
+#[doc(hidden)]
+pub const ACCEPTED_STEMS: &[&str] = &[
+    "a#b",
+    "x^y",
+    "[z]",
+    "日本語",
+    "caf\u{e9}",
+    "\u{dc}n\u{ef}c\u{f8}d\u{e9} \u{2713}",
+    // 126 x U+00E9 = 252 bytes (a const cannot call `repeat`).
+    concat!(
+        "ééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+        "ééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé"
+    ),
+];

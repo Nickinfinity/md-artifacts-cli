@@ -1,11 +1,11 @@
 vault_flag = false
 machine_config = '''
-default = "/nonexistent-mda-w4a"
-vaults = ["/nonexistent-mda-w4a"]
+default = "$MISSING"
+vaults = ["$MISSING"]
 '''
 [expect]
 source = "none"
 configDir = "$CONFIG"
 [expect.defaultError]
 code = "vault.unavailable"
-params = { path = "/nonexistent-mda-w4a" }
+params = { path = "$MISSING" }

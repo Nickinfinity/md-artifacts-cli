@@ -86,6 +86,7 @@ pub fn english(code: &str) -> Option<&'static str> {
         NAMING_RESERVED => "the file name is a reserved system name",
         NAMING_TOO_LONG => "the file name is longer than 255 bytes",
         NAMING_MD_EXTENSION => "the file name already ends in .md",
+        NAMING_NOT_NFC => "the file name is not in Unicode NFC form (normalize it)",
         ARTIFACT_NOT_WHOLE_FILE => "this artifact type does not write a file",
         ARTIFACT_MULTI_BLOCK => "a whole-file artifact must have a single block",
         ARTIFACT_IS_INDEX => "a template index is run, not written",

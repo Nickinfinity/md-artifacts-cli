@@ -15,6 +15,7 @@ const FLAT: &str =
 
 struct V {
     dir: PathBuf,
+    #[cfg(unix)]
     out: PathBuf,
     ctx: Ctx,
 }
@@ -23,14 +24,22 @@ fn vault(name: &str) -> V {
     let base = std::env::temp_dir().join(format!("mda-vars-{}-{name}", std::process::id()));
     let _ = fs::remove_dir_all(&base);
     let dir = base.join("v");
+    #[cfg(unix)]
     let out = base.join("outside");
     fs::create_dir_all(dir.join(".obsidian")).unwrap();
     fs::create_dir_all(dir.join("Variables")).unwrap();
+    #[cfg(unix)]
     fs::create_dir_all(&out).unwrap();
     let dir = dir.canonicalize().unwrap();
+    #[cfg(unix)]
     let out = out.canonicalize().unwrap();
     let ctx = Ctx::new(Some(Root::new(&dir).unwrap()));
-    V { dir, out, ctx }
+    V {
+        dir,
+        #[cfg(unix)]
+        out,
+        ctx,
+    }
 }
 
 impl V {
@@ -77,6 +86,7 @@ fn assert_no_abs(e: &OpError, root: &Path) {
     }
 }
 
+#[cfg(unix)]
 #[test]
 fn symlinked_dir_never_receives_a_new_file() {
     let v = vault("dir");
@@ -97,6 +107,7 @@ fn symlinked_dir_never_receives_a_new_file() {
     );
 }
 
+#[cfg(unix)]
 #[test]
 fn symlinked_file_is_never_rewritten() {
     let v = vault("file");

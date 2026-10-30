@@ -7,7 +7,9 @@ use std::path::Path;
 use mda_core::model::ArtifactModel;
 use mda_vault::{contain, content_hash, rename_new};
 
-use crate::artifact::{MAX_ARTIFACT_BYTES, artifact_path, bad_path, root_of};
+use crate::artifact::{
+    MAX_ARTIFACT_BYTES, artifact_path, bad_path, check_dirs, mid_dirs, root_of, segments,
+};
 use crate::artifact_rewrite::prepare;
 use crate::error::vault_error;
 use crate::rename_links::index_links_to;
@@ -70,6 +72,12 @@ pub fn rename(ctx: &Ctx, req: RenameRequest) -> Result<RenameResponse, OpError> 
     if new.split('/').next() != req.path.split('/').next() {
         return Err(bad_path(new));
     }
+    let new_segs = segments(new).map_err(|()| bad_path(new))?;
+    check_dirs(
+        root,
+        new_segs.first().copied().unwrap_or_default(),
+        mid_dirs(&new_segs),
+    )?;
     let stem = new.rsplit('/').next().and_then(|f| f.strip_suffix(".md"));
     mda_core::naming::validate_stem(stem.unwrap_or_default())?;
     if new == req.path {

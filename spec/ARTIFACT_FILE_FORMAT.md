@@ -317,8 +317,8 @@ supplies.
   value containing `/`, `\`, `..` or NUL is **rejected, never sanitised** (`naming.path_injection`).
   The final name is also validated, first failure wins: more than 255 bytes; empty; a leading or trailing
   space; a **trailing** dot (or all dots — a leading dot is allowed: `.env`, `.cursorrules`); any of
-  `\ / : * ? " < > |`; a control character (C0, DEL or C1 — C1 since engine 0.12.0); a Windows reserved name, also as the stem before the first
-  dot (`CON.txt`), case-insensitive (W3 R-6, R-7, R-16, R-25(3, 21); the reserved-stem and leading-dot
+  `\ / : * ? " < > |`; a control character (C0, DEL or C1 — C1 since engine 0.12.0); a Windows reserved name (the full list in §14.1, since engine 0.14.0), also as the stem before the first
+  dot with trailing spaces removed (`CON.txt`, `CON .txt`), case-insensitive (W3 R-6, R-7, R-16, R-25(3, 21); the reserved-stem and leading-dot
   rules differ from the extension's input box).
 
 ### 5.2 `AIAgentsConfig`
@@ -1001,8 +1001,7 @@ and description, var name and every string inside its value; a match keeps its a
 
 A vault file is `<dir>/<stem>.md`. Every write that **creates a name** checks the **stem** of the last segment (the
 `.md` excluded): `artifact.create`, the `newPath` of `artifact.rename`, the files `index.create` derives, and the
-Variables files `vars.file.new` / `varsets.save` create. Directory segments keep the path rules (§8.3) and are not
-name-checked. Updating, patching or deleting an existing file never checks its name, so no file a user already has
+Variables files `vars.file.new` / `varsets.save` create. New directory segments are checked too (§14.1a). Updating, patching or deleting an existing file never checks its name, so no file a user already has
 is stranded. The rule **rejects, never fixes**. Checks run **in this order**; the first failure decides the code:
 
 | # | Rejected | Code |
@@ -1012,19 +1011,41 @@ is stranded. The rule **rejects, never fixes**. Checks run **in this order**; th
 | 3 | a leading or trailing space | `naming.edge_space` |
 | 4 | a **leading or trailing** dot (`.hidden`, `trail.`) | `naming.edge_dot` |
 | 5 | any of `\ / : * ? " < > \|` | `naming.illegal_char` |
-| 6 | a control character: C0, DEL or C1 | `naming.control_char` |
-| 7 | a Windows reserved name, whole or before the first dot (`CON`, `con.txt`), case-insensitive | `naming.reserved` |
-| 8 | ends in `.md`, ASCII case-insensitive (`x.md` would be `x.md.md`) | `naming.md_extension` |
+| 6 | a control character: C0, DEL or C1; or an invisible format character U+200B, U+200E, U+200F, U+202A–U+202E, U+2066–U+2069, U+FEFF, U+2028, U+2029 (ZWNJ U+200C and ZWJ U+200D are allowed) | `naming.control_char` |
+| 7 | not in Unicode NFC form | `naming.not_nfc` |
+| 8 | a Windows reserved name, whole or before the first dot with trailing spaces removed (`CON`, `con.txt`, `CON .txt`), ASCII case-insensitive: `CON PRN AUX NUL CONIN$ CONOUT$`, `COM0`–`COM9`, `LPT0`–`LPT9`, `COM¹ COM² COM³ LPT¹ LPT² LPT³` (`COM10` is allowed) | `naming.reserved` |
+| 9 | ends in `.md`, ASCII case-insensitive (`x.md` would be `x.md.md`) | `naming.md_extension` |
 
-Unicode letters are allowed in a typed stem (`café`, `日本語`). Obsidian's link characters `# ^ [ ]` are allowed
-(Obsidian allows the file; it warns only about links to it). The rule differs from the output-name rule (§5.1) in
-the leading dot, the 252-byte stem and `naming.md_extension`.
+Unicode letters are allowed in a typed stem (`café`, `日本語`); clients send names in **NFC** (`s.normalize("NFC")`). Obsidian's
+link characters `# ^ [ ]` are allowed (Obsidian allows the file; it warns only about links to it). The rule differs from the
+output-name rule (§5.1) in the leading dot, the 252-byte stem, the format characters, NFC and `naming.md_extension`. The
+reserved list follows Microsoft's "Naming Files, Paths, and Namespaces" and applies on every OS, so a vault stays portable.
 
-**Default stem** of a title: `slugify(title)` (ASCII letters and digits, lower case, other runs → `-`), truncated
-to 252 bytes, trailing `-` trimmed, `untitled` when empty (`Button Group` → `button-group`, `Café` → `caf`,
-`日本` → `untitled`). A default that fails the rule (`Con` → `con`) is reported, never altered. `naming.check`
+**Default stem** of a title: `slugify(title)` — the title (first 1024 characters) in NFC, lower-cased, in NFC again; letters and
+digits of any script kept (with a combining mark that follows one), every other run → one `-`, edge `-` trimmed — cut to at most
+252 bytes on a character boundary, trailing `-` trimmed, `untitled` when empty (`Button Group` → `button-group`, `Café notes` →
+`café-notes`, `日本語 メモ` → `日本語-メモ`, `!!!` → `untitled`). ASCII titles give the same names as before 0.14.0. The same slug
+names `index.create`'s derived files and directories. A default that fails the rule (`Con` → `con`) is reported, never altered. `naming.check`
 answers both questions without a vault: a given `fileName` is checked as given; without one the default stem of
 `title` is derived and checked.
+
+### 14.1a Directory segments
+
+Each **new** directory segment below the type directory of a name-creating write — the path of `artifact.create`, the `newPath`
+of `artifact.rename`, the `dir` of `index.create` and the directories it derives, the `dir` of `vars.file.new` /
+`varsets.save` — passes the stem rule without `md_extension` and with a leading dot allowed: `too_long` (255 bytes), `empty`,
+`edge_space`, `edge_dot` (trailing only), `illegal_char`, `control_char`, `not_nfc`, `reserved`. A refusal carries the param
+`segment`; the check runs before anything is created, so a refusal creates no directory. A segment whose directory **already
+exists** is accepted even if it fails a rule (a Finder-made NFD folder keeps working) — except a **reserved** name, which is
+always refused. `index.create` therefore refuses a source path with a directory named like a device (`aux/x.ts`). Directory
+segments are checked before the stem.
+
+### 14.1b Across operating systems
+
+The rules are the union of what Windows, macOS and Linux refuse, so a vault that passes them can be opened on any of the three.
+NTFS and APFS fold case (`Café.md` and `CAFÉ.md` are one file there): creating one when the other exists is `file.exists`,
+never an overwrite. Every accepted name in the engine's test list (`# ^ [ ]`, Unicode, a 252-byte stem) is created and read
+back on each OS in CI.
 
 ### 14.2 Rename
 

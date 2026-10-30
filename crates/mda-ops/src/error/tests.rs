@@ -400,6 +400,10 @@ fn w6_codes_exact_json() {
             serde_json::json!({"code": "render.unjoinable", "params": {"line": "0", "reason": "multiline_value", "name": "VK-a"}}),
         ),
         (
+            OpError::new(NAMING_NOT_NFC).with("segment", "Cafe\u{301}"),
+            serde_json::json!({"code": "naming.not_nfc", "params": {"segment": "Cafe\u{301}"}}),
+        ),
+        (
             OpError::new(NAMING_MD_EXTENSION),
             serde_json::json!({"code": "naming.md_extension", "params": {}}),
         ),
@@ -424,7 +428,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 79);
+    assert_eq!(ALL_CODES.len(), 80);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE

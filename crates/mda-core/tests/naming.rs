@@ -3,7 +3,8 @@
 
 mod common;
 use mda_core::naming::{
-    NameError as E, NameField as F, check_injection, output_name, validate_name,
+    NameError as E, NameField as F, check_injection, default_stem, output_name, validate_name,
+    validate_stem,
 };
 use mda_core::parse::parse_from_content;
 
@@ -241,25 +242,42 @@ fn slugify_cases() {
         ("---hello---", "hello"),
         ("   ", ""),
         ("Phase 0.5", "phase-0-5"),
-        ("café", "caf"),
+        ("caf\u{e9}", "caf\u{e9}"),
         ("My Snippet Title", "my-snippet-title"),
         ("Hello, World!", "hello-world"),
         ("  Trim  Me  ", "trim-me"),
         ("\u{212a}elvin", "kelvin"),
-        ("İ", "i"),
+        ("\u{130}", "i\u{307}"),
         ("!!!", ""),
         ("a__b", "a-b"),
     ] {
         assert_eq!(slugify(i), o, "{i:?}");
     }
-    for x in common::fuzz_strings(0x1DE7, 2_000, 20) {
+    let frags = [
+        "a", "Z", "9", " ", "-", "_", "!", "e", "\u{301}", "\u{e9}", "日", "本", "\u{200b}",
+        "\u{202e}", "\u{130}",
+    ];
+    let mut r = common::XorShift(0x1DE7);
+    for i in 0..2_000 {
+        // Every 10th input is long, so the 252-byte cut runs on non-ASCII text.
+        let n = if i % 10 == 0 {
+            100 + r.next_u64() % 200
+        } else {
+            r.next_u64() % 20
+        };
+        let x: String = (0..n as usize)
+            .map(|_| frags[(r.next_u64() % frags.len() as u64) as usize])
+            .collect();
         let s = slugify(&x);
+        assert!(unicode_normalization::is_nfc(&s), "{x:?} {s:?}");
         assert!(
-            s.is_empty()
-                || s.split('-').all(|p| !p.is_empty()
-                    && p.bytes()
-                        .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())),
+            !s.contains("--") && !s.starts_with('-') && !s.ends_with('-'),
             "{x:?} {s:?}"
+        );
+        let v = validate_stem(&default_stem(&x));
+        assert!(
+            !matches!(v, Err(E::NotNfc | E::TooLong | E::ControlChar)),
+            "{x:?} {v:?}"
         );
     }
 }

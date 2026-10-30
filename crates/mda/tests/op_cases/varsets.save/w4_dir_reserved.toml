@@ -1,0 +1,5 @@
+vault = "vault"
+params = { title = "T", dir = "Variables/aux" }
+expect_error = "naming.reserved"
+expect_error_params = { segment = "aux" }
+expect_files = { "Variables/aux" = false }

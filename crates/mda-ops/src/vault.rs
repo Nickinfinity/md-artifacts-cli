@@ -214,7 +214,8 @@ fn create_defaults(root: &Root) -> Result<Vec<String>, OpError> {
 /// # Examples
 ///
 /// ```
-/// let e = mda_ops::vault::open_vault(std::path::Path::new("/nonexistent-mda-doc")).unwrap_err();
+/// let missing = std::env::temp_dir().join("mda-nonexistent-doc"); // absolute on every OS
+/// let e = mda_ops::vault::open_vault(&missing).unwrap_err();
 /// assert_eq!(e.code, "path.not_found");
 /// ```
 pub fn open_vault(path: &Path) -> Result<Root, OpError> {

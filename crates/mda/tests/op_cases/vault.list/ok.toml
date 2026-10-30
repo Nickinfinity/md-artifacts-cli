@@ -2,9 +2,9 @@ vault_flag = false
 vault = "vault"
 machine_config = '''
 default = "$VAULT"
-vaults = ["$VAULT", "/nonexistent-mda-w4b"]
+vaults = ["$VAULT", "$MISSING"]
 '''
 params = {}
 [expect]
 default = "$VAULT"
-vaults = [{ path = "$VAULT", available = true }, { path = "/nonexistent-mda-w4b", available = false }]
+vaults = [{ path = "$VAULT", available = true }, { path = "$MISSING", available = false }]

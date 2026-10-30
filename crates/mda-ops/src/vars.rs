@@ -11,7 +11,7 @@ use mda_core::serialize::serialize;
 use mda_core::variables::{self, EditError};
 use mda_vault::{Root, content_hash, create_new};
 
-use crate::artifact::{artifact_path, bad_path, root_of, segments};
+use crate::artifact::{artifact_path, bad_path, check_dirs, root_of, segments};
 use crate::artifact_rewrite::rewrite;
 use crate::artifact_write::{WriteResponse, map_serialize, max_bytes};
 use crate::write_file::exists_actual;
@@ -59,6 +59,11 @@ pub(crate) fn create_variables_file(
     if segs.first() != Some(&ArtifactType::Variables.info().dir) {
         return Err(bad_path(dir));
     }
+    check_dirs(
+        root,
+        ArtifactType::Variables.info().dir,
+        segs.get(1..).unwrap_or_default(),
+    )?;
     let stem = default_stem(&model.title);
     validate_stem(&stem)?;
     let path = format!("{dir}/{stem}.md");

@@ -3,9 +3,13 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-30): ER-7 + ER-5 landed (MAC-19, MAC-20)** — `join` on `artifact.render` / `render.text` joins a rendered
+> **Status (2026-10-30): W4 landed (MAC-21)** — Unicode slugs (`mda-core/src/naming/slug.rs`, NFC via `unicode-normalization`),
+> cross-platform vault names (`naming.not_nfc`, format characters, complete Windows reserved list `naming/reserved.rs`, new directory
+> segments checked with `segment`), CI matrix ubuntu/macos/windows (`.github/workflows/ci.yml`, `.gitattributes * -text`); protocol
+> **2.4**, engine `0.14.0`.
+> **ER-7 + ER-5 landed (MAC-19, MAC-20)** — `join` on `artifact.render` / `render.text` joins a rendered
 > Command into one line or refuses `render.unjoinable{line, reason}` (never guesses; the scanner `mda-core/src/render/join.rs`,
-> spec §4.3), response `joined: true`; `naming.output` (the write_file output name, nothing written); protocol **2.3**, engine `0.13.0`.
+> spec §4.3), response `joined: true`; `naming.output` (the write_file output name, nothing written); protocol 2.3, engine `0.13.0`.
 > **ER-4 + ER-6 landed (MAC-17, MAC-18)** — vault file names: one stem rule
 > `mda_core::naming::validate_stem` (spec §14.1; `naming.md_extension`, leading dot refused, C1 is `naming.control_char`) on every
 > name-creating write, `default_stem` (252-byte slug); `naming.check` (pure); `artifact.rename` (verbatim or with a model, no clobber,
@@ -107,6 +111,8 @@ cargo fmt --all --check \
   && cargo test --workspace --all-features
 ```
 
+CI: `.github/workflows/ci.yml` runs this gate on ubuntu, macos and windows (push to main/develop/feature/**, PRs).
+
 Toolchain: Rust **1.97.1** stable (rustc/cargo/clippy/rustfmt). **Not installed:** `cargo-deny`,
 `cargo-nextest`, `cargo-insta`. Do not add them to the gate without a plan row that installs them.
 
@@ -130,7 +136,7 @@ md-artifacts-cli/
 │   │       ├── serialize/     # THE .md emitter: mod.rs · payload.rs (flags, bare bodies; W7c) · guard.rs (round-trip guard, from_parsed)
 │   │       ├── patch.rs       # surgical in-place edits
 │   │       ├── render/        # token substitution + the directive engine (paths, each/end, join, limits)
-│   │       ├── naming.rs      # slugify, output names, the vault stem rule + default stem (§14.1)
+│   │       ├── naming.rs      # output names, the vault stem rule, dir segments, default stem (§14.1); naming/{slug,reserved}.rs
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
 │   │       ├── varset/        # shapes, sub-sets, search text; score.rs: scoring, order, apply (W5b)
 │   │       ├── variables.rs   # Variables-file edits: sub-sets, vars, name rule, shapes (W5)
@@ -171,7 +177,7 @@ md-artifacts-cli/
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
-├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.3) — orchestrator-owned
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.4) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
 ├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
@@ -217,7 +223,7 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
-- **Authority: `spec/PROTOCOL.md`** (protocol `2.3`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`–`2.3` additive (ER-3; ER-4 + ER-6; ER-7 + ER-5)). Its method, error-code and warning-code
+- **Authority: `spec/PROTOCOL.md`** (protocol `2.4`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`–`2.4` additive (ER-3; ER-4 + ER-6; ER-7 + ER-5; W4)). Its method, error-code and warning-code
   tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
   `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
@@ -341,7 +347,7 @@ through a `serve` NDJSON session (asserting every stdout line is JSON).
   W4 adds `vault_bare/`, `vault_cfg/`, `vault_badcfg/`, `not_vault/`; W5b adds `vault_vars/`; W6 adds `vault_migrate/`.
 - **Machine config per leg:** every leg gets a fresh canonical config dir (`MDA_CONFIG_DIR`);
   `machine_config` seeds it, `expect_config_files` asserts it, `vault_flag = false` copies the fixture
-  without passing `--vault`; `$VAULT` / `$CONFIG` / `$WORKSPACE` are substituted. `expect` is full-body equality.
+  without passing `--vault`; `$VAULT` / `$CONFIG` / `$WORKSPACE` / `$MISSING` (an absolute path never created) are substituted; engine-echoed paths are compared with `\` → `/` on Windows only. `expect` is full-body equality.
 - **Shared test helpers:** `crates/mda/tests/common/mod.rs` (spawn the binary, NDJSON session, the
   every-stdout-line-is-JSON check), orchestrator-owned; test files import it with `mod common;`.
 - The case files double as the protocol's examples in `spec/PROTOCOL.md` (§3 links each op's folder; §9 the grammar).

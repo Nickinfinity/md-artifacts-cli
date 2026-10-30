@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Snippets/café/日本.md", model = { artifactType = "Snippet", title = "x", blocks = [{ code = "y" }] } }
+expect = { path = "Snippets/café/日本.md", hash = "b3a5548add9ebcfe78f71e709bbead861714da9d1a132ea6398f8f5f9d1d0439" }
+expect_files = { "Snippets/café/日本.md" = "---\nartifactType: Snippet\ntitle: x\n---\n\n```\ny\n```\n" }

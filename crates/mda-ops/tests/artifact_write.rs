@@ -7,9 +7,10 @@ use std::path::PathBuf;
 
 use mda_ops::artifact::{ReadRequest, read};
 use mda_ops::artifact_write::{
-    CreateRequest, DeleteRequest, PatchEdit, PatchRequest, UpdateRequest, create, delete, patch,
-    update,
+    CreateRequest, PatchEdit, PatchRequest, UpdateRequest, create, patch, update,
 };
+#[cfg(unix)]
+use mda_ops::artifact_write::{DeleteRequest, delete};
 use mda_ops::{Ctx, OpError, Root};
 use serde_json::json;
 
@@ -39,6 +40,7 @@ impl Vault {
     fn get(&self, rel: &str) -> String {
         fs::read_to_string(self.dir.join(rel)).unwrap()
     }
+    #[cfg(unix)]
     /// A file outside the vault, plus a `Templates/out.md` symlink to it.
     fn link_out(&self, body: &str) -> PathBuf {
         let out = self.dir.with_file_name(format!(
@@ -103,6 +105,7 @@ fn pat(
 
 const BODY: &str = "---\nartifactType: Template\ntitle: T\n---\n\n```\nold\n```\n";
 
+#[cfg(unix)]
 #[test]
 fn symlink_target_is_never_written_or_deleted() {
     let v = vault("link");
@@ -299,4 +302,27 @@ fn invalid_utf8_is_rewritten_lossily_like_update() {
     pat(&v, "Templates/a.md", mda_vault::content_hash(&raw)).unwrap();
     let want = format!("{}\u{fffd}\u{fffd}", BODY.replace("title: T", "title: X"));
     assert_eq!(v.get("Templates/a.md"), want);
+}
+
+/// D-28 exemption: a pre-existing NFD directory keeps accepting files; a new NFD one is refused.
+#[test]
+fn create_into_existing_nfd_dir() {
+    let v = vault("nfd");
+    fs::create_dir_all(v.dir.join("Templates/Cafe\u{301}")).unwrap();
+    let mk = |path: &str| {
+        create(
+            &v.ctx,
+            serde_json::from_value(json!({"path": path, "model":
+                {"artifactType":"Template","title":"T","blocks":[{"code":"c"}]}}))
+            .unwrap(),
+        )
+    };
+    mk("Templates/Cafe\u{301}/x.md").unwrap();
+    let e = mk("Templates/Cafe\u{301}/new\u{301}/y.md").unwrap_err();
+    assert_eq!(e.code, "naming.not_nfc");
+    assert_eq!(
+        e.params.get("segment").map(String::as_str),
+        Some("new\u{301}")
+    );
+    assert!(!v.dir.join("Templates/Cafe\u{301}/new\u{301}").exists());
 }

@@ -11,7 +11,9 @@ use mda_core::patch::{CodeTarget, FmField, PatchError, patch_code, patch_field};
 use mda_core::serialize::{SerializeError, serialize};
 use mda_vault::{content_hash, create_new, delete as vault_delete, replace};
 
-use crate::artifact::{MAX_ARTIFACT_BYTES, artifact_path, bad_path, root_of};
+use crate::artifact::{
+    MAX_ARTIFACT_BYTES, artifact_path, bad_path, check_dirs, mid_dirs, root_of, segments,
+};
 use crate::artifact_rewrite::{read_checked, rewrite};
 use crate::error::vault_error;
 use crate::write_file::exists_actual;
@@ -211,7 +213,14 @@ pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
     if artifact_path(&req.path)? != req.model.artifact_type {
         return Err(bad_path(&req.path));
     }
-    // D-7/D-8: only the last segment's stem is name-checked, and only on a new name.
+    // D-7/D-8: only the last segment's stem is name-checked, and only on a new name; new
+    // directory segments (D-28) are checked first.
+    let segs = segments(&req.path).map_err(|()| bad_path(&req.path))?;
+    check_dirs(
+        root,
+        segs.first().copied().unwrap_or_default(),
+        mid_dirs(&segs),
+    )?;
     let file = req.path.rsplit('/').next().unwrap_or_default();
     mda_core::naming::validate_stem(file.strip_suffix(".md").unwrap_or(file))?;
     let text = serialize(&req.model, max_bytes()).map_err(|e| map_serialize(e, &req.path))?;

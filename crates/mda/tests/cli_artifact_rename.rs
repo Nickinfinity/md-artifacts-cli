@@ -46,6 +46,8 @@ fn human_prints_wrote_and_index_link_warning() {
     let _ = std::fs::remove_dir_all(d);
 }
 
+// Symlink sinks: Unix only (its callers are gated too).
+#[cfg(unix)]
 fn rename_through(
     link: &str,
     target: &std::path::Path,

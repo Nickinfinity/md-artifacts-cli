@@ -303,13 +303,16 @@ pub const NAMING_RESERVED: &str = "naming.reserved";
 pub const NAMING_TOO_LONG: &str = "naming.too_long";
 /// A vault file-name stem that already ends in `.md` (`x.md.md`; spec §14). No params.
 pub const NAMING_MD_EXTENSION: &str = "naming.md_extension";
+/// A vault file-name stem or new directory segment that is not in Unicode NFC form (spec §14.1). Param
+/// `segment` for a directory segment.
+pub const NAMING_NOT_NFC: &str = "naming.not_nfc";
 
 /// Every `naming.*` code, for the `ALL_CODES` contract pin in `mda-ops`.
 ///
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_core::error::NAMING_CODES.len(), 9);
+/// assert_eq!(mda_core::error::NAMING_CODES.len(), 10);
 /// ```
 pub const NAMING_CODES: &[&str] = &[
     NAMING_PATH_INJECTION,
@@ -321,6 +324,7 @@ pub const NAMING_CODES: &[&str] = &[
     NAMING_RESERVED,
     NAMING_TOO_LONG,
     NAMING_MD_EXTENSION,
+    NAMING_NOT_NFC,
 ];
 
 /// Render warning: a variable with no effective value, a missing field, or a field of a string.

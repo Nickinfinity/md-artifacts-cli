@@ -1,0 +1,11 @@
+vault = "vault"
+params = { type = "Template", dir = "Templates/gen", paths = ["src/Café.ts"] }
+[expect]
+written = 2
+skipped = 0
+results = [
+  { relPath = "src/Café.ts", status = "written", path = "Templates/gen/src/café.md", hash = "1ea2ae4590cd094fe8f8831ecfdbcc078a3c07c3dfbb25d46e9392a487afe38b", warnings = [], containsEscape = false },
+  { relPath = "", status = "written", path = "Templates/gen/index.md", hash = "7a5ad109160d532e88e85830fe9713959de75662ebeb9c7165611e7f514e33fd", warnings = [], containsEscape = false },
+]
+[expect_files]
+"Templates/gen/src/café.md" = "---\nartifactType: Template\ntitle: café\nextension: ts\n---\n"

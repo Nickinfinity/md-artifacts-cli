@@ -49,7 +49,8 @@ pub fn validate_vault(path: &Path) -> Result<Root, VaultError> {
     }
 }
 
-/// The state of type directory `dir` (a registry `dir`, one level) inside `root`.
+/// The state of the vault-relative directory `dir` inside `root`, at any depth (`contain` anchors on the nearest
+/// existing ancestor, so a dir under a missing parent is `Missing`).
 ///
 /// # Examples
 ///

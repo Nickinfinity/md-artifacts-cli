@@ -102,8 +102,13 @@ fn resolve_flag_errors_are_fatal() {
 #[test]
 fn stale_default_defers_and_writes_nothing() {
     let cfg = tmp("st-cfg");
-    let body = "default = \"/nonexistent-mda-w4c\"\nvaults = [\"/nonexistent-mda-w4c\"]\n";
-    fs::write(cfg.join("config.toml"), body).unwrap();
+    // forward slashes: a Windows `C:\..` path would be an invalid TOML escape
+    let gone = std::env::temp_dir()
+        .join(format!("nonexistent-mda-w4c-{}", std::process::id()))
+        .to_string_lossy()
+        .replace('\\', "/");
+    let body = format!("default = \"{gone}\"\nvaults = [\"{gone}\"]\n");
+    fs::write(cfg.join("config.toml"), &body).unwrap();
     let ctx = resolve(None, Some(cfg.clone())).unwrap();
     assert_eq!(
         dispatch(&ctx, "artifact.tree", json!({"type": "Snippet"}))

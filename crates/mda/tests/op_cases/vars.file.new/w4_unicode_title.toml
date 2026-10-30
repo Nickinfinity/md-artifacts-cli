@@ -1,0 +1,4 @@
+vault = "vault"
+params = { title = "Café Notes" }
+expect = { path = "Variables/café-notes.md", hash = "d7238fc0aae10f367bd239219dc2d9f09895ddd5ad7aece7615fd749641d1b2b" }
+expect_files = { "Variables/café-notes.md" = "---\nartifactType: Variables\ntitle: Café Notes\n---\n" }

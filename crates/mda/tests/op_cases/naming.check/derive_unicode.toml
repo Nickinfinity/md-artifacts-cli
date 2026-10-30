@@ -1,2 +1,2 @@
 params = { type = "Snippet", title = "日本" }
-expect = { fileName = "untitled", ok = true }
+expect = { fileName = "日本", ok = true }

@@ -1,0 +1,5 @@
+vault = "vault"
+params = { path = "Snippets/CON .txt.md", model = { artifactType = "Snippet", title = "x", blocks = [{ code = "y" }] } }
+expect_error = "naming.reserved"
+expect_error_params = {}
+expect_files = { "Snippets/CON .txt.md" = false }
