@@ -65,15 +65,21 @@ fn vault_text_never_reaches_stdout_with_escape() {
     let _ = std::fs::remove_dir_all(&d);
     std::fs::create_dir_all(d.join(".obsidian")).unwrap();
     std::fs::create_dir_all(d.join("Snippets")).unwrap();
+    // ESC in a file name is invalid on Windows; the hostile content still runs there.
+    let name = if cfg!(windows) {
+        "Snippets/evil.md"
+    } else {
+        "Snippets/e\x1bvil.md"
+    };
     std::fs::write(
-        d.join("Snippets/e\x1bvil.md"),
+        d.join(name),
         "---\ntitle: t\x1b[31m\n---\n\n```bash\nx\x1b[1m\n```\n",
     )
     .unwrap();
     let v = d.to_str().unwrap();
     for args in [
         ["--vault", v, "artifact", "ls", "Snippet"],
-        ["--vault", v, "artifact", "show", "Snippets/e\x1bvil.md"],
+        ["--vault", v, "artifact", "show", name],
     ] {
         let out = run(&args, b"");
         assert_eq!(out.status.code(), Some(0), "{args:?}");
