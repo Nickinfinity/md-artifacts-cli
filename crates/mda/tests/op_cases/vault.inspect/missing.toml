@@ -1,0 +1,6 @@
+vault = "vault"
+vault_flag = false
+params = { path = "$MISSING" }
+expect_error = "path.not_found"
+[expect_config_files]
+"config.toml" = false

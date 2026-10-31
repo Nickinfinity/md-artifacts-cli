@@ -115,6 +115,13 @@ fn every_code_has_english() {
 }
 
 #[test]
+fn every_warning_has_english() {
+    for c in error::RENDER_WARNING_CODES {
+        assert!(mda::cli::print::english(c).is_some(), "{c}");
+    }
+}
+
+#[test]
 fn log_file_failure_is_an_op_error() {
     let log = std::env::temp_dir()
         .join(format!("mda-{}-nolog", std::process::id()))

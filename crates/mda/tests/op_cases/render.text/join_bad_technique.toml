@@ -1,0 +1,2 @@
+params = { text = "a", join = "nope" }
+expect_error = "op.bad_request"

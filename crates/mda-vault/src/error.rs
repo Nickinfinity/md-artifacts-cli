@@ -26,10 +26,57 @@ pub enum VaultError {
     /// Not a regular file (FIFO, device, directory); refused before opening.
     #[error("not a regular file: {path:?}")]
     NotRegular { path: PathBuf },
+    /// The file's content hash is not the one the client last read (optimistic concurrency).
+    #[error("conflict on {path:?}: expected {expected}, actual {actual}")]
+    Conflict {
+        path: PathBuf,
+        expected: String,
+        actual: String,
+    },
+    /// A create found a file already at the target; it is never overwritten.
+    #[error("file exists: {path:?}")]
+    Exists { path: PathBuf },
+    /// The path exists but is not a directory (a vault, a workspace root, a type dir, `.mda`).
+    #[error("not a directory: {path:?}")]
+    NotDir { path: PathBuf },
+    /// The directory has no `.obsidian/` directory: not an Obsidian vault.
+    #[error("not an Obsidian vault: {path:?}")]
+    NotObsidian { path: PathBuf },
+    /// A configuration file is corrupt, too large, not UTF-8, or breaks a spec §12 rule.
+    #[error("invalid config: {path:?}")]
+    ConfigInvalid { path: PathBuf },
+    /// A walk cap was reached; refused before the work it bounds (no path: the whole call is refused).
+    #[error("walk limit {limit:?} ({max})")]
+    Limit { limit: WalkLimit, max: u64 },
     /// Any other I/O failure.
     #[error("io failed on {path:?}: {kind}")]
     Io {
         path: PathBuf,
         kind: std::io::ErrorKind,
     },
+}
+
+/// Which walk cap was reached (spec §13.2).
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(mda_vault::WalkLimit::Files.as_str(), "files");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WalkLimit {
+    Depth,
+    Files,
+    Bytes,
+}
+
+impl WalkLimit {
+    /// `depth` | `files` | `bytes`.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Depth => "depth",
+            Self::Files => "files",
+            Self::Bytes => "bytes",
+        }
+    }
 }

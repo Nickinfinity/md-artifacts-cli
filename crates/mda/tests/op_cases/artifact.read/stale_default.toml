@@ -1,0 +1,9 @@
+vault = "vault"
+vault_flag = false
+machine_config = '''
+default = "$MISSING"
+vaults = ["$MISSING"]
+'''
+params = { path = "Snippets/hello.md" }
+expect_error = "vault.unavailable"
+expect_error_params = { path = "$MISSING" }

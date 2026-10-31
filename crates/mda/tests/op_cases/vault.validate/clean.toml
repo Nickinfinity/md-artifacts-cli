@@ -1,0 +1,9 @@
+vault = "vault_vars"
+params = {}
+
+[expect]
+files = 6
+errors = 0
+warnings = 0
+truncated = false
+issues = []

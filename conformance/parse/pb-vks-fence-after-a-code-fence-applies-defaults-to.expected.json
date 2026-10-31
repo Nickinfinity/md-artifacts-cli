@@ -1,0 +1,54 @@
+{
+  "blocks": [
+    {
+      "code": "const <VK-result> = <VK-array>.filter(i => i.<VK-prop> === <VK-value>);",
+      "description": "Filter items.",
+      "fenceLang": "javascript",
+      "heading": "Filter",
+      "vars": [
+        {
+          "defaultValue": "filtered",
+          "name": "VK-result"
+        },
+        {
+          "defaultValue": "items",
+          "name": "VK-array"
+        },
+        {
+          "defaultValue": "status",
+          "name": "VK-prop"
+        },
+        {
+          "defaultValue": "\"active\"",
+          "name": "VK-value"
+        }
+      ]
+    }
+  ],
+  "code": "const <VK-result> = <VK-array>.filter(i => i.<VK-prop> === <VK-value>);",
+  "fileName": "pb-vks-fence-after-a-code-fence-applies-defaults-to",
+  "filePath": "Snippets/pb-vks-fence-after-a-code-fence-applies-defaults-to.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "javascript"
+  },
+  "relativePath": "pb-vks-fence-after-a-code-fence-applies-defaults-to.md",
+  "vars": [
+    {
+      "defaultValue": "filtered",
+      "name": "VK-result"
+    },
+    {
+      "defaultValue": "items",
+      "name": "VK-array"
+    },
+    {
+      "defaultValue": "status",
+      "name": "VK-prop"
+    },
+    {
+      "defaultValue": "\"active\"",
+      "name": "VK-value"
+    }
+  ]
+}

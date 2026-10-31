@@ -1,0 +1,5 @@
+# W7c: a flagged payload (named, `***`-wrapped, notes before and after) is written as flags, so its fence survives.
+vault = "vault"
+params = { "path" = "AIPrompts/new.md", "model" = { "artifactType" = "AIPrompt", "title" = "New", "blocks" = [{ "code" = "Use <VK-tool>.\n\n```bash\nrun\n```", "vars" = [{ "name" = "VK-tool", "value" = "rg" }] }], "layout" = { "payload" = "flags", "regions" = [{ "name" = "Main", "notes" = "Why this exists.", "rule" = true }], "notes" = "After." } } }
+expect = { path = "AIPrompts/new.md", hash = "f1b38d4e85dfbb8d44db229c456c59cf41d9605319e2e93f0d7bd94678c88c9a" }
+expect_files = { "AIPrompts/new.md" = "---\nartifactType: AIPrompt\ntitle: New\n---\n\nWhy this exists.\n\n%%oa:start Main%%\n***\nUse <VK-tool>.\n\n```bash\nrun\n```\n***\n%%oa:end%%\n\nAfter.\n\nvars:\n```yaml VKs\nVK-tool: rg\n```\n" }

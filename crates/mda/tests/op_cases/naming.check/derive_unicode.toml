@@ -1,0 +1,2 @@
+params = { type = "Snippet", title = "日本" }
+expect = { fileName = "日本", ok = true }

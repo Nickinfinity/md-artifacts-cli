@@ -1,0 +1,20 @@
+{
+  "blocks": [],
+  "code": "first\n\n\nlast",
+  "fileName": "fs-blank-lines-are-trimmed-from-the-ends-but-never",
+  "filePath": "AIPrompts/fs-blank-lines-are-trimmed-from-the-ends-but-never.md",
+  "frontmatter": {
+    "artifactType": "AIPrompt",
+    "language": "markdown"
+  },
+  "layout": {
+    "payload": "flags",
+    "regions": [
+      {
+        "name": ""
+      }
+    ]
+  },
+  "relativePath": "fs-blank-lines-are-trimmed-from-the-ends-but-never.md",
+  "vars": []
+}

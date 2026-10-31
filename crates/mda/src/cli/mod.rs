@@ -2,22 +2,31 @@
 //! response. Stub landed by H0.0b; T0.4 implements it.
 
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::Parser;
-use mda_ops::{Ctx, OpError, Root};
-use serde_json::json;
+use mda_ops::OpError;
+use serde_json::{Value, json};
 
 use crate::{debug, serve};
 
+mod artifact;
+mod english;
+mod index;
+mod input;
+mod migrate;
+mod naming;
 pub mod print;
+mod vars;
+mod varsets;
+mod vault;
 
 /// Global flags and the subcommand.
 #[derive(clap::Parser)]
 #[command(name = "mda", version)]
 pub struct Cli {
-    /// The vault to use for this process (not persisted).
+    /// The vault for this process (not persisted; overrides the default).
     #[arg(long, global = true)]
     pub vault: Option<PathBuf>,
     /// Print the exact op response as one JSON line.
@@ -39,15 +48,62 @@ pub struct Cli {
 pub enum Command {
     /// Serve JSON-RPC 2.0 over stdio, one JSON object per line.
     Serve,
+    /// Read, list and write artifacts.
+    #[command(subcommand)]
+    Artifact(artifact::ArtifactCmd),
+    /// Plan, run and create template indexes.
+    #[command(subcommand)]
+    Index(index::IndexCmd),
     /// Engine information.
     #[command(subcommand)]
     System(SystemCmd),
+    /// Select, inspect and list vaults.
+    #[command(subcommand)]
+    Vault(vault::VaultCmd),
+    /// Engine configuration.
+    #[command(subcommand)]
+    Config(vault::ConfigCmd),
+    /// Artifact types in the current vault.
+    #[command(subcommand)]
+    Types(vault::TypesCmd),
+    /// Variables files: create, edit sub-sets and variables.
+    #[command(subcommand)]
+    Vars(vars::VarsCmd),
+    /// Variable sets: match an artifact, apply, save.
+    #[command(subcommand)]
+    Varsets(varsets::VarsetsCmd),
+    /// Render text without an artifact.
+    #[command(subcommand)]
+    Render(RenderCmd),
+    /// Migrate legacy vault files (plan writes nothing).
+    #[command(subcommand)]
+    Migrate(migrate::MigrateCmd),
+    /// Check a vault file name, or derive the default one, before writing.
+    #[command(subcommand)]
+    Naming(naming::NamingCmd),
     /// Run any operation by dotted name with raw JSON params (default `{}`).
     Call {
         /// Dotted op name, e.g. `system.ops`.
         op: String,
         /// JSON params.
         params: Option<String>,
+    },
+}
+
+/// `mda render …`
+#[derive(clap::Subcommand)]
+pub enum RenderCmd {
+    /// Fill `<VK-…>` tokens in text (FILE or `-` = stdin) with `--values` (a JSON object file, `-` = stdin).
+    Text {
+        /// The text file, or `-` for stdin.
+        #[arg(default_value = "-")]
+        file: String,
+        /// Values as a JSON object (file, or `-` for stdin).
+        #[arg(long)]
+        values: Option<String>,
+        /// Join the lines into one command: and, seq, continuation, pwsh, cmd.
+        #[arg(long)]
+        join: Option<String>,
     },
 }
 
@@ -78,18 +134,62 @@ pub fn run() -> ExitCode {
         let e = OpError::new(mda_ops::error::IO_FAILED).with("kind", kind.to_string());
         return fail(&e, cli.json);
     }
-    let root = match cli.vault.as_deref().map(Root::new).transpose() {
-        Ok(root) => root,
-        Err(e) => return fail(&OpError::from(e), cli.json),
+    // `--vault` made absolute client side (V-17(3)); the resolver refuses relative paths.
+    let flag = match cli
+        .vault
+        .as_deref()
+        .map(|p| input::absolute(p, "vault"))
+        .transpose()
+    {
+        Ok(f) => f,
+        Err(e) => return fail(&e, cli.json),
     };
-    let ctx = Ctx::new(root);
-    let (op, params) = match cli.command {
-        Command::Serve => {
-            return match serve::run(&ctx, std::io::stdin().lock(), std::io::stdout().lock()) {
-                Ok(()) => ExitCode::SUCCESS,
-                Err(_) => ExitCode::from(3),
-            };
+    let cfg = mda_ops::vault::config_dir(std::env::consts::OS, |k| std::env::var_os(k));
+    let ctx = match mda_ops::vault::resolve(flag.as_deref().map(Path::new), cfg) {
+        Ok(c) => c,
+        Err(e) => return fail(&e, cli.json),
+    };
+    let typed = !matches!(cli.command, Command::Call { .. });
+    let Some((op, params)) = request(cli.command, &ctx) else {
+        return match serve::run(&ctx, std::io::stdin().lock(), std::io::stdout().lock()) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(_) => ExitCode::from(3),
+        };
+    };
+    // Every subcommand goes through dispatch only: one code path, one dispatch log line.
+    match params.and_then(|p| mda_ops::dispatch(&ctx, &op, p)) {
+        Ok(v) if cli.json => emit_rc(&v.to_string(), rc_of(typed, &op, &v)),
+        Ok(v) => {
+            if let Some(e) = print::refuse(&op, &v) {
+                return fail(&e, false);
+            }
+            for w in print::warnings(&v) {
+                let _ = writeln!(std::io::stderr().lock(), "{w}");
+            }
+            emit_rc(&print::success(&op, &v), rc_of(typed, &op, &v))
         }
+        Err(e) => fail(&e, cli.json),
+    }
+}
+
+/// The op and params a subcommand stands for; `None` for `serve`. `ctx` lets a typed command run
+/// a preparatory op (human `migrate … apply` plans first, M-6).
+fn request(cmd: Command, ctx: &mda_ops::Ctx) -> Option<(String, Result<Value, OpError>)> {
+    let (op, params) = match cmd {
+        Command::Serve => return None,
+        Command::Artifact(cmd) => return Some(artifact::artifact_request(cmd)),
+        Command::Index(cmd) => return Some(index::index_request(cmd)),
+        Command::Vault(cmd) => return Some(vault::vault_request(cmd)),
+        Command::Config(cmd) => return Some(vault::config_request(cmd)),
+        Command::Types(cmd) => return Some(vault::types_request(cmd)),
+        Command::Vars(cmd) => return Some(vars::vars_request(cmd)),
+        Command::Varsets(cmd) => return Some(varsets::varsets_request(cmd)),
+        Command::Migrate(cmd) => return Some(migrate::migrate_request(cmd, ctx)),
+        Command::Naming(cmd) => return Some(naming::naming_request(cmd)),
+        Command::Render(RenderCmd::Text { file, values, join }) => (
+            "render.text".to_owned(),
+            input::render_text_params(&file, values, join),
+        ),
         Command::System(SystemCmd::Version) => ("system.version".to_owned(), Ok(json!({}))),
         Command::System(SystemCmd::Ops) => ("system.ops".to_owned(), Ok(json!({}))),
         Command::Call { op, params } => {
@@ -102,26 +202,31 @@ pub fn run() -> ExitCode {
             (op, p)
         }
     };
-    // Every subcommand goes through dispatch only: one code path, one dispatch log line.
-    match params.and_then(|p| mda_ops::dispatch(&ctx, &op, p)) {
-        Ok(v) => {
-            let text = if cli.json {
-                v.to_string()
-            } else {
-                print::success(&op, &v)
-            };
-            emit(&text)
-        }
-        Err(e) => fail(&e, cli.json),
+    Some((op, params))
+}
+
+/// The exit code for a successful response: [`report_exit`] for typed commands, 0 for `mda call`.
+fn rc_of(typed: bool, op: &str, v: &Value) -> u8 {
+    if typed { report_exit(op, v) } else { 0 }
+}
+
+/// Write one block to stdout and exit with `rc`; a broken pipe is an I/O failure.
+fn emit_rc(text: &str, rc: u8) -> ExitCode {
+    match writeln!(std::io::stdout().lock(), "{text}") {
+        Ok(()) => ExitCode::from(rc),
+        Err(_) => ExitCode::from(3),
     }
 }
 
-/// Write one block to stdout; a broken pipe is an I/O failure.
-fn emit(text: &str) -> ExitCode {
-    match writeln!(std::io::stdout().lock(), "{text}") {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(_) => ExitCode::from(3),
-    }
+/// Exit code of a successful typed command: 1 for `vault.validate` with `errors > 0` (M-5), else 0.
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(mda::cli::report_exit("system.ops", &serde_json::json!({})), 0);
+/// ```
+pub fn report_exit(op: &str, v: &Value) -> u8 {
+    u8::from(op == "vault.validate" && v["errors"].as_u64() > Some(0))
 }
 
 /// Report an op error (`--json`: the `OpError` JSON on stdout; human: stderr) and map the exit code.

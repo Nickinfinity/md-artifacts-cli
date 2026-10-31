@@ -1,0 +1,20 @@
+{
+  "blocks": [
+    {
+      "code": "git remote set-url origin \"new_url\"",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Change url (remote)",
+      "vars": []
+    }
+  ],
+  "code": "git remote set-url origin \"new_url\"",
+  "fileName": "x",
+  "filePath": "Whatever/x.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "x.md",
+  "vars": []
+}

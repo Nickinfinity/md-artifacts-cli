@@ -1,0 +1,3 @@
+vault = "vault_migrate"
+params = { files = [{ path = "Snippets/a.md", hash = "x", x = 1 }] }
+expect_error = "op.bad_request"

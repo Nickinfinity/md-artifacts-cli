@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Variables/flat.md", values = { "VK-a" = "a\u0001" } }
+expect_error = "vks.control_char"

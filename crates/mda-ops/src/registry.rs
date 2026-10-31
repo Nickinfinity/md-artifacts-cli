@@ -1,28 +1,79 @@
 //! The op registry machinery. Stubs landed by H0.0; T0.2 implements them. The registration list
 //! itself is `ops_list.rs` (orchestrator-owned).
 
+use std::cell::{Cell, RefCell};
+use std::path::PathBuf;
 use std::time::Instant;
 
 use serde_json::{Value, json};
 
 use crate::{OpError, Root, error};
 
-/// What every op receives from its front-end: the active vault root, if any.
+/// Where the session vault came from (`config.get`).
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(serde_json::to_value(mda_ops::Source::Flag).unwrap(), "flag");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Source {
+    /// `--vault` (or a client's explicit root): one process, never persisted.
+    Flag,
+    /// The machine file's default, or a `vault.select`/`vault.use` in this session.
+    Default,
+    /// No vault.
+    None,
+}
+
+/// What every op receives from its front-end: the session vault (switched by `vault.select` /
+/// `vault.use`), the machine config dir, where the vault came from, and the deferred error of a
+/// stale or corrupt default (V-3). `serve` is single-threaded, so `RefCell`/`Cell` suffice. Never
+/// hold a `borrow()` across a call that may `borrow_mut()`.
 ///
 /// # Examples
 ///
 /// ```
 /// let ctx = mda_ops::Ctx::new(None);
-/// assert!(ctx.root.is_none());
+/// assert!(ctx.root.borrow().is_none());
+/// assert_eq!(ctx.source.get(), mda_ops::Source::None);
 /// ```
 pub struct Ctx {
-    pub root: Option<Root>,
+    pub root: RefCell<Option<Root>>,
+    pub config_dir: Option<PathBuf>,
+    pub source: Cell<Source>,
+    pub default_error: RefCell<Option<OpError>>,
 }
 
 impl Ctx {
-    /// A context for one process or session.
+    /// A context for one process or session: `source` is `Flag` when `root` is given, else `None`;
+    /// no machine config.
     pub fn new(root: Option<Root>) -> Self {
-        Self { root }
+        let source = if root.is_some() {
+            Source::Flag
+        } else {
+            Source::None
+        };
+        Self {
+            root: RefCell::new(root),
+            config_dir: None,
+            source: Cell::new(source),
+            default_error: RefCell::new(None),
+        }
+    }
+
+    /// The same context with a machine config dir (the resolver; in-process tests pass a temp dir).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let ctx = mda_ops::Ctx::new(None).with_config_dir(std::env::temp_dir().join("mda-doc-cfg"));
+    /// assert!(ctx.config_dir.is_some());
+    /// ```
+    pub fn with_config_dir(mut self, dir: PathBuf) -> Self {
+        self.config_dir = Some(dir);
+        self
     }
 }
 
@@ -92,7 +143,7 @@ pub fn dispatch_in(
 }
 
 /// Adapt a typed op `fn(&Ctx, Req) -> Result<Resp, OpError>` into a JSON handler. `null` params
-/// mean `{}`.
+/// mean `{}`; any other non-object is `op.bad_request`.
 ///
 /// # Examples
 ///
@@ -107,6 +158,10 @@ pub fn typed<Req: serde::de::DeserializeOwned, Resp: serde::Serialize>(
     f: fn(&Ctx, Req) -> Result<Resp, OpError>,
 ) -> Result<Value, OpError> {
     let params = if params.is_null() { json!({}) } else { params };
+    if !params.is_object() {
+        // Fixed literal: never format the value (could be 16 MiB, or a secret) into the reply.
+        return Err(OpError::new(error::OP_BAD_REQUEST).with("reason", "params must be an object"));
+    }
     let req = serde_json::from_value(params)
         .map_err(|e| OpError::new(error::OP_BAD_REQUEST).with("reason", e.to_string()))?;
     let resp = f(ctx, req)?;

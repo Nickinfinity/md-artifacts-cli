@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Snippets/hello.md", expectedHash = "ec08b1ff85244ca852728e7bf761ccb8cfcaf796abd9ddfef6e5f8aef5082c1e", newPath = "Snippets/renamed.md", model = { artifactType = "Snippet", title = "Renamed", blocks = [{ code = "echo hi" }] } }
+expect = { path = "Snippets/renamed.md", hash = "f1e3d242ea2a98c129761a0c6d28797e1d9118e5e07fe58e5a6ec4ab8723412f", warnings = [] }
+expect_files = { "Snippets/hello.md" = false, "Snippets/renamed.md" = "---\nartifactType: Snippet\ntitle: Renamed\n---\n\n```\necho hi\n```\n" }

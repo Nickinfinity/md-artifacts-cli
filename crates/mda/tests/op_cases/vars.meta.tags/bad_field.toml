@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Variables/flat.md", expectedHash = "0000000000000000000000000000000000000000000000000000000000000000", tags = [], x = 1 }
+expect_error = "op.bad_request"

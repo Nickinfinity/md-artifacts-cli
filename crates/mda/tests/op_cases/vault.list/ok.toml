@@ -1,0 +1,10 @@
+vault_flag = false
+vault = "vault"
+machine_config = '''
+default = "$VAULT"
+vaults = ["$VAULT", "$MISSING"]
+'''
+params = {}
+[expect]
+default = "$VAULT"
+vaults = [{ path = "$VAULT", available = true }, { path = "$MISSING", available = false }]

@@ -1,0 +1,2 @@
+params = { type = "Snippet", x = 1 }
+expect_error = "op.bad_request"

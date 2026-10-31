@@ -1,0 +1,29 @@
+{
+  "blocks": [],
+  "code": "# Reviewer\n\nReview <VK-repo> and report findings.\n\n```bash\nnpm test\n```",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "markdown",
+    "target": "CLAUDE.md",
+    "title": "Code reviewer"
+  },
+  "layout": {
+    "notes": "More scratch notes.",
+    "payload": "flags",
+    "regions": [
+      {
+        "name": "",
+        "notes": "Scratch notes that are not part of the config."
+      }
+    ]
+  },
+  "relativePath": "reviewer.md",
+  "vars": [
+    {
+      "defaultValue": "",
+      "name": "VK-repo"
+    }
+  ]
+}

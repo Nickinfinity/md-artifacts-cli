@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Snippets/x.md.md", model = { artifactType = "Snippet", title = "x" } }
+expect_error = "naming.md_extension"
+expect_files = { "Snippets/x.md.md" = false }

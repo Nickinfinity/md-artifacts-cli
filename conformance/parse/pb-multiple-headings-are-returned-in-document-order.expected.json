@@ -1,0 +1,34 @@
+{
+  "blocks": [
+    {
+      "code": "a();",
+      "description": "",
+      "fenceLang": "js",
+      "heading": "Alpha",
+      "vars": []
+    },
+    {
+      "code": "b();",
+      "description": "",
+      "fenceLang": "js",
+      "heading": "Beta",
+      "vars": []
+    },
+    {
+      "code": "c();",
+      "description": "",
+      "fenceLang": "js",
+      "heading": "Gamma",
+      "vars": []
+    }
+  ],
+  "code": "a();",
+  "fileName": "pb-multiple-headings-are-returned-in-document-order",
+  "filePath": "Snippets/pb-multiple-headings-are-returned-in-document-order.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "js"
+  },
+  "relativePath": "pb-multiple-headings-are-returned-in-document-order.md",
+  "vars": []
+}

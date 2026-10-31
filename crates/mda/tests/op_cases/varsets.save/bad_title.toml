@@ -1,0 +1,3 @@
+vault = "vault"
+params = { title = "  " }
+expect_error = "vars.bad_title"

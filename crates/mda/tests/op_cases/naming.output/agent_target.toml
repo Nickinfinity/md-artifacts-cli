@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "AIAgentsConf/reviewer.md" }
+expect = { fileName = "CLAUDE.md" }

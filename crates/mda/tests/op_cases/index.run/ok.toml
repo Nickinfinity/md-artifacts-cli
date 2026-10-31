@@ -1,0 +1,8 @@
+# Carry-over (R-12): VK-label is ignored by step 1, used by step 2.
+vault = "vault"
+params = { path = "Templates/index.md", workspaceRoot = "$WORKSPACE", steps = [{ relPath = "edit.md", destDir = "" }, { relPath = "sub/widget.md", destDir = "sub" }], values = { VK-name = "x", VK-label = "y" } }
+expect = { results = [
+  { relPath = "edit.md", status = "written", path = "Edit me.ts", hash = "2bf28849cade87113ec4170ef2bf9ffb1179fc9a276afa675c9de2424349560b", warnings = [], containsEscape = false },
+  { relPath = "sub/widget.md", status = "written", path = "sub/Widget.ts", hash = "e6a45813fe5a933e9986c19a57ceb1bb6623daa4a3877234fb23d054bf7f3f6f", warnings = [], containsEscape = false },
+], written = 2, skipped = 0 }
+expect_workspace_files = { "Edit me.ts" = "export const x = 1;", "sub/Widget.ts" = "export const y = 2;" }

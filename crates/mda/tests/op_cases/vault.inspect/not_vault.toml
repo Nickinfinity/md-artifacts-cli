@@ -1,0 +1,33 @@
+vault = "not_vault"
+vault_flag = false
+params = { path = "$VAULT" }
+[expect]
+path = "$VAULT"
+isObsidianVault = false
+missingDefaults = ["Snippet", "AIAgentsConfig", "AIPrompt"]
+[[expect.dirs]]
+type = "Snippet"
+dir = "Snippets"
+state = "missing"
+[[expect.dirs]]
+type = "AIAgentsConfig"
+dir = "AIAgentsConf"
+state = "missing"
+[[expect.dirs]]
+type = "Command"
+dir = "Commands"
+state = "missing"
+[[expect.dirs]]
+type = "Template"
+dir = "Templates"
+state = "missing"
+[[expect.dirs]]
+type = "Variables"
+dir = "Variables"
+state = "missing"
+[[expect.dirs]]
+type = "AIPrompt"
+dir = "AIPrompts"
+state = "missing"
+[expect_config_files]
+"config.toml" = false

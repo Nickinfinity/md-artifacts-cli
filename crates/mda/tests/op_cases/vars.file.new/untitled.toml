@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "title" = "!!!" }
+expect = { "path" = "Variables/untitled.md", "hash" = "999e883e7b44221ba71f56a10bf30f502f748585546f5d5161eacf0204659521" }
+expect_files = { "Variables/untitled.md" = "---\nartifactType: Variables\ntitle: !!!\n---\n" }

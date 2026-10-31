@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/component.md", fileName = "CON.txt" }
+expect_error = "naming.reserved"
+expect_error_params = {}

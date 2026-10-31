@@ -1,0 +1,6 @@
+vault = "vault_migrate"
+params = { files = [{ path = "Templates/quoted.md", hash = "e033bacd074548413d9e1818f699d38c64b27c5bf401bfb71415a277e7eaf08f" }] }
+expect = { results = [
+  { status = "skipped", path = "Templates/quoted.md", code = "migrate.quoted_type", params = { value = "\"template\"" } },
+], written = 0, skipped = 1 }
+expect_files = { "Templates/quoted.md" = "---\ntype: \"template\"\n---\nbody\n" }

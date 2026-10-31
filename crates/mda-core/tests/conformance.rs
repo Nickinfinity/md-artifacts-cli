@@ -2,6 +2,7 @@
 //! handler in `run_case`, not a change to the walker.
 #![allow(clippy::unwrap_used, clippy::expect_used)] // test file: a failing test is the point
 
+use mda_core::serialize::SerializeError;
 use serde::Deserialize;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -20,28 +21,170 @@ struct Case {
     input: String,
     expected: Option<String>,
     values: Option<String>,
+    /// Render only: the block to select (`render_artifact`'s `block`).
+    block: Option<usize>,
+    path: Option<String>,
+    /// Migrate only: `frontmatter` | `vks`.
+    migration: Option<String>,
+    /// Migrate only: the expected skip code (no `expected` then).
+    skip: Option<String>,
+    #[allow(dead_code)] // reason: provenance, read by humans
+    origin: Option<String>,
     #[allow(dead_code)] // recorded decision, read by humans and later kind handlers
     deviates_from_ts: Option<String>,
 }
 
-/// Wave that implements each recognised kind; `None` = unknown kind.
-fn kind_wave(kind: &str) -> Option<&'static str> {
-    match kind {
-        "parse" => Some("W1"),
-        "serialize" => Some("W2"),
-        "render" => Some("W3"),
-        _ => None,
+#[path = "conformance/selftest.rs"]
+mod selftest;
+
+/// The engine's output limit (`MAX_ARTIFACT_BYTES`), the bound `artifact.create` passes.
+const MAX: usize = 1 << 20;
+
+/// First JSON pointer where `a` and `b` differ (object key order is ignored by design).
+fn first_diff(a: &serde_json::Value, b: &serde_json::Value, ptr: &str) -> Option<String> {
+    use serde_json::Value::{Array, Object};
+    let leaf = || Some(format!("{ptr}: got {a} want {b}"));
+    match (a, b) {
+        (Object(x), Object(y)) => {
+            x.keys()
+                .chain(y.keys())
+                .find_map(|k| match (x.get(k), y.get(k)) {
+                    (Some(l), Some(r)) => first_diff(l, r, &format!("{ptr}/{k}")),
+                    (l, r) => Some(format!("{ptr}/{k}: got {l:?} want {r:?}")),
+                })
+        }
+        (Array(x), Array(y)) if x.len() == y.len() => x
+            .iter()
+            .zip(y)
+            .enumerate()
+            .find_map(|(i, (l, r))| first_diff(l, r, &format!("{ptr}/{i}"))),
+        _ if a == b => None,
+        _ => leaf(),
     }
 }
 
-/// The per-kind handler. Fails loudly until the wave lands; never skips.
-fn run_case(c: &Case) -> Result<(), String> {
-    match kind_wave(&c.kind) {
-        Some(w) => Err(format!(
-            "{}: kind {} not implemented until {w}",
-            c.id, c.kind
+fn run_parse(dir: &Path, c: &Case) -> Result<(), String> {
+    let (Some(path), Some(exp)) = (&c.path, &c.expected) else {
+        return Err(format!("{}: parse needs path and expected", c.id));
+    };
+    let io = |e: std::io::Error| format!("{}: {e}", c.id);
+    let bytes = std::fs::read(dir.join(&c.input)).map_err(io)?;
+    let parsed = mda_core::parse::parse_from_content(&mda_core::parse::decode(&bytes), path);
+    let got = serde_json::to_value(parsed).map_err(|e| format!("{}: {e}", c.id))?;
+    let want = std::fs::read_to_string(dir.join(exp)).map_err(io)?;
+    let want: serde_json::Value =
+        serde_json::from_str(&want).map_err(|e| format!("{}: expected: {e}", c.id))?;
+    match first_diff(&got, &want, "") {
+        None => Ok(()),
+        Some(d) => Err(format!("{}: differs at {d}", c.id)),
+    }
+}
+
+/// Model JSON -> `serialize` -> exact bytes. Compares bytes (not parse JSON): the serializer's own
+/// round-trip guard is the model-level comparator.
+fn run_serialize(dir: &Path, c: &Case) -> Result<(), String> {
+    let Some(exp) = &c.expected else {
+        return Err(format!("{}: serialize needs expected", c.id));
+    };
+    let io = |e: std::io::Error| format!("{}: {e}", c.id);
+    let model = std::fs::read_to_string(dir.join(&c.input)).map_err(io)?;
+    let model: mda_core::model::ArtifactModel =
+        serde_json::from_str(&model).map_err(|e| format!("{}: model: {e}", c.id))?;
+    let got = mda_core::serialize::serialize(&model, MAX)
+        .map_err(|e| format!("{}: refused {e:?}", c.id))?;
+    let want = std::fs::read_to_string(dir.join(exp)).map_err(io)?;
+    same_lines(&c.id, &got, &want)
+}
+
+/// Line-by-line exact comparison; the error names the case id and the first differing line.
+fn same_lines(id: &str, got: &str, want: &str) -> Result<(), String> {
+    let (mut g, mut w) = (got.split('\n'), want.split('\n'));
+    for n in 1.. {
+        match (g.next(), w.next()) {
+            (None, None) => return Ok(()),
+            (a, b) if a == b => {}
+            (a, b) => return Err(format!("{id}: line {n}: got {a:?} want {b:?}")),
+        }
+    }
+    Ok(())
+}
+
+/// parse -> `from_parsed` -> `serialize` must give the input back byte for byte (X-22): the
+/// canonical form is a fixed point.
+fn run_idempotent(dir: &Path, c: &Case) -> Result<(), String> {
+    let Some(path) = &c.path else {
+        return Err(format!("{}: idempotent needs path", c.id));
+    };
+    let bytes = std::fs::read(dir.join(&c.input)).map_err(|e| format!("{}: {e}", c.id))?;
+    let text = mda_core::parse::decode(&bytes);
+    let parsed = mda_core::parse::parse_from_content(&text, path);
+    let model = mda_core::serialize::from_parsed(&parsed);
+    let got = mda_core::serialize::serialize(&model, MAX)
+        .map_err(|e| format!("{}: refused {e:?}", c.id))?;
+    same_lines(&c.id, &got, &text)
+}
+
+/// Migrate: decode the input, run the core rewrite, compare the exact output bytes (`expected`), the
+/// skip code (`skip`), or "no change" (neither).
+fn run_migrate(dir: &Path, c: &Case) -> Result<(), String> {
+    use mda_core::migrate::frontmatter;
+    let bytes = std::fs::read(dir.join(&c.input)).map_err(|e| format!("{}: {e}", c.id))?;
+    let text = mda_core::parse::decode(&bytes);
+    let got = match c.migration.as_deref() {
+        Some("frontmatter") => frontmatter::rewrite(&text).map(|r| r.map(|r| r.content)),
+        m => return Err(format!("{}: migrate needs migration, got {m:?}", c.id)),
+    };
+    match (got, &c.expected, &c.skip) {
+        (Ok(Some(out)), Some(exp), None) => {
+            let want = std::fs::read(dir.join(exp)).map_err(|e| format!("{}: {e}", c.id))?;
+            same_lines(&c.id, &out, &String::from_utf8_lossy(&want))
+        }
+        (Ok(None), None, None) => Ok(()),
+        (Err(s), None, Some(code)) if s.code() == code => Ok(()),
+        (got, exp, skip) => Err(format!(
+            "{}: got {got:?}, want expected={exp:?} skip={skip:?}",
+            c.id
         )),
-        None => Err(format!("{}: unknown kind {}", c.id, c.kind)),
+    }
+}
+
+/// Parse + render the input with the client values; compares the whole `Rendered` JSON, so a
+/// warning regression cannot hide behind an unchanged `output`.
+fn run_render(dir: &Path, c: &Case) -> Result<(), String> {
+    use mda_core::render::{Values, check_values, render_artifact};
+    let (Some(path), Some(exp)) = (&c.path, &c.expected) else {
+        return Err(format!("{}: render needs path and expected", c.id));
+    };
+    let io = |e: std::io::Error| format!("{}: {e}", c.id);
+    let values: Values = match &c.values {
+        Some(v) => serde_json::from_str(&std::fs::read_to_string(dir.join(v)).map_err(io)?)
+            .map_err(|e| format!("{}: values: {e}", c.id))?,
+        None => Values::new(),
+    };
+    check_values(&values).map_err(|e| format!("{}: values: {}", c.id, e.code))?;
+    let bytes = std::fs::read(dir.join(&c.input)).map_err(io)?;
+    let parsed = mda_core::parse::parse_from_content(&mda_core::parse::decode(&bytes), path);
+    let r = render_artifact(&parsed, c.block, None, &values)
+        .map_err(|e| format!("{}: refused {e:?}", c.id))?;
+    let got = serde_json::to_value(r).map_err(|e| format!("{}: {e}", c.id))?;
+    let want = std::fs::read_to_string(dir.join(exp)).map_err(io)?;
+    let want: serde_json::Value =
+        serde_json::from_str(&want).map_err(|e| format!("{}: expected: {e}", c.id))?;
+    match first_diff(&got, &want, "") {
+        None => Ok(()),
+        Some(d) => Err(format!("{}: differs at {d}", c.id)),
+    }
+}
+
+/// The per-kind handler. Never skips.
+fn run_case(dir: &Path, c: &Case) -> Result<(), String> {
+    match c.kind.as_str() {
+        "parse" => run_parse(dir, c),
+        "serialize" => run_serialize(dir, c),
+        "render" => run_render(dir, c),
+        "idempotent" => run_idempotent(dir, c),
+        "migrate" => run_migrate(dir, c),
+        k => Err(format!("{}: unknown kind {k}", c.id)),
     }
 }
 
@@ -79,12 +222,12 @@ fn check(dir: &Path) -> Result<(), Vec<String>> {
                 errs.push(format!("{}: missing file {rel}", c.id));
             }
         }
-        if let Err(e) = run_case(c) {
+        if let Err(e) = run_case(dir, c) {
             errs.push(e);
         }
     }
     let mut files = Vec::new();
-    for sub in ["parse", "serialize", "render"] {
+    for sub in ["parse", "serialize", "render", "migrate"] {
         walk(&dir.join(sub), &mut files);
     }
     for f in files {
@@ -95,80 +238,55 @@ fn check(dir: &Path) -> Result<(), Vec<String>> {
     if errs.is_empty() { Ok(()) } else { Err(errs) }
 }
 
-fn tmp(name: &str, manifest: &str, files: &[&str]) -> PathBuf {
-    let d = std::env::temp_dir().join(format!("mda-{}-{name}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&d);
-    std::fs::create_dir_all(&d).unwrap();
-    std::fs::write(d.join("manifest.toml"), manifest).unwrap();
-    for f in files {
-        std::fs::create_dir_all(d.join(f).parent().unwrap()).unwrap();
-        std::fs::write(d.join(f), "x").unwrap();
-    }
-    d
-}
-
-fn err_of(d: &Path) -> String {
-    let e = check(d).unwrap_err().join("\n");
-    std::fs::remove_dir_all(d).unwrap();
-    e
-}
-
-fn case(id: &str, kind: &str, input: &str) -> String {
-    format!("[[cases]]\nid = \"{id}\"\nkind = \"{kind}\"\ninput = \"{input}\"\n")
-}
-
-#[test]
-fn unknown_kind_names_id() {
-    let d = tmp(
-        "bogus",
-        &case("c-bogus", "bogus", "parse/a.md"),
-        &["parse/a.md"],
-    );
-    assert!(err_of(&d).contains("c-bogus"));
-}
-
-#[test]
-fn missing_input_names_path() {
-    let d = tmp("missing", &case("c1", "bogus", "parse/gone.md"), &[]);
-    assert!(err_of(&d).contains("parse/gone.md"));
-}
-
-#[test]
-fn unlisted_file_named() {
-    let d = tmp("unlisted", "", &["parse/stray.md"]);
-    assert!(err_of(&d).contains("stray.md"));
-}
-
-#[test]
-fn listed_parse_case_not_implemented() {
-    let d = tmp(
-        "notimpl",
-        &case("c1", "parse", "parse/a.md"),
-        &["parse/a.md"],
-    );
-    assert!(err_of(&d).contains("c1: kind parse not implemented until W1"));
-}
-
-#[test]
-fn duplicate_id_fails() {
-    let m = format!(
-        "{}{}",
-        case("dup", "bogus", "parse/a.md"),
-        case("dup", "bogus", "parse/a.md")
-    );
-    let d = tmp("dup", &m, &["parse/a.md"]);
-    assert!(err_of(&d).contains("dup: duplicate id"));
-}
-
-#[test]
-fn typo_field_is_rejected() {
-    let m = format!("{}expectd = \"x\"\n", case("c1", "parse", "parse/a.md"));
-    let d = tmp("typo", &m, &["parse/a.md"]);
-    assert!(err_of(&d).contains("expectd"));
-}
-
 #[test]
 fn real_manifest_ok() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance");
     assert_eq!(check(&dir), Ok(()));
+}
+
+/// Parse cases the serializer refuses by design (B-RISK 3): id -> reason. Anything else refused fails.
+/// Empty since W7e: the one entry was a legacy duplicate-key body, a dialect no longer read.
+const ROUND_TRIP_REFUSALS: &[(&str, &str, &str)] = &[];
+
+/// D-9: every clean `parse` case re-serializes through the guard (`Ok` is the assertion).
+#[test]
+fn parse_cases_round_trip() {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance");
+    let m: Manifest =
+        toml::from_str(&std::fs::read_to_string(dir.join("manifest.toml")).unwrap()).unwrap();
+    let (mut bad, mut seen) = (Vec::new(), Vec::new());
+    for c in m.cases.iter().filter(|c| c.kind == "parse") {
+        let content = mda_core::parse::decode(&std::fs::read(dir.join(&c.input)).unwrap());
+        let p = mda_core::parse::parse_from_content(&content, c.path.as_deref().unwrap());
+        if p.vars_error.is_some()
+            || p.blocks.iter().any(|b| b.vars_error.is_some())
+            || p.frontmatter.index == Some(true)
+            || mda_core::parse::is_flagged(&content)
+        {
+            continue;
+        }
+        let model = mda_core::serialize::from_parsed(&p);
+        if let Err(e) = mda_core::serialize::serialize(&model, MAX) {
+            seen.push(c.id.as_str());
+            let code = match &e {
+                SerializeError::Vars(v) => v.code,
+                SerializeError::Field { .. } => "artifact.unrepresentable",
+                SerializeError::Vks(_) => "vks.unrepresentable",
+                SerializeError::TooLarge { .. } => "file.too_large",
+            };
+            if !ROUND_TRIP_REFUSALS
+                .iter()
+                .any(|(id, k, _)| *id == c.id && *k == code)
+            {
+                bad.push(format!("{}: refused {e:?}", c.id));
+            }
+        }
+    }
+    for (id, _, _) in ROUND_TRIP_REFUSALS {
+        if !seen.contains(id) {
+            bad.push(format!("{id}: listed but not refused (stale entry)"));
+        }
+    }
+    eprintln!("round-trip refusals: {seen:#?}");
+    assert!(bad.is_empty(), "{}", bad.join("\n"));
 }

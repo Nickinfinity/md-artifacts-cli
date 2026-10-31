@@ -1,0 +1,15 @@
+{
+  "blocks": [],
+  "code": "intro\n\n***\n\noutro",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "markdown"
+  },
+  "layout": {
+    "payload": "bare"
+  },
+  "relativePath": "reviewer.md",
+  "vars": []
+}

@@ -9,7 +9,11 @@ pub use framing::MAX_LINE_BYTES;
 use std::io::{BufRead, Write};
 
 use framing::{Line, read_line};
-use mda_ops::error::{OP_BAD_REQUEST, OP_INTERNAL, OP_UNKNOWN, PROTOCOL_VERSION_MISMATCH};
+use mda_ops::error::{
+    OP_BAD_REQUEST, OP_INTERNAL, OP_UNKNOWN, PROTOCOL_ALREADY_INITIALIZED,
+    PROTOCOL_INVALID_REQUEST, PROTOCOL_LINE_TOO_LONG, PROTOCOL_NOT_INITIALIZED,
+    PROTOCOL_PARSE_ERROR, PROTOCOL_VERSION_MISMATCH,
+};
 use mda_ops::system::{VersionRequest, version};
 use mda_ops::{Ctx, OpError, PROTOCOL};
 use serde_json::{Value, json};
@@ -27,20 +31,19 @@ const NOT_INITIALIZED: i64 = -32002;
 /// ```
 /// let ctx = mda_ops::Ctx::new(None);
 /// let mut out = Vec::new();
-/// let input = b"{\"id\":1,\"method\":\"initialize\",\"params\":{\"protocol\":\"1.0\"}}\n";
+/// let input = b"{\"id\":1,\"method\":\"initialize\",\"params\":{\"protocol\":\"2.0\"}}\n";
 /// mda::serve::run(&ctx, &input[..], &mut out).unwrap();
-/// assert!(String::from_utf8(out).unwrap().contains("\"protocol\":\"1.0\""));
+/// assert!(String::from_utf8(out).unwrap().contains("\"protocol\":\"2.4\""));
 /// ```
 pub fn run(ctx: &Ctx, mut input: impl BufRead, mut out: impl Write) -> std::io::Result<()> {
     let mut initialized = false;
     loop {
         let reply = match read_line(&mut input)? {
             Line::Eof => return Ok(()),
-            Line::TooLong => Some(rpc_error(
+            Line::TooLong => Some(transport(
                 &Value::Null,
                 INVALID_REQUEST,
-                "line too long",
-                None,
+                PROTOCOL_LINE_TOO_LONG,
             )),
             Line::Text(t) if t.is_empty() => None,
             Line::Text(t) => {
@@ -57,40 +60,51 @@ pub fn run(ctx: &Ctx, mut input: impl BufRead, mut out: impl Write) -> std::io::
     }
 }
 
-/// One frame to at most one response. `None` for notifications (no `id`).
+/// One frame to at most one response. `None` for client notifications (no `id`, string `method`).
 fn handle(ctx: &Ctx, line: &[u8], initialized: &mut bool) -> Option<Value> {
     let Ok(msg) = serde_json::from_slice::<Value>(line) else {
-        return Some(rpc_error(&Value::Null, PARSE_ERROR, "parse error", None));
+        return Some(transport(&Value::Null, PARSE_ERROR, PROTOCOL_PARSE_ERROR));
     };
+    let invalid = |id: &Value| Some(transport(id, INVALID_REQUEST, PROTOCOL_INVALID_REQUEST));
     let Value::Object(mut obj) = msg else {
-        return Some(rpc_error(
-            &Value::Null,
-            INVALID_REQUEST,
-            "invalid request",
-            None,
-        ));
+        return invalid(&Value::Null);
     };
-    // W0 defines no notifications: an id-less message is ignored, not executed.
-    let id = obj.remove("id")?;
+    let method = obj.remove("method");
+    let id = match obj.remove("id") {
+        None if matches!(method, Some(Value::String(_))) => return None,
+        None => return invalid(&Value::Null),
+        // An invalid id is never echoed: a hostile one could be megabytes.
+        Some(id) if !valid_id(&id) => return invalid(&Value::Null),
+        Some(id) => id,
+    };
     let id = &id;
-    let Some(Value::String(method)) = obj.remove("method") else {
-        return Some(rpc_error(id, INVALID_REQUEST, "invalid request", None));
+    let Some(Value::String(method)) = method else {
+        return invalid(id);
     };
     // Moved, not cloned: a hostile params tree is already large.
     let params = obj.remove("params").unwrap_or(Value::Null);
     let method = method.as_str();
     if method == "initialize" {
         if *initialized {
-            return Some(rpc_error(id, INVALID_REQUEST, "already initialized", None));
+            return Some(transport(id, INVALID_REQUEST, PROTOCOL_ALREADY_INITIALIZED));
         }
         let result = initialize(ctx, &params);
         *initialized = result.is_ok();
         return Some(respond(id, result));
     }
     if !*initialized {
-        return Some(rpc_error(id, NOT_INITIALIZED, "not initialized", None));
+        return Some(transport(id, NOT_INITIALIZED, PROTOCOL_NOT_INITIALIZED));
     }
     Some(respond(id, mda_ops::dispatch(ctx, method, params)))
+}
+
+/// A JSON string, or an integer in i64/u64 range: anything else would not echo byte-exact.
+fn valid_id(v: &Value) -> bool {
+    match v {
+        Value::String(_) => true,
+        Value::Number(n) => n.is_i64() || n.is_u64(),
+        _ => false,
+    }
 }
 
 fn initialize(ctx: &Ctx, params: &Value) -> Result<Value, OpError> {
@@ -105,29 +119,37 @@ fn initialize(ctx: &Ctx, params: &Value) -> Result<Value, OpError> {
             .with("server", PROTOCOL));
     }
     let engine = version(ctx, VersionRequest {})?.engine;
-    Ok(json!({ "protocol": PROTOCOL, "engine": engine }))
+    let types = serde_json::to_value(&mda_ops::TYPES).map_err(|_| OpError::new(OP_INTERNAL))?;
+    Ok(json!({ "protocol": PROTOCOL, "engine": engine, "types": types }))
 }
 
 fn respond(id: &Value, result: Result<Value, OpError>) -> Value {
     match result {
         Ok(v) => json!({ "jsonrpc": "2.0", "id": id, "result": v }),
         Err(e) => {
-            let code = if e.code == OP_UNKNOWN {
+            let rpc = if e.code == OP_UNKNOWN {
                 METHOD_NOT_FOUND
             } else {
                 OP_ERROR
             };
-            // OpError serializes infallibly (string map); fall back to the bare code regardless.
-            let data = serde_json::to_value(&e).unwrap_or_else(|_| json!({ "code": OP_INTERNAL }));
-            rpc_error(id, code, e.code, Some(data))
+            rpc_error(id, rpc, &e)
         }
     }
 }
 
-fn rpc_error(id: &Value, code: i64, message: &str, data: Option<Value>) -> Value {
-    let error = match data {
-        Some(d) => json!({ "code": code, "message": message, "data": d }),
-        None => json!({ "code": code, "message": message }),
+/// A transport-level error (`protocol.*`) with no params, except `line_too_long{max}`.
+fn transport(id: &Value, rpc: i64, code: &'static str) -> Value {
+    let e = if code == PROTOCOL_LINE_TOO_LONG {
+        OpError::new(code).with("max", MAX_LINE_BYTES.to_string())
+    } else {
+        OpError::new(code)
     };
-    json!({ "jsonrpc": "2.0", "id": id, "error": error })
+    rpc_error(id, rpc, &e)
+}
+
+/// The one error shape: `message` = `data.code`, `data` = the serialized `OpError`.
+fn rpc_error(id: &Value, rpc: i64, e: &OpError) -> Value {
+    // OpError serializes infallibly (string map); fall back to the bare code regardless.
+    let data = serde_json::to_value(e).unwrap_or_else(|_| json!({ "code": OP_INTERNAL }));
+    json!({ "jsonrpc": "2.0", "id": id, "error": { "code": rpc, "message": e.code, "data": data } })
 }

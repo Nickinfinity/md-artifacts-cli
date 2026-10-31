@@ -1,20 +1,38 @@
 //! THE command list for MD Artifacts. Every operation any client can perform is registered once
 //! here and reached through [`dispatch`]: by the CLI, by `mda serve`, and later by the TUI and MCP.
 
+pub mod artifact;
+pub mod artifact_rename;
+mod artifact_rewrite;
+pub mod artifact_write;
 pub mod error;
+pub mod index;
+pub mod index_create;
+pub mod migrate;
+pub mod naming;
 mod ops_list;
+pub mod prefill;
 pub mod registry;
+mod rename_links;
+pub mod render;
 pub mod system;
+pub mod types;
+pub mod validate;
+pub mod vars;
+pub mod varsets;
+pub mod vault;
+pub mod write_file;
 
 pub use error::OpError;
-pub use mda_vault::Root;
-pub use registry::{Ctx, OpSpec, check_names, dispatch, dispatch_in, ops, typed};
+pub use mda_core::registry::{ArtifactType, TYPES};
+pub use mda_vault::{Root, plain_path};
+pub use registry::{Ctx, OpSpec, Source, check_names, dispatch, dispatch_in, ops, typed};
 
 /// The protocol version this engine speaks. Single owner for `system.version` and `initialize`.
 ///
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_ops::PROTOCOL, "1.0");
+/// assert_eq!(mda_ops::PROTOCOL, "2.4");
 /// ```
-pub const PROTOCOL: &str = "1.0";
+pub const PROTOCOL: &str = "2.4";

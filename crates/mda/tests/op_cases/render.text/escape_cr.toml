@@ -1,0 +1,2 @@
+params = { text = "echo a\rtouch x" }
+expect = { output = "echo a\rtouch x", warnings = [], containsEscape = true }

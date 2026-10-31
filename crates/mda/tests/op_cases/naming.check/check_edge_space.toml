@@ -1,0 +1,2 @@
+params = { type = "Snippet", fileName = " a" }
+expect = { fileName = " a", ok = false, error = { code = "naming.edge_space", params = {} } }

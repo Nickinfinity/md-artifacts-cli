@@ -1,0 +1,4 @@
+vault = "vault"
+params = { type = "Template", dir = "Templates/gen", paths = ["con.ts"] }
+expect_error = "naming.reserved"
+expect_files = { "Templates/gen/con.md" = false, "Templates/gen/index.md" = false }

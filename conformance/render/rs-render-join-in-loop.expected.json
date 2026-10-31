@@ -1,0 +1,13 @@
+{
+  "output": "(Alice Smith: core, ops); (Bob Jones: <VK-join:users.tags>)",
+  "warnings": [
+    {
+      "code": "render.join_empty",
+      "params": {
+        "line": "1",
+        "path": "VK-users.tags"
+      }
+    }
+  ],
+  "containsEscape": false
+}

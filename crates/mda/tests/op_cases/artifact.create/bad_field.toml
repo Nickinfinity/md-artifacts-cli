@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Templates/n.md", model = { artifactType = "Template" }, x = 1 }
+expect_error = "op.bad_request"

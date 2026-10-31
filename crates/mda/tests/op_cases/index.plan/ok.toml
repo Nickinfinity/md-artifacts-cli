@@ -1,0 +1,10 @@
+# The fixture index: five steps (embed dropped, ../x rejected), candidates from paths:, per-step skips.
+vault = "vault"
+params = { path = "Templates/index.md" }
+expect = { steps = [
+  { raw = "edit", relPath = "edit.md", relDir = "", candidates = ["", "src/components"] },
+  { raw = "sub/widget.md", relPath = "sub/widget.md", relDir = "sub", candidates = ["sub", "src/components"] },
+  { raw = "edit", relPath = "edit.md", relDir = "", candidates = ["", "src/components"] },
+  { raw = "sub/snip", relPath = "sub/snip.md", relDir = "sub", candidates = ["sub", "src/components"], skip = { code = "artifact.not_whole_file", params = { type = "Snippet" } } },
+  { raw = "sub/nested-index", relPath = "sub/nested-index.md", relDir = "sub", candidates = ["sub", "src/components"], skip = { code = "artifact.is_index", params = {} } },
+], rejected = [{ raw = "../x", code = "path.parent_segment" }] }

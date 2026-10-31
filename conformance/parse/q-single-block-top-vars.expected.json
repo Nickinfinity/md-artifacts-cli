@@ -1,0 +1,17 @@
+{
+  "blocks": [],
+  "code": "echo <VK-a>",
+  "fileName": "q-single-block-top-vars",
+  "filePath": "Snippets/q-single-block-top-vars.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "q-single-block-top-vars.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-b"
+    }
+  ]
+}

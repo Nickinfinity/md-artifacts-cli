@@ -1,0 +1,12 @@
+{
+  "blocks": [],
+  "code": "ls\r\npwd",
+  "fileName": "q-crlf",
+  "filePath": "Snippets/q-crlf.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "q-crlf.md",
+  "vars": []
+}

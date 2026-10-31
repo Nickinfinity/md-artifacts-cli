@@ -1,0 +1,11 @@
+vault_flag = false
+machine_config = '''
+default = "$MISSING"
+vaults = ["$MISSING"]
+'''
+[expect]
+source = "none"
+configDir = "$CONFIG"
+[expect.defaultError]
+code = "vault.unavailable"
+params = { path = "$MISSING" }

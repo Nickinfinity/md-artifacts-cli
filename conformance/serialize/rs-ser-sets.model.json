@@ -1,0 +1,19 @@
+{
+  "artifactType": "Variables",
+  "title": "Sets",
+  "blocks": [
+    {
+      "heading": "Dev",
+      "description": "Dev machine.",
+      "vars": [
+        {
+          "name": "VK-host",
+          "value": "localhost"
+        }
+      ]
+    },
+    {
+      "heading": "Empty"
+    }
+  ]
+}

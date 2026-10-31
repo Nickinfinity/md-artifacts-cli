@@ -1,0 +1,5 @@
+Example:
+
+```yaml
+type: snippet
+```

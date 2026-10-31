@@ -1,0 +1,19 @@
+{
+  "blocks": [],
+  "code": "test('<VK-language> renders', () => {});",
+  "fileName": "Button.test",
+  "filePath": "Templates/multi-index/dir_2/subdir1/Button.test.md",
+  "frontmatter": {
+    "artifactType": "Template",
+    "extension": ".tsx",
+    "language": "tsx",
+    "title": "Button Test"
+  },
+  "relativePath": "multi-index/dir_2/subdir1/Button.test.md",
+  "vars": [
+    {
+      "defaultValue": "python",
+      "name": "VK-language"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "output": "<VK-each:env>x",
+  "warnings": [
+    {
+      "code": "render.unterminated",
+      "params": {
+        "line": "1",
+        "path": "VK-env"
+      }
+    }
+  ],
+  "containsEscape": false
+}

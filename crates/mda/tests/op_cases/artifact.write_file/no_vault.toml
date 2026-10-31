@@ -1,0 +1,3 @@
+# No --vault: the op needs one.
+params = { path = "Templates/component.md", workspaceRoot = "$WORKSPACE", destDir = "" }
+expect_error = "vault.not_selected"

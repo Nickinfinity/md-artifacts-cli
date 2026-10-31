@@ -1,0 +1,12 @@
+vault = "vault"
+params = { type = "Template", dir = "Templates/x", paths = ["index.ts"] }
+[expect]
+written = 2
+skipped = 0
+results = [
+  { relPath = "index.ts", status = "written", path = "Templates/x/index.md", hash = "fc0169905d4f20a619563e3929cf44831d7a68a0d3091dce8b59c3285fba4948", warnings = [], containsEscape = false },
+  { relPath = "", status = "written", path = "Templates/x/index-2.md", hash = "1a696bfcd1fc8991f1a0f389a4a54e979a19128f5707b1b41c05fbfa037c7fdf", warnings = [], containsEscape = false },
+]
+[expect_files]
+"Templates/x/index.md" = "---\nartifactType: Template\ntitle: index\nextension: ts\n---\n"
+"Templates/x/index-2.md" = "---\nartifactType: Template\ntitle: Index\nindex: true\n---\n\n```\n1. [[index]]\n```\n"

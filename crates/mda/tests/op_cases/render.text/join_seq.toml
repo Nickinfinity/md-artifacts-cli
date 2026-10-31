@@ -1,0 +1,2 @@
+params = { text = "a\nb", join = "seq" }
+expect = { output = "a ; b", warnings = [], containsEscape = false, joined = true }

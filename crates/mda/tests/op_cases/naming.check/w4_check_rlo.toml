@@ -1,0 +1,2 @@
+params = { type = "Snippet", fileName = "a\u202Eb" }
+expect = { fileName = "a\u202Eb", ok = false, error = { code = "naming.control_char", params = {} } }

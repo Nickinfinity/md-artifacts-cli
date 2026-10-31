@@ -1,0 +1,3 @@
+vault = "vault"
+params = { type = "snippet", enabled = true }
+expect_error = "op.bad_request"

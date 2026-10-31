@@ -1,0 +1,14 @@
+{
+  "blocks": [],
+  "code": "console.log('hello');",
+  "fileName": "snippet-minimal",
+  "filePath": "Snippets/artifact-form/snippet-minimal.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "description": "Smallest valid snippet.",
+    "language": "javascript",
+    "title": "Minimal Snippet"
+  },
+  "relativePath": "artifact-form/snippet-minimal.md",
+  "vars": []
+}

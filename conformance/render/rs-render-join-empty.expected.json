@@ -1,0 +1,13 @@
+{
+  "output": "<VK-join:users.missing>",
+  "warnings": [
+    {
+      "code": "render.join_empty",
+      "params": {
+        "line": "1",
+        "path": "VK-users.missing"
+      }
+    }
+  ],
+  "containsEscape": false
+}

@@ -1,0 +1,3 @@
+vault = "vault_vars"
+params = { path = "Snippets/api.md", x = 1 }
+expect_error = "op.bad_request"

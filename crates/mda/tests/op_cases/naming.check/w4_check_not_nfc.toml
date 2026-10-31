@@ -1,0 +1,2 @@
+params = { type = "Snippet", fileName = "Cafe\u0301" }
+expect = { fileName = "Cafe\u0301", ok = false, error = { code = "naming.not_nfc", params = {} } }

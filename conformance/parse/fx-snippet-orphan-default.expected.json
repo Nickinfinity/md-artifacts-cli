@@ -1,0 +1,19 @@
+{
+  "blocks": [],
+  "code": "console.log('no tokens here');",
+  "fileName": "snippet-orphan-default",
+  "filePath": "Snippets/artifact-form/snippet-orphan-default.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "description": "Declares a variable default for a token not present in the code body.",
+    "language": "javascript",
+    "title": "Orphan Default Snippet"
+  },
+  "relativePath": "artifact-form/snippet-orphan-default.md",
+  "vars": [
+    {
+      "defaultValue": "hello",
+      "name": "VK-extra"
+    }
+  ]
+}

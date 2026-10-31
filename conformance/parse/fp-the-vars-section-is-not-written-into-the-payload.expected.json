@@ -1,0 +1,20 @@
+{
+  "blocks": [],
+  "code": "Be terse with <VK-repo_name>.",
+  "fileName": "reviewer",
+  "filePath": "AIAgentsConf/reviewer.md",
+  "frontmatter": {
+    "artifactType": "AIAgentsConfig",
+    "language": "markdown"
+  },
+  "layout": {
+    "payload": "bare"
+  },
+  "relativePath": "reviewer.md",
+  "vars": [
+    {
+      "defaultValue": "my-app",
+      "name": "VK-repo_name"
+    }
+  ]
+}

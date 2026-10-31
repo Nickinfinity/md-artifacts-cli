@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/new-index.md", model = { artifactType = "Template", title = "I", index = true, blocks = [{ code = "[[edit]]" }] } }
+expect = { path = "Templates/new-index.md", hash = "527ea1325ab70cfb42cd37cd6e6b307cc1cc00cac4a19cfca26d963fbf5af3bb" }
+expect_files = { "Templates/new-index.md" = "---\nartifactType: Template\ntitle: I\nindex: true\n---\n\n```\n[[edit]]\n```\n" }

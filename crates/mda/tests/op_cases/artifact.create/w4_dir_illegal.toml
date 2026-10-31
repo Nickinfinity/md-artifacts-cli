@@ -1,0 +1,5 @@
+vault = "vault"
+params = { path = "Snippets/a:b/x.md", model = { artifactType = "Snippet", title = "x", blocks = [{ code = "y" }] } }
+expect_error = "naming.illegal_char"
+expect_error_params = { segment = "a:b" }
+expect_files = { "Snippets/a:b/x.md" = false, "Snippets/a:b" = false }

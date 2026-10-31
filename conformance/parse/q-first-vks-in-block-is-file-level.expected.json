@@ -1,0 +1,42 @@
+{
+  "blocks": [
+    {
+      "code": "echo <VK-x>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "One",
+      "vars": [
+        {
+          "defaultValue": "1",
+          "name": "VK-x"
+        }
+      ]
+    },
+    {
+      "code": "echo <VK-y>",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Two",
+      "vars": [
+        {
+          "defaultValue": "",
+          "name": "VK-y"
+        }
+      ]
+    }
+  ],
+  "code": "echo <VK-x>",
+  "fileName": "q-first-vks-in-block",
+  "filePath": "Snippets/q-first-vks-in-block.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "q-first-vks-in-block.md",
+  "vars": [
+    {
+      "defaultValue": "1",
+      "name": "VK-x"
+    }
+  ]
+}

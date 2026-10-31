@@ -1,0 +1,3 @@
+vault = "vault_vars"
+params = { path = "Variables/dev.md", x = 1 }
+expect_error = "op.bad_request"

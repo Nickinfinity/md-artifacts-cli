@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Variables/sets.md" }
+expect_error = "artifact.block_not_found"

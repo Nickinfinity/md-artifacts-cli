@@ -1,0 +1,3 @@
+# terminal_hidden
+params = { source = "terminal", type = "AIPrompt", text = "ls" }
+expect = { artifactType = "AIPrompt", title = "", description = "", tags = [], extension = "", provider = "", model = "", version = "", env = "", target = "", blocks = [{ heading = "", description = "", language = "markdown", code = "ls", vars = [] }] }

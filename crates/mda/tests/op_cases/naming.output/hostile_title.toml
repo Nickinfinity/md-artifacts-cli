@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/hostile.md" }
+expect_error = "naming.path_injection"
+expect_error_params = { field = "title" }

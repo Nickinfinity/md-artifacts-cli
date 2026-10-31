@@ -1,0 +1,5 @@
+vault = "vault"
+params = { path = "Snippets/Cafe\u0301/x.md", model = { artifactType = "Snippet", title = "x", blocks = [{ code = "y" }] } }
+expect_error = "naming.not_nfc"
+expect_error_params = { segment = "Cafe\u0301" }
+expect_files = { "Snippets/Cafe\u0301/x.md" = false, "Snippets/Cafe\u0301" = false }

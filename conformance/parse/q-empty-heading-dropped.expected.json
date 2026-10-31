@@ -1,0 +1,20 @@
+{
+  "blocks": [
+    {
+      "code": "y",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Real",
+      "vars": []
+    }
+  ],
+  "code": "x",
+  "fileName": "q-empty-heading",
+  "filePath": "Snippets/q-empty-heading.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "q-empty-heading.md",
+  "vars": []
+}

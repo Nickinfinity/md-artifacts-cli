@@ -1,0 +1,11 @@
+vault = "vault_vars"
+params = { path = "Snippets/api.md" }
+[expect]
+artifactVars = ["VK-host", "VK-port", "VK-path"]
+paths = ["Variables/dev.md", "Variables/envs.md", "Variables/team/ops.md"]
+matches = [
+  { pathIndex = 0, subset = { index = 0, heading = "" }, label = "Dev", score = 0.7666666666666666, matchRatio = 0.6666666666666666, tagMatches = 1, matchedVars = ["VK-host", "VK-port"], extraVars = [] },
+  { pathIndex = 2, subset = { index = 0, heading = "" }, label = "Ops", score = 0.3, matchRatio = 0.0, tagMatches = 1, matchedVars = [], extraVars = ["VK-user"] },
+  { pathIndex = 1, subset = { index = 0, heading = "Stage" }, label = "Stage", score = 0.2333333333333333, matchRatio = 0.3333333333333333, tagMatches = 0, matchedVars = ["VK-host"], extraVars = [] },
+  { pathIndex = 1, subset = { index = 1, heading = "Prod" }, label = "Prod", score = 0.2333333333333333, matchRatio = 0.3333333333333333, tagMatches = 0, matchedVars = ["VK-host"], extraVars = ["VK-db"] },
+]

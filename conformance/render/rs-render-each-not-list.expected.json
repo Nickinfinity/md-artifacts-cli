@@ -1,0 +1,13 @@
+{
+  "output": "<VK-each:db>x<VK-end:db>",
+  "warnings": [
+    {
+      "code": "render.each_not_list",
+      "params": {
+        "line": "1",
+        "path": "VK-db"
+      }
+    }
+  ],
+  "containsEscape": false
+}

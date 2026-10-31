@@ -1,0 +1,4 @@
+# An unknown request field reaches deny_unknown_fields.
+vault = "vault"
+params = { path = "Snippets/hello.md", nope = 1 }
+expect_error = "op.bad_request"

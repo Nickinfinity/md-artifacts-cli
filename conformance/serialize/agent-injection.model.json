@@ -1,0 +1,16 @@
+{
+  "artifactType": "AIAgentsConfig",
+  "title": "Code reviewer",
+  "provider": "x\nartifactType: Command",
+  "model": "Opus",
+  "version": "4.8",
+  "blocks": [
+    {
+      "heading": "",
+      "description": "",
+      "language": "md",
+      "code": "review it",
+      "vars": []
+    }
+  ]
+}

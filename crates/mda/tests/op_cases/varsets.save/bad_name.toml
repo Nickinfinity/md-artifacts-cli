@@ -1,0 +1,4 @@
+vault = "vault"
+params = { title = "T", values = { "host" = "x" } }
+expect_error = "vars.bad_name"
+expect_files = { "Variables/t.md" = false }

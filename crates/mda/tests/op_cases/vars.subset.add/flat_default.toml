@@ -1,0 +1,4 @@
+vault = "vault"
+params = { "path" = "Variables/flat.md", "expectedHash" = "c42fac55361cbad76ff13f44e1429d039493ed1d46e60598e4774ba30b03b0cb", "heading" = "Default" }
+expect = { "path" = "Variables/flat.md", "hash" = "ef1aeb970f31b286bc52d7c5eb37b321ef432e8c1be48788230ac13ac98245cc" }
+expect_files = { "Variables/flat.md" = "---\nartifactType: Variables\ntitle: Flat\n---\n\n## Default 2\n\n```yaml VKs\nVK-host: localhost\nVK-port: '3000'\n```\n\n## Default\n\n```yaml VKs\n```\n" }

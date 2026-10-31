@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Templates/component.md", nope = 1 }
+expect_error = "op.bad_request"

@@ -1,0 +1,20 @@
+{
+  "blocks": [
+    {
+      "code": "line one\nline two\nline three",
+      "description": "",
+      "fenceLang": "bash",
+      "heading": "Script",
+      "vars": []
+    }
+  ],
+  "code": "line one\nline two\nline three",
+  "fileName": "pb-multi-line-code-block-is-captured-in-full-with-i",
+  "filePath": "Snippets/pb-multi-line-code-block-is-captured-in-full-with-i.md",
+  "frontmatter": {
+    "artifactType": "Snippet",
+    "language": "bash"
+  },
+  "relativePath": "pb-multi-line-code-block-is-captured-in-full-with-i.md",
+  "vars": []
+}

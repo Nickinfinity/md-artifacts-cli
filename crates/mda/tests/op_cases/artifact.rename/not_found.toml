@@ -1,0 +1,3 @@
+vault = "vault"
+params = { path = "Snippets/nope.md", expectedHash = "ec08b1ff85244ca852728e7bf761ccb8cfcaf796abd9ddfef6e5f8aef5082c1e", newPath = "Snippets/b.md" }
+expect_error = "path.not_found"

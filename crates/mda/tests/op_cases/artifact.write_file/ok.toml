@@ -1,0 +1,5 @@
+# Directive-free Template into a fresh workspace; the written bytes are the render output exactly.
+vault = "vault"
+params = { path = "Templates/component.md", workspaceRoot = "$WORKSPACE", destDir = "out" }
+expect = { path = "out/Button.tsx", hash = "51d19095f78d0ae1feebbfa13285608ef6890e9d5035f500ec8a82b6e67169f5", warnings = [], containsEscape = false }
+expect_workspace_files = { "out/Button.tsx" = "export const Widget = () => <button>Click</button>;" }

@@ -1,0 +1,16 @@
+{
+  "blocks": [],
+  "code": "[[dir_2/subdir1/Button]]\n[[../../etc/passwd]]\n[[/etc/passwd]]",
+  "fileName": "hostile-index",
+  "filePath": "Templates/multi-index/hostile-index.md",
+  "frontmatter": {
+    "artifactType": "Template",
+    "index": true,
+    "language": "markdown"
+  },
+  "layout": {
+    "payload": "bare"
+  },
+  "relativePath": "multi-index/hostile-index.md",
+  "vars": []
+}

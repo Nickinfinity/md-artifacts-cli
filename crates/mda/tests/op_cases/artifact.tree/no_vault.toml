@@ -1,0 +1,2 @@
+params = { type = "Snippet" }
+expect_error = "vault.not_selected"

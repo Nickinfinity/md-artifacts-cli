@@ -1,0 +1,3 @@
+# selection_hidden
+params = { source = "selection", type = "AIPrompt", text = "hi", languageId = "typescript" }
+expect = { artifactType = "AIPrompt", title = "", description = "", tags = [], extension = "", provider = "", model = "", version = "", env = "", target = "", blocks = [{ heading = "", description = "", language = "markdown", code = "hi", vars = [] }] }

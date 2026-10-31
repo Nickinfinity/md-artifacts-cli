@@ -1,0 +1,13 @@
+{
+  "output": "Bearer abc123 for <VK-user>",
+  "warnings": [
+    {
+      "code": "render.unknown_var",
+      "params": {
+        "line": "1",
+        "name": "VK-user"
+      }
+    }
+  ],
+  "containsEscape": false
+}

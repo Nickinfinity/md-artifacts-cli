@@ -1,0 +1,2 @@
+params = { text = "a\u009b\nb", join = "and" }
+expect = { output = "a\u009b && b", warnings = [], containsEscape = true, joined = true }

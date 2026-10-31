@@ -1,0 +1,21 @@
+{
+  "blocks": [],
+  "code": "# <VK-project_name>\n\nDocs go here.",
+  "fileName": "readme",
+  "filePath": "Templates/readme.md",
+  "frontmatter": {
+    "artifactType": "Template",
+    "language": "markdown",
+    "title": "Readme"
+  },
+  "layout": {
+    "payload": "bare"
+  },
+  "relativePath": "readme.md",
+  "vars": [
+    {
+      "defaultValue": "",
+      "name": "VK-project_name"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+vault = "vault_migrate"
+params = { files = [{ path = "Commands/done.md", hash = "cfb681346e3802ce7bfb73468051ebc0df1a4bfd5a6a7a4eb810265d1489ee9a" }] }
+expect = { results = [
+  { status = "skipped", path = "Commands/done.md", code = "migrate.up_to_date", params = {} },
+], written = 0, skipped = 1 }

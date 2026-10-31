@@ -1,0 +1,10 @@
+{
+  "artifactType": "Template",
+  "title": "Blank",
+  "extension": "ts",
+  "blocks": [
+    {
+      "code": ""
+    }
+  ]
+}

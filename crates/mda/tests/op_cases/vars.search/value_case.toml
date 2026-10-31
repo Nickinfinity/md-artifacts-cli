@@ -1,0 +1,13 @@
+vault = "vault_vars"
+params = { query = "LOCALHOST" }
+[[expect.files]]
+path = "Variables/dev.md"
+name = "dev"
+title = "Dev"
+tags = ["api"]
+shape = "flat"
+[[expect.files.subsets]]
+index = 0
+heading = ""
+description = ""
+vars = [{ name = "VK-host", defaultValue = "localhost" }]
