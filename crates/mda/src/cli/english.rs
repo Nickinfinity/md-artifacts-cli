@@ -51,6 +51,7 @@ pub fn english(code: &str) -> Option<&'static str> {
         }
         RENAME_INDEX_LINK => "an index links the old name",
         RENAME_LINKS_UNCHECKED => "index links not checked",
+        RENAME_LINK_UPDATE_FAILED => "an index link could not be updated",
         VARS_MIXED_FILE => {
             "a variables fence sits before the first ## section; edits refuse this file"
         }

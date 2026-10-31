@@ -5,8 +5,8 @@ mod common;
 use common::fuzz_strings;
 use mda_core::model::Frontmatter;
 use mda_core::multi_index::{
-    RelPathError as E, dest_candidates, extract_links, is_index, plan_links, resolve_link,
-    safe_rel_path,
+    RelPathError as E, RewriteError, dest_candidates, extract_links, is_index, plan_links,
+    resolve_link, rewrite_links, safe_rel_path,
 };
 use mda_core::registry::ArtifactType;
 use std::time::{Duration, Instant};
@@ -238,4 +238,92 @@ fn fuzz_invariants() {
         let _ = extract_links(&x);
         let _ = plan_links(&x);
     }
+}
+
+// ---- rewrite_links (spec 14.3, D-37) ----
+
+fn rw(body: &str, from: &str, to: &str) -> String {
+    rewrite_links(body, from, to).unwrap()
+}
+
+#[test]
+fn rewrite_keeps_anchor_and_alias() {
+    assert_eq!(
+        rewrite_links("[[sub/a#h|t]]", "sub/a.md", "sub/b.md").unwrap(),
+        "[[sub/b#h|t]]"
+    );
+    assert_eq!(rw("[[ a # h | t ]]", "a.md", "b.md"), "[[ b # h | t ]]");
+    // The `#` after the alias bar is alias text, not an anchor.
+    assert_eq!(rw("[[a#h]]", "a.md", "b.md"), "[[b#h]]");
+    assert_eq!(rw("[[a|t]]", "a.md", "b.md"), "[[b|t]]");
+    assert_eq!(rw("[[a|t#h]]", "a.md", "b.md"), "[[b|t#h]]");
+    assert_eq!(rw("[[ |t]] [[a]]", "a.md", "b.md"), "[[ |t]] [[b]]");
+}
+
+#[test]
+fn rewrite_markdown_and_md_suffix() {
+    assert_eq!(
+        rw("[Label](sub/a.md)", "sub/a.md", "sub/b.md"),
+        "[Label](sub/b.md)"
+    );
+    assert_eq!(rw("[L]( a.md )", "a.md", "b.md"), "[L]( b.md )");
+    assert_eq!(rw("[[a]]", "a.md", "b.md"), "[[b]]");
+    assert_eq!(rw("[[a.md]]", "a.md", "b.md"), "[[b.md]]");
+    assert_eq!(rw("[[a.MD]]", "a.md", "b.md"), "[[b.md]]");
+    assert_eq!(rw("[[./sub//a]]", "sub/a.md", "sub/b.md"), "[[sub/b]]");
+}
+
+#[test]
+fn rewrite_all_matches_and_case_insensitive() {
+    assert_eq!(rw("[[a]] x [[a]]", "a.md", "b.md"), "[[b]] x [[b]]");
+    assert_eq!(rw("[[SUB/A]]", "sub/a.md", "sub/b.md"), "[[sub/b]]");
+}
+
+#[test]
+fn rewrite_leaves_everything_else() {
+    for body in [
+        "![[a]]",
+        "![x](a.md)",
+        "[x](a.md \"t\")",
+        "[x](a.md#h)",
+        "[[../a]] [[c]] [[/a]]",
+        "[[\u{e9}]]",
+    ] {
+        assert_eq!(rw(body, "a.md", "b.md"), body, "{body}");
+    }
+    assert_eq!(rw("![T]([[x]])", "a.md", "b.md"), "![T]([[x]])");
+    assert_eq!(rw("![T]([[x]])", "x.md", "y.md"), "![T]([[y]])");
+}
+
+#[test]
+fn rewrite_unlinkable_target() {
+    for to in ["a#b.md", "a|b.md", "a[b.md", "a]b.md", "a(b.md", "a)b.md"] {
+        assert_eq!(
+            rewrite_links("[[a]]", "a.md", to),
+            Err(RewriteError::Unlinkable),
+            "{to}"
+        );
+    }
+    // Not its own normal form: the guard would compare a different path.
+    for to in ["b.md.md", "s//b.md", "./b.md", "b"] {
+        assert_eq!(
+            rewrite_links("[[a]]", "a.md", to),
+            Err(RewriteError::Unlinkable),
+            "{to}"
+        );
+    }
+    // No matching link: nothing to spell, so no check.
+    assert_eq!(
+        rewrite_links("[[c]]", "a.md", "a#b.md"),
+        Ok("[[c]]".to_owned())
+    );
+}
+
+#[test]
+fn rewrite_is_linear() {
+    let body = "[[a]] ".repeat(100_000);
+    let t = Instant::now();
+    let out = rw(&body, "a.md", "bb.md");
+    assert!(t.elapsed() < Duration::from_secs(5));
+    assert_eq!(out, "[[bb]] ".repeat(100_000));
 }

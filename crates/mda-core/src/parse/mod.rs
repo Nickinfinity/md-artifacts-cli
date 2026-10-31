@@ -66,6 +66,11 @@ pub(crate) fn top_code_range(content: &str) -> Option<std::ops::Range<usize>> {
     Some(base + r.start..base + r.end)
 }
 
+/// Byte offset where the file's body starts (just after the frontmatter block; `0` when there is none).
+pub(crate) fn frontmatter_end(content: &str) -> usize {
+    content.len() - frontmatter::strip(content).len() // `strip` returns a suffix of `content`
+}
+
 /// The payload fields a file's body yields, however it is delimited.
 struct Payload {
     code: String,

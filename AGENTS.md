@@ -3,10 +3,12 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
-> **Status (2026-10-30): W4 landed (MAC-21)** — Unicode slugs (`mda-core/src/naming/slug.rs`, NFC via `unicode-normalization`),
+> **Status (2026-10-31): W4 + W5 landed (MAC-21, MAC-22), one release** — W5: `updateLinks` on `artifact.rename` rewrites only the
+> link targets of linking template indexes (`multi_index::rewrite_links`, `patch::patch_index_body`, `mda-ops/src/rename_links.rs`), response
+> `updatedIndexes`, failures `rename.link_update_failed{index, reason}`, the rename never undone. W4: — Unicode slugs (`mda-core/src/naming/slug.rs`, NFC via `unicode-normalization`),
 > cross-platform vault names (`naming.not_nfc`, format characters, complete Windows reserved list `naming/reserved.rs`, new directory
-> segments checked with `segment`), CI matrix ubuntu/macos/windows (`.github/workflows/ci.yml`, `.gitattributes * -text`); protocol
-> **2.4**, engine `0.14.0`.
+> segments checked with `segment`), `plain_path` at the engine boundary, CI matrix ubuntu/macos/windows (`.github/workflows/ci.yml`,
+> `.gitattributes * -text`); protocol **2.4**, engine `0.14.0`.
 > **ER-7 + ER-5 landed (MAC-19, MAC-20)** — `join` on `artifact.render` / `render.text` joins a rendered
 > Command into one line or refuses `render.unjoinable{line, reason}` (never guesses; the scanner `mda-core/src/render/join.rs`,
 > spec §4.3), response `joined: true`; `naming.output` (the write_file output name, nothing written); protocol 2.3, engine `0.13.0`.
@@ -160,7 +162,7 @@ md-artifacts-cli/
 │   │       ├── ops_list.rs    # THE registration list: one line per op
 │   │       ├── error.rs       # OpError { code, params } — the ONLY error shape clients see
 │   │       ├── artifact_write.rs · artifact_rewrite.rs  # create/update/patch/delete · the one rewrite path (`prepare`, `rewrite`)
-│   │       ├── artifact_rename.rs · rename_links.rs  # artifact.rename · index links to a path (warnings)
+│   │       ├── artifact_rename.rs · rename_links.rs  # artifact.rename · index links to a path (warnings, `updateLinks`)
 │   │       ├── naming.rs      # naming.check, naming.output
 │   │       ├── render.rs · write_file.rs · prefill.rs  # artifact.render / write_file / prefill (W3)
 │   │       ├── index.rs · index_create.rs  # index.plan / run / create (W3b)

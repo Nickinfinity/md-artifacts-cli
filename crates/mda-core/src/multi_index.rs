@@ -6,9 +6,10 @@ use crate::error::{
     PATH_PARENT_SEGMENT,
 };
 use crate::model::Frontmatter;
-use crate::parse::text::{compile, js_trim};
+use crate::parse::text::{compile, js_trim, js_trim_end};
 use regex::Regex;
 use std::collections::HashSet;
+use std::ops::Range;
 use std::sync::LazyLock;
 
 /// Wikilink `[[t]]` or markdown link `[x](t)`; targets exclude brackets/parens/newlines so the scan
@@ -133,10 +134,7 @@ pub fn safe_rel_path(raw: &str) -> Result<String, RelPathError> {
 /// ```
 pub fn resolve_link(raw: &str) -> Result<String, RelPathError> {
     let mut p = safe_rel_path(raw)?;
-    let has_md = p.len() >= 3
-        && p.get(p.len() - 3..)
-            .is_some_and(|s| s.eq_ignore_ascii_case(".md"));
-    if !has_md {
+    if strip_md(&p).len() == p.len() {
         p.push_str(".md");
     }
     Ok(p)
@@ -151,6 +149,13 @@ pub fn resolve_link(raw: &str) -> Result<String, RelPathError> {
 /// ```
 pub fn extract_links(body: &str) -> Vec<String> {
     let mut out = Vec::new();
+    walk_links(body, |raw, _| out.push(raw.to_owned()));
+    out
+}
+
+/// The one link scanner: calls `f(target, byte span of the target in body)` per link, in order.
+/// The span is what [`rewrite_links`] replaces; for a wikilink it excludes anchor and alias.
+fn walk_links(body: &str, mut f: impl FnMut(&str, Range<usize>)) {
     let mut at = 0;
     while let Some(c) = LINK_RE.captures_at(body, at) {
         let Some(m) = c.get(0) else { break };
@@ -160,13 +165,103 @@ pub fn extract_links(body: &str) -> Vec<String> {
             continue;
         }
         at = m.end();
-        if let Some(w) = c.get(1) {
-            out.push(strip_wiki(w.as_str()).to_owned());
-        } else if let Some(l) = c.get(2) {
-            out.push(js_trim(l.as_str()).to_owned());
-        }
+        let (g, wiki) = match (c.get(1), c.get(2)) {
+            (Some(w), _) => (w, true),
+            (None, Some(l)) => (l, false),
+            _ => continue,
+        };
+        let s = g.as_str();
+        let cut = if wiki { strip_wiki_raw(s) } else { s };
+        let lead = js_trim_end(cut).len() - js_trim(cut).len();
+        let start = g.start() + lead;
+        f(js_trim(cut), start..start + js_trim(cut).len());
     }
-    out
+}
+
+/// Why [`rewrite_links`] refused: the new target cannot be spelled as a link.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::multi_index::RewriteError;
+/// assert_eq!(RewriteError::Unlinkable, RewriteError::Unlinkable);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RewriteError {
+    Unlinkable,
+}
+
+/// `body` with every link resolving to `from_rel` pointing at `to_rel` (both relative to the index's
+/// directory); only the target text changes (spec §14.3).
+///
+/// # Examples
+///
+/// ```
+/// let _ = mda_core::multi_index::rewrite_links("[[a]]", "a.md", "b.md");
+/// ```
+pub fn rewrite_links(body: &str, from_rel: &str, to_rel: &str) -> Result<String, RewriteError> {
+    // (span, replacement) per matched link; `want` is the resolved path list the guard expects.
+    let mut hits: Vec<(Range<usize>, String)> = Vec::new();
+    let (mut want, mut rejected) = (Vec::new(), Vec::new());
+    // The new path must be its own normal form, so the guard can compare it exactly.
+    let to_ok = resolve_link(to_rel).is_ok_and(|p| p == to_rel);
+    let mut bad_target = false;
+    walk_links(body, |raw, span| {
+        let Ok(rel) = resolve_link(raw) else {
+            rejected.push(raw.to_owned());
+            return;
+        };
+        if !rel.eq_ignore_ascii_case(from_rel) {
+            want.push(rel);
+            return;
+        }
+        bad_target |= !to_ok || to_rel.contains(['#', '|', '[', ']', '(', ')']);
+        let stem = strip_md(to_rel);
+        let had_md = safe_rel_path(raw).is_ok_and(|p| strip_md(&p).len() != p.len());
+        let new = if had_md {
+            format!("{stem}.md")
+        } else {
+            stem.to_owned()
+        };
+        want.push(to_rel.to_owned());
+        hits.push((span, new));
+    });
+    if hits.is_empty() {
+        return Ok(body.to_owned());
+    }
+    if bad_target {
+        return Err(RewriteError::Unlinkable);
+    }
+    // One pass, gap by gap: linear however many links match.
+    let mut out = String::with_capacity(body.len() + hits.len() * to_rel.len());
+    let mut at = 0;
+    for (span, new) in &hits {
+        out.push_str(body.get(at..span.start).ok_or(RewriteError::Unlinkable)?);
+        out.push_str(new);
+        at = span.end;
+    }
+    out.push_str(body.get(at..).ok_or(RewriteError::Unlinkable)?);
+    // Guard: the rewritten body must plan exactly the old links with the matched ones swapped.
+    let plan = plan_links(&out);
+    let got: Vec<&String> = plan.steps.iter().map(|s| &s.rel_path).collect();
+    let rej: Vec<&String> = plan.rejected.iter().map(|(r, _)| r).collect();
+    if got.iter().copied().eq(want.iter()) && rej.iter().copied().eq(rejected.iter()) {
+        Ok(out)
+    } else {
+        Err(RewriteError::Unlinkable)
+    }
+}
+
+/// `p` without a trailing `.md` (ASCII case-insensitive).
+fn strip_md(p: &str) -> &str {
+    match p
+        .len()
+        .checked_sub(3)
+        .and_then(|i| p.get(i..).map(|e| (i, e)))
+    {
+        Some((i, e)) if e.eq_ignore_ascii_case(".md") => p.get(..i).unwrap_or(p),
+        _ => p,
+    }
 }
 
 /// The link plan of an index body: each target resolved, or rejected with its code.
@@ -233,8 +328,8 @@ fn rel_dir_of(rel: &str) -> &str {
     rel.rsplit_once('/').map_or("", |(d, _)| d)
 }
 
-/// `[[a#h|b]]` -> `a`: alias first, then anchor, then JS trim.
-fn strip_wiki(raw: &str) -> &str {
+/// A wikilink's target text, untrimmed: cut at the first `|`, then at the first `#` before it.
+fn strip_wiki_raw(raw: &str) -> &str {
     let no_alias = raw.split('|').next().unwrap_or("");
-    js_trim(no_alias.split('#').next().unwrap_or(""))
+    no_alias.split('#').next().unwrap_or("")
 }

@@ -111,7 +111,6 @@ pub fn success(op: &str, v: &Value) -> String {
             || matches!(
                 op,
                 "artifact.create"
-                    | "artifact.rename"
                     | "artifact.update"
                     | "artifact.patch"
                     | "artifact.write_file"
@@ -119,6 +118,13 @@ pub fn success(op: &str, v: &Value) -> String {
             ) =>
         {
             format!("wrote {}  {}", s(v, "path"), s(v, "hash"))
+        }
+        "artifact.rename" => {
+            let mut out = format!("wrote {}  {}", s(v, "path"), s(v, "hash"));
+            for i in v["updatedIndexes"].as_array().into_iter().flatten() {
+                out.push_str(&format!("\nupdated {}  {}", s(i, "path"), s(i, "hash")));
+            }
+            out
         }
         "artifact.delete" => format!("deleted {}", s(v, "path")),
         "naming.output" => s(v, "fileName"),

@@ -6,10 +6,12 @@
 use std::ops::Range;
 
 use crate::error::Refusal;
+use crate::model::PayloadKind;
 use crate::parse::DEFAULTS_INFO;
 use crate::parse::text::js_trim_end;
 use crate::parse::{
-    block_code_ranges, body_range, is_flagged, key_of, parse_from_content, top_code_range,
+    block_code_ranges, body_range, frontmatter_end, is_flagged, key_of, parse_from_content,
+    top_code_range,
 };
 use crate::registry::ArtifactType;
 use crate::serialize::{FRONTMATTER_KEY_ORDER, single_line};
@@ -233,6 +235,50 @@ pub fn patch_code(
         }
         Some(i) => block_guard(&before, &after, i, new_code),
     };
+    if ok { Ok(out) } else { Err(bad) }
+}
+
+/// Replace the single body of a template index with `code`, whatever its layout (fence, bare or flagged;
+/// [`patch_code`] refuses the last two, the usual index shape). Only the body's span changes.
+///
+/// # Examples
+///
+/// ```
+/// let r = mda_core::patch::patch_index_body("[[a]]\n", "Templates/i.md", "[[b]]");
+/// let _ = r;
+/// ```
+pub fn patch_index_body(content: &str, path: &str, new_code: &str) -> Result<String, PatchError> {
+    let bad = PatchError::Unrepresentable("code");
+    let before = parse_from_content(content, path);
+    let range = if before.layout.payload == PayloadKind::Fence {
+        let r = top_code_range(content)
+            .filter(|r| !is_vks_fence(content, r))
+            .ok_or(PatchError::Refused(Refusal::NoFence))?;
+        // The fence text is `code` trimmed at the end: replace that span, not the line terminator.
+        r.start..r.start + before.code.len()
+    } else {
+        // ponytail: needs the code text verbatim exactly once after the frontmatter; a mid-body
+        // `vars:` line or a multi-line flagged CRLF region (normalised by the parser) is refused —
+        // a span-tracking parser would lift this.
+        let base = frontmatter_end(content);
+        let tail = content.get(base..).ok_or(bad.clone())?;
+        let mut hits = tail.match_indices(before.code.as_str());
+        let (i, _) = hits
+            .next()
+            .filter(|_| !before.code.is_empty())
+            .ok_or(bad.clone())?;
+        if hits.next().is_some() {
+            return Err(bad);
+        }
+        base + i..base + i + before.code.len()
+    };
+    let out = splice(content, &range, new_code).ok_or(bad.clone())?;
+    // Guard: code, frontmatter, layout and block count; `vars` follow `code` and are not compared.
+    let after = parse_from_content(&out, path);
+    let ok = after.code == new_code
+        && after.frontmatter == before.frontmatter
+        && after.layout == before.layout
+        && after.blocks.len() == before.blocks.len();
     if ok { Ok(out) } else { Err(bad) }
 }
 

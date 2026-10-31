@@ -1,16 +1,37 @@
-//! The template-index links that point at a vault path (spec §14.3): `artifact.rename` reports them
-//! as `rename.index_link` warnings and never rewrites them.
+//! The template-index links that point at a vault path (spec §14.3). `artifact.rename` reports them as
+//! `rename.index_link` warnings; with `updateLinks` it rewrites each linking index's link targets
+//! instead (D-34…D-40), file by file, after the move and after the whole scan.
 
 use std::collections::HashSet;
+use std::path::Path;
 
-use mda_core::multi_index::{is_index, plan_links};
+use mda_core::multi_index::{is_index, plan_links, rewrite_links};
 use mda_core::parse::{decode, parse_from_content};
+use mda_core::patch::patch_index_body;
 use mda_core::registry::type_for_dir;
-use mda_vault::{Root, VaultError, walk_md};
+use mda_vault::{Root, VaultError, contain, content_hash, replace, walk_md};
 
 use crate::OpError;
 use crate::artifact::MAX_ARTIFACT_BYTES;
-use crate::error::{RENAME_INDEX_LINK, RENAME_LINKS_UNCHECKED, vault_error};
+use crate::artifact_rename::UpdatedIndex;
+use crate::error::{
+    RENAME_INDEX_LINK, RENAME_LINK_UPDATE_FAILED, RENAME_LINKS_UNCHECKED, vault_error,
+};
+
+/// One linking index found by the scan: its bytes as read (the write's hash check), the distinct raw
+/// links to the old path, and how many link steps match (undeduped: it sizes the rewrite).
+struct Hit {
+    rel: String,
+    bytes: Vec<u8>,
+    links: Vec<String>,
+    matches: usize,
+}
+
+/// What the walk found; `unchecked` is the `rename.links_unchecked` warning of a walk that stopped early.
+struct Scan {
+    hits: Vec<Hit>,
+    unchecked: Option<OpError>,
+}
 
 /// One `rename.index_link` per (index, link) under `old`'s type directory that resolves to `old`;
 /// a walk that stops early appends one `rename.links_unchecked`.
@@ -18,8 +39,129 @@ pub(crate) fn index_links_to(root: &Root, old: &str) -> Vec<OpError> {
     let Some((dir, _)) = old.split_once('/') else {
         return vec![];
     };
-    collect(root, old, dir, |visit| {
+    warnings(collect(root, old, dir, |visit| {
         walk_md(root, &[dir], MAX_ARTIFACT_BYTES, visit)
+    }))
+}
+
+/// With `updateLinks`: rewrite the links to `old` in every linking index (spec §14.3). Returns the warnings
+/// and the indexes updated. The rename has already happened; nothing here undoes it. The scan finishes
+/// before the first write.
+pub(crate) fn update_index_links(
+    root: &Root,
+    old: &str,
+    new: &str,
+) -> (Vec<OpError>, Vec<UpdatedIndex>) {
+    let Some((dir, _)) = old.split_once('/') else {
+        return (vec![], vec![]);
+    };
+    let scan = collect(root, old, dir, |visit| {
+        walk_md(root, &[dir], MAX_ARTIFACT_BYTES, visit)
+    });
+    apply(root, old, new, scan)
+}
+
+/// A hit's `rename.index_link` warnings.
+fn hit_warnings(hit: &Hit) -> impl Iterator<Item = OpError> + '_ {
+    hit.links.iter().map(|raw| {
+        OpError::new(RENAME_INDEX_LINK)
+            .with("index", &hit.rel)
+            .with("link", raw)
+    })
+}
+
+fn warnings(scan: Scan) -> Vec<OpError> {
+    let mut out: Vec<_> = scan.hits.iter().flat_map(hit_warnings).collect();
+    out.extend(scan.unchecked);
+    out
+}
+
+/// Rewrite every hit; a failed one stays byte-identical and warns `rename.link_update_failed` then its
+/// `rename.index_link` rows. `rename.links_unchecked` stays last (D-35).
+fn apply(root: &Root, old: &str, new: &str, scan: Scan) -> (Vec<OpError>, Vec<UpdatedIndex>) {
+    let (mut out, mut done) = (Vec::new(), Vec::new());
+    // The moved file is skipped by canonical identity (right on case-insensitive and -sensitive
+    // filesystems alike). A `contain` error means "not the moved file": `rewrite_one`'s own pin
+    // then refuses a path it cannot contain, and a vanished `new` cannot match anything.
+    let moved = contain(root, Path::new(new)).ok();
+    for hit in &scan.hits {
+        if moved.is_some() && contain(root, Path::new(&hit.rel)).ok() == moved {
+            continue;
+        }
+        match rewrite_one(root, hit, old, new) {
+            Ok(row) => done.push(row),
+            Err(reason) => {
+                out.push(
+                    OpError::new(RENAME_LINK_UPDATE_FAILED)
+                        .with("index", &hit.rel)
+                        .with("reason", reason),
+                );
+                out.extend(hit_warnings(hit));
+            }
+        }
+    }
+    out.extend(scan.unchecked);
+    (out, done)
+}
+
+/// `s` without the ASCII-case-insensitive prefix `p` (`.get()`: never panics on a char boundary).
+/// Only `old` is matched this way, as the scan does; `new` is compared exactly.
+fn strip_prefix_ci<'a>(s: &'a str, p: &str) -> Option<&'a str> {
+    let head = s.get(..p.len())?;
+    head.eq_ignore_ascii_case(p)
+        .then(|| s.get(p.len()..))
+        .flatten()
+}
+
+/// Rewrite one index in place; the `Err` is the D-36 `reason`.
+fn rewrite_one(root: &Root, hit: &Hit, old: &str, new: &str) -> Result<UpdatedIndex, &'static str> {
+    let prefix = format!("{}/", hit.rel.rsplit_once('/').map_or("", |(d, _)| d));
+    let (Some(from_rel), Some(to_rel)) = (strip_prefix_ci(old, &prefix), new.strip_prefix(&prefix))
+    else {
+        return Err("unreachable");
+    };
+    // Raw bytes, never the lossy decode: a replacement char would be written back.
+    let text = std::str::from_utf8(&hit.bytes).map_err(|_| "not_patchable")?;
+    // `replace` bounds the current file, not the new text. ponytail: overestimates (the removed
+    // spans are ignored), so a file just under the cap can be refused — exact sizing if it ever bites.
+    let grown = hit
+        .bytes
+        .len()
+        .saturating_add(hit.matches.saturating_mul(to_rel.len()));
+    if grown as u64 > MAX_ARTIFACT_BYTES {
+        return Err("not_patchable");
+    }
+    let (bom, body) = match text.strip_prefix('\u{feff}') {
+        Some(rest) => ("\u{feff}", rest),
+        None => ("", text),
+    };
+    let code = parse_from_content(body, &hit.rel).code;
+    let new_code = rewrite_links(&code, from_rel, to_rel).map_err(|_| "unlinkable")?;
+    let patched = patch_index_body(body, &hit.rel, &new_code).map_err(|_| "not_patchable")?;
+    let out = format!("{bom}{patched}");
+    // Pin: an in-vault symlink to another type dir must not be written through.
+    let dir = hit.rel.split('/').next().unwrap_or_default();
+    match (
+        contain(root, Path::new(dir)),
+        contain(root, Path::new(&hit.rel)),
+    ) {
+        (Ok(d), Ok(f)) if f.starts_with(&d) => {}
+        _ => return Err("not_patchable"),
+    }
+    replace(
+        root,
+        Path::new(&hit.rel),
+        out.as_bytes(),
+        &content_hash(&hit.bytes),
+        MAX_ARTIFACT_BYTES,
+    )
+    .map_err(|e| match e {
+        VaultError::Conflict { .. } | VaultError::NotFound { .. } => "conflict",
+        _ => "write_failed",
+    })?;
+    Ok(UpdatedIndex {
+        path: hit.rel.clone(),
+        hash: content_hash(out.as_bytes()),
     })
 }
 
@@ -29,12 +171,15 @@ fn collect(
     old: &str,
     dir: &str,
     walker: impl FnOnce(&mut dyn FnMut(&str, Result<Vec<u8>, VaultError>)) -> Result<(), VaultError>,
-) -> Vec<OpError> {
+) -> Scan {
+    let mut scan = Scan {
+        hits: Vec::new(),
+        unchecked: None,
+    };
     // Only whole-file types can be indexes.
     if !type_for_dir(dir).is_some_and(|t| t.info().writes_file) {
-        return vec![];
+        return scan;
     }
-    let mut out = Vec::new();
     let mut visit = |rel: &str, res: Result<Vec<u8>, VaultError>| {
         // Unreadable or oversize files are skipped; the renamed file is never its own warning.
         let Ok(bytes) = res else { return };
@@ -46,17 +191,24 @@ fn collect(
             return;
         }
         let idx_dir = rel.rsplit_once('/').map_or("", |(d, _)| d);
-        let mut seen = HashSet::new();
+        let (mut seen, mut links, mut matches) = (HashSet::new(), Vec::new(), 0);
         for step in plan_links(&file.code).steps {
             // The joined vault path, not `rel_path` alone: links resolve from the index's dir.
             let target = format!("{idx_dir}/{}", step.rel_path);
-            if target.eq_ignore_ascii_case(old) && seen.insert(step.raw.clone()) {
-                out.push(
-                    OpError::new(RENAME_INDEX_LINK)
-                        .with("index", rel)
-                        .with("link", step.raw),
-                );
+            if target.eq_ignore_ascii_case(old) {
+                matches += 1;
+                if seen.insert(step.raw.clone()) {
+                    links.push(step.raw);
+                }
             }
+        }
+        if matches > 0 {
+            scan.hits.push(Hit {
+                rel: rel.to_owned(),
+                bytes,
+                links,
+                matches,
+            });
         }
     };
     if let Err(e) = walker(&mut visit) {
@@ -65,118 +217,10 @@ fn collect(
             // Same params as `walk.limit`: one mapping only.
             w.params = vault_error(e, root).params;
         }
-        out.push(w);
+        scan.unchecked = Some(w);
     }
-    out
+    scan
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-
-    fn vault(name: &str, files: &[(&str, &str)]) -> (std::path::PathBuf, Root) {
-        let p = std::env::temp_dir().join(format!("mda-rlinks-{}-{name}", std::process::id()));
-        let _ = fs::remove_dir_all(&p);
-        for (rel, body) in files {
-            let f = p.join("vault").join(rel);
-            fs::create_dir_all(f.parent().unwrap()).unwrap();
-            fs::write(f, body).unwrap();
-        }
-        fs::create_dir_all(p.join("vault/Snippets")).unwrap();
-        let root = Root::new(&p.join("vault")).unwrap();
-        (p, root)
-    }
-
-    fn idx(body: &str) -> String {
-        format!("---\nartifactType: Template\ntitle: I\nindex: true\n---\n\n{body}\n")
-    }
-
-    const LEAF: &str = "---\nartifactType: Template\ntitle: A\n---\n\nx\n";
-
-    #[test]
-    fn index_link_found_with_raw_stripped() {
-        let (p, root) = vault(
-            "found",
-            &[
-                (
-                    "Templates/idx.md",
-                    &idx("[[sub/a]]\n[[SUB/A#h|al]]\n[x](sub/a.md)\n[[sub/a]]"),
-                ),
-                ("Templates/sub/a.md", LEAF),
-            ],
-        );
-        let w = index_links_to(&root, "Templates/sub/a.md");
-        let links: Vec<_> = w.iter().map(|e| e.params["link"].as_str()).collect();
-        assert_eq!(links, ["sub/a", "SUB/A", "sub/a.md"]);
-        assert!(w.iter().all(|e| e.code == RENAME_INDEX_LINK));
-        assert!(w.iter().all(|e| e.params["index"] == "Templates/idx.md"));
-        let _ = fs::remove_dir_all(p);
-    }
-
-    #[test]
-    fn nested_index_resolves_from_its_dir_and_ignores_rejects_and_embeds() {
-        let (p, root) = vault(
-            "nested",
-            &[
-                ("Templates/sub/idx.md", &idx("[[a]]\n![[a]]\n[[../sub/a]]")),
-                ("Templates/other.md", &idx("[[a]]")),
-                ("Templates/sub/a.md", LEAF),
-            ],
-        );
-        let w = index_links_to(&root, "Templates/sub/a.md");
-        assert_eq!(w.len(), 1);
-        assert_eq!(w[0].params["index"], "Templates/sub/idx.md");
-        assert!(index_links_to(&root, "Templates/a.md").len() == 1);
-        let _ = fs::remove_dir_all(p);
-    }
-
-    #[test]
-    fn non_whole_file_type_skips_walk() {
-        let (p, root) = vault("snip", &[("Snippets/a.md", &idx("[[b]]"))]);
-        assert!(index_links_to(&root, "Snippets/b.md").is_empty());
-        let _ = fs::remove_dir_all(p);
-    }
-
-    #[test]
-    fn walk_error_keeps_earlier_warnings_and_appends_unchecked() {
-        let (p, root) = vault("cap", &[("Templates/idx.md", &idx("[[a]]"))]);
-        let seen = collect(&root, "Templates/a.md", "Templates", |visit| {
-            visit(
-                "Templates/idx.md",
-                Ok(fs::read(root.path().join("Templates/idx.md")).unwrap()),
-            );
-            Err(VaultError::Limit {
-                limit: mda_vault::WalkLimit::Files,
-                max: 3,
-            })
-        });
-        assert_eq!(seen.len(), 2);
-        assert_eq!(seen[0].code, RENAME_INDEX_LINK);
-        assert_eq!(seen[1].code, RENAME_LINKS_UNCHECKED);
-        assert_eq!(seen[1].params["limit"], "files");
-        assert_eq!(seen[1].params["max"], "3");
-        let other = collect(&root, "Templates/a.md", "Templates", |_| {
-            Err(VaultError::NotFound { path: "x".into() })
-        });
-        assert!(other[0].params.is_empty());
-        let _ = fs::remove_dir_all(p);
-    }
-
-    #[test]
-    fn unreadable_file_skipped_later_files_still_warn() {
-        let (p, root) = vault("skip", &[("Templates/z.md", &idx("[[a]]"))]);
-        let z = fs::read(root.path().join("Templates/z.md")).unwrap();
-        let got = collect(&root, "Templates/a.md", "Templates", |visit| {
-            visit(
-                "Templates/bad.md",
-                Err(VaultError::NotFound { path: "x".into() }),
-            );
-            visit("Templates/z.md", Ok(z));
-            Ok(())
-        });
-        assert_eq!(got.len(), 1);
-        assert_eq!(got[0].params["index"], "Templates/z.md");
-        let _ = fs::remove_dir_all(p);
-    }
-}
+mod tests;

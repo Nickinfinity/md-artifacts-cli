@@ -12,7 +12,7 @@ use crate::artifact::{
 };
 use crate::artifact_rewrite::prepare;
 use crate::error::vault_error;
-use crate::rename_links::index_links_to;
+use crate::rename_links::{index_links_to, update_index_links};
 use crate::write_file::exists_actual;
 use crate::{Ctx, OpError, error};
 
@@ -35,22 +35,43 @@ pub struct RenameRequest {
     pub new_path: String,
     #[serde(default)]
     pub model: Option<ArtifactModel>,
+    #[serde(default)]
+    pub update_links: bool,
 }
 
-/// `artifact.rename` response: the new path, the hash of its bytes, and the `rename.*` warnings.
+/// One index rewritten by `updateLinks`: its vault path and the hash of its new bytes.
+///
+/// # Examples
+///
+/// ```
+/// let r = mda_ops::artifact_rename::UpdatedIndex { path: "Templates/i.md".into(), hash: "h".into() };
+/// assert_eq!(serde_json::to_string(&r).unwrap(), r#"{"path":"Templates/i.md","hash":"h"}"#);
+/// ```
+#[derive(Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdatedIndex {
+    pub path: String,
+    pub hash: String,
+}
+
+/// `artifact.rename` response: the new path, the hash of its bytes, the `rename.*` warnings, and with
+/// `updateLinks` the indexes rewritten.
 ///
 /// # Examples
 ///
 /// ```
 /// let r = mda_ops::artifact_rename::RenameResponse {
-///     path: "Snippets/b.md".into(), hash: "h".into(), warnings: vec![] };
+///     path: "Snippets/b.md".into(), hash: "h".into(), warnings: vec![], updated_indexes: None };
 /// assert_eq!(serde_json::to_string(&r).unwrap(), r#"{"path":"Snippets/b.md","hash":"h","warnings":[]}"#);
 /// ```
 #[derive(Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RenameResponse {
     pub path: String,
     pub hash: String,
     pub warnings: Vec<OpError>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_indexes: Option<Vec<UpdatedIndex>>,
 }
 
 /// `artifact.rename`: refuse before any write, then move without clobbering.
@@ -126,9 +147,15 @@ pub fn rename(ctx: &Ctx, req: RenameRequest) -> Result<RenameResponse, OpError> 
             content_hash(text.as_bytes())
         }
     };
+    let (warnings, updated) = if req.update_links {
+        update_index_links(root, &req.path, new)
+    } else {
+        (index_links_to(root, &req.path), Vec::new())
+    };
     Ok(RenameResponse {
         path: req.new_path,
         hash,
-        warnings: index_links_to(root, &req.path),
+        warnings,
+        updated_indexes: req.update_links.then_some(updated),
     })
 }

@@ -154,6 +154,10 @@ pub const RENAME_INDEX_LINK: &str = "rename.index_link";
 /// `artifact.rename` warning: the index-link scan stopped early, so links may be missed (spec §14.3).
 /// Params `limit`, `max` when a walk cap stopped it; none otherwise.
 pub const RENAME_LINKS_UNCHECKED: &str = "rename.links_unchecked";
+/// `artifact.rename` warning with `updateLinks`: an index could not be updated, the file is untouched and
+/// the rename stands (spec §14.3). Params `index` (its vault path), `reason` (`unreachable` | `unlinkable` |
+/// `not_patchable` | `conflict` | `write_failed`).
+pub const RENAME_LINK_UPDATE_FAILED: &str = "rename.link_update_failed";
 /// Transport: a protocol line is not valid JSON (−32700, `id: null`; spec PROTOCOL §4, S-20). No params.
 pub const PROTOCOL_PARSE_ERROR: &str = "protocol.parse_error";
 /// Transport: a protocol line exceeds the frame cap (−32600, `id: null`; S-8, S-21). Param `max` (bytes).
@@ -244,6 +248,7 @@ pub const ALL_CODES: &[&str] = &[
     VARS_UNTAGGED_DEFAULTS,
     RENAME_INDEX_LINK,
     RENAME_LINKS_UNCHECKED,
+    RENAME_LINK_UPDATE_FAILED,
     PROTOCOL_PARSE_ERROR,
     PROTOCOL_LINE_TOO_LONG,
     PROTOCOL_ALREADY_INITIALIZED,

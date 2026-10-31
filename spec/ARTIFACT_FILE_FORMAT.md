@@ -1060,11 +1060,24 @@ case-insensitive file system renames in place.
 
 ### 14.3 Links on rename
 
-- **Template-index links** (§8.2) to the old path are **reported, never rewritten**: one warning
-  `rename.index_link{index, link}` per (index, link) — `index` the index's vault path, `link` the raw link
-  target (alias and anchor stripped). Only the old path's type directory is searched (a link resolves only
-  below its index's own directory, §8.3), with the bounded walk (§13.2 caps); the comparison is ASCII
-  case-insensitive. A walk that stops early adds one `rename.links_unchecked` (`limit`, `max` when a cap
-  stopped it); the rename itself has succeeded.
+- **Template-index links** (§8.2) to the old path are found in the old path's type directory (a link resolves only below its
+  index's own directory, §8.3) with the bounded walk (§13.2 caps); the comparison is ASCII case-insensitive and byte-exact
+  otherwise, so an NFD link does not match an NFC name. A walk that stops early adds one `rename.links_unchecked` (`limit`,
+  `max` when a cap stopped it); the rename itself has succeeded.
+- **By default they are reported, never rewritten:** one warning `rename.index_link{index, link}` per (index, link) — `index`
+  the index's vault path, `link` the raw link target (alias and anchor stripped).
+- **With `updateLinks: true`**, after the move, each linking index gets only its link targets rewritten: anchors, aliases, labels
+  and every other byte stay (a BOM and CRLF included). A wikilink target is the text before the first `|`, then before the first
+  `#`, trimmed; a markdown target is the trimmed `(…)` content, so `[x](a.md "t")` and `[x](a.md#h)` never match and stay
+  untouched. The whole target becomes the new path relative to the index (`./sub//a` is normalised), with `.md` only if the link
+  had one (any case, written `.md`). Each index is all-or-nothing: on success it is listed in `updatedIndexes: [{path, hash}]`;
+  on failure it stays byte-identical and gets `rename.link_update_failed{index, reason}` followed by its `rename.index_link`
+  warnings. Reasons: `unreachable` (the new path is not below the index's directory), `unlinkable` (the new path holds `#`, `|`,
+  `[`, `]`, `(`, `)` or does not survive a round trip through §8.2), `not_patchable` (not valid UTF-8, the body cannot be located
+  exactly, a guard refused, over the size limit, or the index resolves outside the type directory), `conflict` (the file changed
+  or vanished after it was read), `write_failed` (any other write error). Several indexes are not one atomic write, and the rename
+  is never undone. Spaces and `%` in a new name are accepted; Obsidian may not resolve such a markdown link.
+- **Not touched:** the moved file's own links. A moved index keeps its text and its links now resolve from the new directory; in
+  update mode a self-link of the moved index is neither rewritten nor warned about (default mode warns).
 - **Obsidian wikilinks** in other notes are neither scanned, rewritten nor reported. Obsidian resolves them by
   name and rewrites them only for renames made inside Obsidian.

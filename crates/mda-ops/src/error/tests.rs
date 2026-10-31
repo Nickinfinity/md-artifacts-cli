@@ -404,6 +404,12 @@ fn w6_codes_exact_json() {
             serde_json::json!({"code": "naming.not_nfc", "params": {"segment": "Cafe\u{301}"}}),
         ),
         (
+            OpError::new(RENAME_LINK_UPDATE_FAILED)
+                .with("index", "Templates/index.md")
+                .with("reason", "unreachable"),
+            serde_json::json!({"code": "rename.link_update_failed", "params": {"index": "Templates/index.md", "reason": "unreachable"}}),
+        ),
+        (
             OpError::new(NAMING_MD_EXTENSION),
             serde_json::json!({"code": "naming.md_extension", "params": {}}),
         ),
@@ -428,7 +434,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 80);
+    assert_eq!(ALL_CODES.len(), 81);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE

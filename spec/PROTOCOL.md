@@ -211,6 +211,7 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `vars.untagged_defaults` | `info` |
 | `rename.index_link` | `index`, `link` |
 | `rename.links_unchecked` | `limit?`, `max?` |
+| `rename.link_update_failed` | `index`, `reason` |
 | `migrate.up_to_date` | — |
 | `migrate.leading_blank` | — |
 | `migrate.quoted_type` | `value` |
@@ -254,7 +255,7 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 | `2.1` | 0.11.0 | `containsEscape` widened (§11): any terminal control — C0 except TAB and LF (a CR directly before LF is exempt), DEL, C1 U+0080–U+009F — not only ESC. No method, field or code added. The CRLF exemption is looser than a client's "C0 except TAB" predicate |
 | `2.2` | 0.12.0 | Vault file names and rename (format spec §14). **Methods:** `naming.check` (pure: the stem rule and the default stem), `artifact.rename` (move within a type directory, verbatim or from a model, never overwriting; `warnings`). **Codes:** `naming.md_extension`; warnings `rename.index_link{index, link}`, `rename.links_unchecked{limit?, max?}`. **Behaviour:** `artifact.create`, `index.create`, `vars.file.new` and `varsets.save` refuse a stem that breaks §14.1 (leading dot, `.md` ending, reserved, …) — they accepted some before; a Variables file's default name is truncated to a 252-byte stem instead of `naming.too_long`; `naming.control_char` includes C1 (also for output names). Writes of names over ~220 bytes no longer fail with `io.failed` |
 | `2.3` | 0.13.0 | One-line Command join (format spec §4.3) and the output name. **Request:** optional `join` (`and` \| `seq` \| `continuation` \| `pwsh` \| `cmd`) on `artifact.render` and `render.text`. **Response:** `joined: true` when `join` was sent (absent otherwise). **Code:** `render.unjoinable{line, reason, name?}`. **Method:** `naming.output` (the file name `artifact.write_file` would write; nothing written). Without `join` every render request and response is unchanged |
-| `2.4` | 0.14.0 | Unicode slugs and cross-platform vault names (format spec §14.1–§14.1b). **Code:** `naming.not_nfc`. **Param:** `segment?` on `naming.*` (a directory segment was refused; a stem error never carries it). **Behaviour:** default names keep Unicode letters and digits (`Café notes` → `café-notes`; were ASCII-only — ASCII titles unchanged) for `naming.check`, `vars.file.new`, `varsets.save`, `index.create`; the Windows reserved list is complete (`COM0`, `LPT0`, `COM¹²³`, `LPT¹²³`, `CONIN$`, `CONOUT$`, `CON .txt`), also for output names; new vault names refuse non-NFC text and invisible format characters (`naming.control_char`); new directory segments of name-creating writes are checked (an existing directory is exempt unless its name is reserved), so `index.create` refuses a source folder named like a device; on Windows, paths leaving the engine are plain, not `\\?\` (§11) |
+| `2.4` | 0.14.0 | Unicode slugs and cross-platform vault names (format spec §14.1–§14.1b). **Code:** `naming.not_nfc`. **Param:** `segment?` on `naming.*` (a directory segment was refused; a stem error never carries it). **Behaviour:** default names keep Unicode letters and digits (`Café notes` → `café-notes`; were ASCII-only — ASCII titles unchanged) for `naming.check`, `vars.file.new`, `varsets.save`, `index.create`; the Windows reserved list is complete (`COM0`, `LPT0`, `COM¹²³`, `LPT¹²³`, `CONIN$`, `CONOUT$`, `CON .txt`), also for output names; new vault names refuse non-NFC text and invisible format characters (`naming.control_char`); new directory segments of name-creating writes are checked (an existing directory is exempt unless its name is reserved), so `index.create` refuses a source folder named like a device; on Windows, paths leaving the engine are plain, not `\\?\` (§11). **Request:** optional `updateLinks` on `artifact.rename`. **Response:** `updatedIndexes: [{path, hash}]` when it was sent. **Code:** `rename.link_update_failed{index, reason}` (a warning) |
 
 ### 7.2 What 2.0 removed
 
@@ -300,6 +301,11 @@ Since `2.1`; in `2.0` it meant ESC only. Clients that send rendered text to a te
 `cmd`); the response then has `joined: true` and the output is one command. A refusal is `render.unjoinable{line, reason,
 name?}`; `line` counts rendered-output lines (`"0"` for `multiline_value`), and `reason` is one of `heredoc`, `comment`,
 `open_quote`, `trailing_operator`, `block_keyword`, `multiline_value` (format spec §4.3).
+
+**`updateLinks`** (`artifact.rename`, since `2.4`): after the move, linking template indexes get only their link targets rewritten (format
+spec §14.3). The response then has `updatedIndexes: [{path, hash}]`, empty when nothing linked. An index that could not be updated stays
+byte-identical and gets `rename.link_update_failed{index, reason}` (`unreachable`, `unlinkable`, `not_patchable`, `conflict`, `write_failed`)
+plus its `rename.index_link` warnings; the rename is never undone. A moved index's self-link is silent in update mode, warned by default.
 
 **Windows paths** (since `2.4`): paths in responses, errors and `config.toml` are plain (`C:\v`, `\\s\share\v`), never the `\\?\` form,
 with one exception: a vault whose own path has a component with a trailing dot or space or a reserved name keeps `\\?\`, because the

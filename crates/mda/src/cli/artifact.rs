@@ -142,6 +142,9 @@ pub enum ArtifactCmd {
         /// An `ArtifactModel` JSON file (`-` = stdin) to write at the new path.
         #[arg(long)]
         model: Option<String>,
+        /// Also rewrite the links in the template indexes that point at the old path.
+        #[arg(long)]
+        update_links: bool,
     },
     /// Delete an artifact file, when its hash is `--hash`.
     #[command(name = "rm", alias = "delete")]
@@ -179,8 +182,12 @@ pub(super) fn artifact_request(cmd: ArtifactCmd) -> (String, Result<Value, OpErr
             new_path,
             hash,
             model: m,
+            update_links,
         } => {
-            let base = json!({ "path": path, "expectedHash": hash, "newPath": new_path });
+            let mut base = json!({ "path": path, "expectedHash": hash, "newPath": new_path });
+            if update_links && let Some(o) = base.as_object_mut() {
+                o.insert("updateLinks".into(), json!(true));
+            }
             let p = match m {
                 None => Ok(base),
                 Some(m) => model(&m).map(|m| {

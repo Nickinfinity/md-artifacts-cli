@@ -47,6 +47,39 @@ fn human_prints_wrote_and_index_link_warning() {
     let _ = std::fs::remove_dir_all(d);
 }
 
+#[test]
+fn human_update_links_prints_updated_rows_and_rewrites() {
+    let d = temp_vault("upd");
+    let out = run(
+        &[
+            "--vault",
+            d.to_str().unwrap(),
+            "artifact",
+            "rename",
+            "Templates/sub/widget.md",
+            "Templates/sub/w2.md",
+            "--hash",
+            WIDGET,
+            "--update-links",
+        ],
+        b"",
+    );
+    assert_eq!(out.status.code(), Some(0), "{out:?}");
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(
+        text.contains("updated Templates/index.md  eb48ff15"),
+        "{text}"
+    );
+    assert!(
+        text.contains("updated Templates/sub/nested-index.md  2e59023e"),
+        "{text}"
+    );
+    assert!(String::from_utf8(out.stderr).unwrap().is_empty());
+    let idx = std::fs::read_to_string(d.join("Templates/index.md")).unwrap();
+    assert!(idx.contains("[Widget](sub/w2.md)"), "{idx}");
+    let _ = std::fs::remove_dir_all(d);
+}
+
 // Symlink sinks: Unix only (its callers are gated too).
 #[cfg(unix)]
 fn rename_through(

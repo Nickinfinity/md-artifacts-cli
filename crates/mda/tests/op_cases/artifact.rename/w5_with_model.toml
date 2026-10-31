@@ -1,0 +1,4 @@
+vault = "vault"
+params = { path = "Templates/sub/widget.md", expectedHash = "dfb8eaca9f611de341f5176b4e6bc16256a221a5f0b89bbf812aaa96e1abc6a0", newPath = "Templates/sub/w2.md", updateLinks = true, model = { artifactType = "Template", title = "Widget 2", blocks = [{ code = "export const x = 1;" }] } }
+expect = { path = "Templates/sub/w2.md", hash = "141bd1ccfd42032167f67279eec820b7eb7e785ab8d6c0226c30f613c4ed5315", warnings = [], updatedIndexes = [{ path = "Templates/index.md", hash = "eb48ff15d1fb70185af220ab82273425a1c63bb7840af9e3b7fa5d634c6e8421" }, { path = "Templates/sub/nested-index.md", hash = "2e59023e9e2aa551e279cc1c17e0e73615c1f38e491172102fa94d863f4f111e" }] }
+expect_files = { "Templates/sub/widget.md" = false, "Templates/sub/w2.md" = "---\nartifactType: Template\ntitle: Widget 2\n---\n\n```\nexport const x = 1;\n```\n" }
