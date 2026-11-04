@@ -1,0 +1,7 @@
+# D-1: the error names the virtual path, not `Lib/nope.md`.
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Variables]\nvault=\"$WORKSPACE\"\ndir=\"Lib\""
+params = { path = "Variables/nope.md", expectedHash = "h", tags = [] }
+expect_error = "path.not_found"
+expect_error_params = { path = "Variables/nope.md" }

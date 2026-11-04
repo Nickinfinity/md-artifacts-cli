@@ -6,7 +6,7 @@ use mda_core::registry::ArtifactType;
 
 use mda_core::naming::output_name;
 
-use crate::artifact::{artifact_path, load, root_of};
+use crate::artifact::{load_at, locate};
 use crate::write_file::check_whole_file;
 use crate::{Ctx, OpError};
 
@@ -115,9 +115,7 @@ pub struct OutputResponse {
 /// assert!(output(&Ctx::new(None), req).is_err());
 /// ```
 pub fn output(ctx: &Ctx, req: OutputRequest) -> Result<OutputResponse, OpError> {
-    let root = &root_of(ctx)?;
-    artifact_path(&req.path)?;
-    let p = load(root, &req.path)?.artifact;
+    let p = load_at(&locate(ctx, &req.path)?)?.artifact;
     check_whole_file(&p)?;
     let file_name = output_name(&p, req.file_name.as_deref())?;
     Ok(OutputResponse { file_name })

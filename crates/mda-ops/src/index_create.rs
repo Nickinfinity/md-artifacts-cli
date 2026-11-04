@@ -9,12 +9,13 @@ use mda_core::multi_index::safe_rel_path;
 use mda_core::naming::{MAX_NAME_BYTES, NameError, node_ext, node_stem, slugify, validate_stem};
 use mda_core::registry::{ArtifactType, OutputNameKey};
 use mda_core::serialize::serialize;
-use mda_vault::{Root, contain, content_hash, create_new};
+use mda_vault::{contain, content_hash, create_new};
 
-use crate::artifact::{bad_path, check_dirs, root_of, segments};
+use crate::artifact::{bad_path, check_dirs_at, no_dot_below_root, segments};
 use crate::artifact_write::{map_serialize, max_bytes};
-use crate::error::vault_error;
+use crate::error::vault_error_at;
 use crate::index::{BatchResponse, MAX_STEPS, StepResult, limit_error, path_error};
+use crate::location::{Place, map, physical};
 use crate::write_file::{WriteFileResponse, exists_actual};
 use crate::{Ctx, OpError, error};
 
@@ -48,7 +49,6 @@ pub struct CreateIndexRequest {
 /// assert_eq!(index_create::create(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpError> {
-    let root = &root_of(ctx)?;
     let t = req.artifact_type;
     let info = t.info();
     if !info.writes_file {
@@ -63,8 +63,11 @@ pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpErr
     }
     let dir_segs = segments(&req.dir).unwrap_or_default();
     let below = dir_segs.get(1..).unwrap_or_default();
-    check_dirs(root, info.dir, below)?;
-    contain(root, Path::new(&req.dir)).map_err(|e| vault_error(e, root))?;
+    let r = physical(ctx, &req.dir)?;
+    let (place, root) = (&r.place, &r.place.root);
+    no_dot_below_root(place, &r.rel, &req.dir)?;
+    check_dirs_at(place, below)?;
+    contain(root, Path::new(&r.rel)).map_err(|e| vault_error_at(e, root, &req.dir))?;
 
     // Derive, build and serialize every file before the first write: a late rejection leaves nothing.
     let mut used = HashSet::new();
@@ -72,7 +75,7 @@ pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpErr
     let mut links = Vec::new();
     for raw in &req.paths {
         let norm = safe_rel_path(raw).map_err(|e| path_error(e, raw))?;
-        let link = derive_link(root, info.dir, below, &norm, &mut used)?;
+        let link = derive_link(place, below, &norm, &mut used)?;
         let model = sibling(t, &link, &norm);
         let path = format!("{}/{link}.md", req.dir);
         let text = serialize(&model, max_bytes()).map_err(|e| map_serialize(e, &path))?;
@@ -87,7 +90,11 @@ pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpErr
     let results = files
         .into_iter()
         .map(|(rel_path, path, text)| {
-            let rel = Path::new(&path);
+            let phys = match map(t, place, &path) {
+                Ok(p) => p,
+                Err(e) => return StepResult::skipped(rel_path, e),
+            };
+            let rel = Path::new(&phys);
             match create_new(root, rel, text.as_bytes()) {
                 Ok(()) => StepResult::written(
                     rel_path,
@@ -98,7 +105,7 @@ pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpErr
                         contains_escape: false,
                     },
                 ),
-                Err(e) => StepResult::skipped(rel_path, exists_actual(root, rel, e)),
+                Err(e) => StepResult::skipped(rel_path, exists_actual(root, rel, &path, e)),
             }
         })
         .collect();
@@ -108,8 +115,7 @@ pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpErr
 /// The slugged link for a normalised input path, unique within `used` (the emitted set, so
 /// `a.ts, a.md, a-2.ts` give `a, a-2, a-2-2`).
 fn derive_link(
-    root: &Root,
-    type_dir: &str,
+    place: &Place,
     below: &[&str],
     norm: &str,
     used: &mut HashSet<String>,
@@ -141,7 +147,7 @@ fn derive_link(
         .copied()
         .chain(derived.iter().map(String::as_str))
         .collect();
-    check_dirs(root, type_dir, &dirs)?;
+    check_dirs_at(place, &dirs)?;
     if file.len() + ".md".len() > MAX_NAME_BYTES {
         return Err(NameError::TooLong.into());
     }

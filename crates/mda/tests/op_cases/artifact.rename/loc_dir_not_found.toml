@@ -1,0 +1,5 @@
+vault = "vault_loc_b"
+machine_config = "[types.Snippet]\nvault=\"$VAULT\"\ndir=\"Lib\""
+params = { path = "Snippets/nope.md", expectedHash = "96e881348a1f67717a23559e37fd8083d6d7be15e964bb14a371967906d9059e", newPath = "Snippets/r.md" }
+expect_error = "path.not_found"
+expect_error_params = { path = "Snippets/nope.md" }

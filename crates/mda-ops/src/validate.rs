@@ -11,7 +11,7 @@ use mda_core::registry::ArtifactType;
 use mda_core::variables::{EditError, model_of};
 
 use crate::error::{
-    MIGRATE_PENDING, VARS_FENCELESS_SECTION, VARS_MIXED_FILE, VARS_UNTAGGED_DEFAULTS, vault_error,
+    MIGRATE_PENDING, VARS_FENCELESS_SECTION, VARS_MIXED_FILE, VARS_UNTAGGED_DEFAULTS,
 };
 use crate::{Ctx, OpError};
 
@@ -87,7 +87,6 @@ pub struct ValidateResponse {
 /// ```
 pub fn validate(ctx: &Ctx, req: ValidateRequest) -> Result<ValidateResponse, OpError> {
     let ValidateRequest {} = req;
-    let root = crate::artifact::root_of(ctx)?;
     let mut out = ValidateResponse {
         files: 0,
         errors: 0,
@@ -95,12 +94,11 @@ pub fn validate(ctx: &Ctx, req: ValidateRequest) -> Result<ValidateResponse, OpE
         truncated: false,
         issues: Vec::new(),
     };
-    crate::migrate::scope(&root, |path, bytes| {
+    crate::migrate::scope(ctx, |path, bytes| {
         out.files += 1;
         let found = match bytes {
             Ok(b) => issues_of(path, &b),
             Err(e) => {
-                let e = vault_error(e, &root);
                 vec![issue(path, e.code, e.params, Severity::Error)]
             }
         };

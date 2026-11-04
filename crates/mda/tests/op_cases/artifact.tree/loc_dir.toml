@@ -1,0 +1,9 @@
+vault = "vault_loc_b"
+machine_config = "[types.Snippet]\nvault=\"$VAULT\"\ndir=\"Lib\""
+params = { type = "Snippet" }
+[expect]
+dirs = []
+[[expect.files]]
+path = "Snippets/s.md"
+name = "s"
+title = "S"

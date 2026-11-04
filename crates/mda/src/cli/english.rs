@@ -31,6 +31,8 @@ pub fn english(code: &str) -> Option<&'static str> {
         VAULT_UNKNOWN => "not a known vault (add it with \"mda vault select\")",
         VAULT_UNAVAILABLE => "the default vault is no longer available",
         CONFIG_INVALID => "the configuration file is invalid; fix or remove it",
+        CONFIG_LOCATION_CONFLICT => "two artifact types are configured for the same location",
+        CONFIG_LOCATION_INVALID => "an artifact type's location in the configuration is invalid",
         VARS_BAD_NAME => "variable names are VK- then a letter, then letters, digits or _",
         VARS_VAR_EXISTS => "a variable with that name already exists in this sub-set",
         VARS_VAR_NOT_FOUND => "no variable with that name in this sub-set",

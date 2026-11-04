@@ -117,6 +117,12 @@ pub const VAULT_UNKNOWN: &str = "vault.unknown";
 pub const VAULT_UNAVAILABLE: &str = "vault.unavailable";
 /// A configuration file is corrupt or breaks a spec §12 rule, or no config dir exists. Param `path`.
 pub const CONFIG_INVALID: &str = "config.invalid";
+/// Two types' locations overlap (spec §15): same vault + dir, or a root type sharing its vault.
+/// Params `type`, `other`.
+pub const CONFIG_LOCATION_CONFLICT: &str = "config.location_conflict";
+/// A machine-file location table is malformed (spec §15). Params `type`, `reason`
+/// (`vault`, `dir`, `both`, `neither`, `shape`).
+pub const CONFIG_LOCATION_INVALID: &str = "config.location_invalid";
 
 /// `vars.var.add` / `vars.var.rename`: not `VK-` + a letter, then letters, digits or `_`. Param `name`.
 pub const VARS_BAD_NAME: &str = "vars.bad_name";
@@ -231,6 +237,8 @@ pub const ALL_CODES: &[&str] = &[
     VAULT_UNKNOWN,
     VAULT_UNAVAILABLE,
     CONFIG_INVALID,
+    CONFIG_LOCATION_CONFLICT,
+    CONFIG_LOCATION_INVALID,
     VARS_BAD_NAME,
     VARS_VAR_EXISTS,
     VARS_VAR_NOT_FOUND,
@@ -292,6 +300,26 @@ pub fn vault_error(mut e: VaultError, root: &Root) -> OpError {
     OpError::from(e)
 }
 
+/// [`vault_error`] for a file named by a **virtual** path (spec §15, D-1): the `path` param
+/// becomes `virt`, so no physical or location-dependent name reaches a client.
+///
+/// # Examples
+///
+/// ```
+/// use mda_ops::{Root, error::vault_error_at};
+/// use mda_vault::VaultError;
+/// let root = Root::new(&std::env::temp_dir()).unwrap();
+/// let e = vault_error_at(VaultError::NotFound { path: root.path().join("Lib/x.md") }, &root, "Snippets/x.md");
+/// assert_eq!(e.params["path"], "Snippets/x.md");
+/// ```
+pub fn vault_error_at(e: VaultError, root: &Root, virt: &str) -> OpError {
+    let mut o = vault_error(e, root);
+    if let Some(p) = o.params.get_mut("path") {
+        virt.clone_into(p);
+    }
+    o
+}
+
 // For root-less errors only (`Root::new` on the user's own `--vault`): the path is the user's.
 // ponytail: paths become params via display(), lossy on non-UTF-8 names; carry raw bytes if a
 // client ever needs to round-trip such a name.
@@ -325,6 +353,9 @@ impl From<VaultError> for OpError {
             VaultError::ConfigInvalid { path } => {
                 Self::new(CONFIG_INVALID).with("path", shown(&path))
             }
+            VaultError::LocationInvalid { ty, reason } => Self::new(CONFIG_LOCATION_INVALID)
+                .with("type", ty)
+                .with("reason", reason),
             VaultError::Limit { limit, max } => Self::new(WALK_LIMIT)
                 .with("limit", limit.as_str())
                 .with("max", max.to_string()),

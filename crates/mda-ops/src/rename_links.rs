@@ -9,7 +9,7 @@ use mda_core::multi_index::{is_index, plan_links, rewrite_links};
 use mda_core::parse::{decode, parse_from_content};
 use mda_core::patch::patch_index_body;
 use mda_core::registry::type_for_dir;
-use mda_vault::{Root, VaultError, contain, content_hash, replace, walk_md};
+use mda_vault::{VaultError, contain, content_hash, replace, walk_md};
 
 use crate::OpError;
 use crate::artifact::MAX_ARTIFACT_BYTES;
@@ -17,11 +17,14 @@ use crate::artifact_rename::UpdatedIndex;
 use crate::error::{
     RENAME_INDEX_LINK, RENAME_LINK_UPDATE_FAILED, RENAME_LINKS_UNCHECKED, vault_error,
 };
+use crate::location::{Place, map};
 
 /// One linking index found by the scan: its bytes as read (the write's hash check), the distinct raw
 /// links to the old path, and how many link steps match (undeduped: it sizes the rewrite).
 struct Hit {
+    /// Virtual path (what clients see); `phys` is the vault-relative file.
     rel: String,
+    phys: String,
     bytes: Vec<u8>,
     links: Vec<String>,
     matches: usize,
@@ -33,14 +36,28 @@ struct Scan {
     unchecked: Option<OpError>,
 }
 
+/// Virtual `<TypeDir>/<rest>` of the vault-relative physical `phys` in `place` (D-1).
+fn to_virt(place: &Place, ty_dir: &str, phys: &str) -> Option<String> {
+    let rest = match place.base.as_deref() {
+        Some(b) => phys.strip_prefix(b)?.strip_prefix('/')?,
+        None => phys,
+    };
+    Some(format!("{ty_dir}/{rest}"))
+}
+
+/// The walk start of a place: its base, or exactly `""` at a root location.
+fn start(place: &Place) -> &str {
+    place.base.as_deref().unwrap_or_default()
+}
+
 /// One `rename.index_link` per (index, link) under `old`'s type directory that resolves to `old`;
 /// a walk that stops early appends one `rename.links_unchecked`.
-pub(crate) fn index_links_to(root: &Root, old: &str) -> Vec<OpError> {
+pub(crate) fn index_links_to(place: &Place, old: &str) -> Vec<OpError> {
     let Some((dir, _)) = old.split_once('/') else {
         return vec![];
     };
-    warnings(collect(root, old, dir, |visit| {
-        walk_md(root, &[dir], MAX_ARTIFACT_BYTES, visit)
+    warnings(collect(place, old, dir, |visit| {
+        walk_md(&place.root, &[start(place)], MAX_ARTIFACT_BYTES, visit)
     }))
 }
 
@@ -48,17 +65,17 @@ pub(crate) fn index_links_to(root: &Root, old: &str) -> Vec<OpError> {
 /// and the indexes updated. The rename has already happened; nothing here undoes it. The scan finishes
 /// before the first write.
 pub(crate) fn update_index_links(
-    root: &Root,
+    place: &Place,
     old: &str,
     new: &str,
 ) -> (Vec<OpError>, Vec<UpdatedIndex>) {
     let Some((dir, _)) = old.split_once('/') else {
         return (vec![], vec![]);
     };
-    let scan = collect(root, old, dir, |visit| {
-        walk_md(root, &[dir], MAX_ARTIFACT_BYTES, visit)
+    let scan = collect(place, old, dir, |visit| {
+        walk_md(&place.root, &[start(place)], MAX_ARTIFACT_BYTES, visit)
     });
-    apply(root, old, new, scan)
+    apply(place, old, new, scan)
 }
 
 /// A hit's `rename.index_link` warnings.
@@ -78,17 +95,20 @@ fn warnings(scan: Scan) -> Vec<OpError> {
 
 /// Rewrite every hit; a failed one stays byte-identical and warns `rename.link_update_failed` then its
 /// `rename.index_link` rows. `rename.links_unchecked` stays last (D-35).
-fn apply(root: &Root, old: &str, new: &str, scan: Scan) -> (Vec<OpError>, Vec<UpdatedIndex>) {
+fn apply(place: &Place, old: &str, new: &str, scan: Scan) -> (Vec<OpError>, Vec<UpdatedIndex>) {
     let (mut out, mut done) = (Vec::new(), Vec::new());
     // The moved file is skipped by canonical identity (right on case-insensitive and -sensitive
     // filesystems alike). A `contain` error means "not the moved file": `rewrite_one`'s own pin
     // then refuses a path it cannot contain, and a vanished `new` cannot match anything.
-    let moved = contain(root, Path::new(new)).ok();
+    let root = &place.root;
+    let moved = type_for_dir(new.split('/').next().unwrap_or_default())
+        .and_then(|t| map(t, place, new).ok())
+        .and_then(|p| contain(root, Path::new(&p)).ok());
     for hit in &scan.hits {
-        if moved.is_some() && contain(root, Path::new(&hit.rel)).ok() == moved {
+        if moved.is_some() && contain(root, Path::new(&hit.phys)).ok() == moved {
             continue;
         }
-        match rewrite_one(root, hit, old, new) {
+        match rewrite_one(place, hit, old, new) {
             Ok(row) => done.push(row),
             Err(reason) => {
                 out.push(
@@ -114,7 +134,12 @@ fn strip_prefix_ci<'a>(s: &'a str, p: &str) -> Option<&'a str> {
 }
 
 /// Rewrite one index in place; the `Err` is the D-36 `reason`.
-fn rewrite_one(root: &Root, hit: &Hit, old: &str, new: &str) -> Result<UpdatedIndex, &'static str> {
+fn rewrite_one(
+    place: &Place,
+    hit: &Hit,
+    old: &str,
+    new: &str,
+) -> Result<UpdatedIndex, &'static str> {
     let prefix = format!("{}/", hit.rel.rsplit_once('/').map_or("", |(d, _)| d));
     let (Some(from_rel), Some(to_rel)) = (strip_prefix_ci(old, &prefix), new.strip_prefix(&prefix))
     else {
@@ -140,17 +165,17 @@ fn rewrite_one(root: &Root, hit: &Hit, old: &str, new: &str) -> Result<UpdatedIn
     let patched = patch_index_body(body, &hit.rel, &new_code).map_err(|_| "not_patchable")?;
     let out = format!("{bom}{patched}");
     // Pin: an in-vault symlink to another type dir must not be written through.
-    let dir = hit.rel.split('/').next().unwrap_or_default();
+    let root = &place.root;
     match (
-        contain(root, Path::new(dir)),
-        contain(root, Path::new(&hit.rel)),
+        contain(root, Path::new(start(place))),
+        contain(root, Path::new(&hit.phys)),
     ) {
         (Ok(d), Ok(f)) if f.starts_with(&d) => {}
         _ => return Err("not_patchable"),
     }
     replace(
         root,
-        Path::new(&hit.rel),
+        Path::new(&hit.phys),
         out.as_bytes(),
         &content_hash(&hit.bytes),
         MAX_ARTIFACT_BYTES,
@@ -167,7 +192,7 @@ fn rewrite_one(root: &Root, hit: &Hit, old: &str, new: &str) -> Result<UpdatedIn
 
 /// The scan over any walker (the seam lets a test inject a walk error after some files).
 fn collect(
-    root: &Root,
+    place: &Place,
     old: &str,
     dir: &str,
     walker: impl FnOnce(&mut dyn FnMut(&str, Result<Vec<u8>, VaultError>)) -> Result<(), VaultError>,
@@ -180,7 +205,15 @@ fn collect(
     if !type_for_dir(dir).is_some_and(|t| t.info().writes_file) {
         return scan;
     }
-    let mut visit = |rel: &str, res: Result<Vec<u8>, VaultError>| {
+    let root = &place.root;
+    let Some(ty_dir) = type_for_dir(dir).map(|t| t.info().dir) else {
+        return scan;
+    };
+    let mut visit = |phys: &str, res: Result<Vec<u8>, VaultError>| {
+        let Some(rel) = to_virt(place, ty_dir, phys) else {
+            return;
+        };
+        let rel = rel.as_str();
         // Unreadable or oversize files are skipped; the renamed file is never its own warning.
         let Ok(bytes) = res else { return };
         if rel.eq_ignore_ascii_case(old) {
@@ -205,6 +238,7 @@ fn collect(
         if matches > 0 {
             scan.hits.push(Hit {
                 rel: rel.to_owned(),
+                phys: phys.to_owned(),
                 bytes,
                 links,
                 matches,

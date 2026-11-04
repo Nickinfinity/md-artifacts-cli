@@ -1,0 +1,6 @@
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Snippet]\nvault=\"$WORKSPACE\"\nroot=true"
+params = { path = "Snippets/.obsidian/x.md", expectedHash = "h", model = { artifactType = "Snippet", title = "N" } }
+expect_error = "artifact.bad_path"
+expect_workspace_files = { ".obsidian/x.md" = false }

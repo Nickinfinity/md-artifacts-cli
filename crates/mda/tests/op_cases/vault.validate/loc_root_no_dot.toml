@@ -1,0 +1,12 @@
+# Template at B's root: `.obsidian/` is never walked; `Lib/s.md` and `deep/t.md` are counted (A's a.md too).
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Template]\nvault=\"$WORKSPACE\"\nroot=true"
+params = {}
+
+[expect]
+files = 3
+errors = 0
+warnings = 0
+truncated = false
+issues = []

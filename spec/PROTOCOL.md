@@ -163,6 +163,8 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `vault.unknown` | `path` |
 | `vault.unavailable` | `path` |
 | `config.invalid` | `path` |
+| `config.location_conflict` | `type`, `other` |
+| `config.location_invalid` | `type`, `reason` |
 | `artifact.bad_path` | `path` |
 | `artifact.vars_invalid` | `path` |
 | `artifact.block_not_found` | `block` |
@@ -256,6 +258,7 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 | `2.2` | 0.12.0 | Vault file names and rename (format spec §14). **Methods:** `naming.check` (pure: the stem rule and the default stem), `artifact.rename` (move within a type directory, verbatim or from a model, never overwriting; `warnings`). **Codes:** `naming.md_extension`; warnings `rename.index_link{index, link}`, `rename.links_unchecked{limit?, max?}`. **Behaviour:** `artifact.create`, `index.create`, `vars.file.new` and `varsets.save` refuse a stem that breaks §14.1 (leading dot, `.md` ending, reserved, …) — they accepted some before; a Variables file's default name is truncated to a 252-byte stem instead of `naming.too_long`; `naming.control_char` includes C1 (also for output names). Writes of names over ~220 bytes no longer fail with `io.failed` |
 | `2.3` | 0.13.0 | One-line Command join (format spec §4.3) and the output name. **Request:** optional `join` (`and` \| `seq` \| `continuation` \| `pwsh` \| `cmd`) on `artifact.render` and `render.text`. **Response:** `joined: true` when `join` was sent (absent otherwise). **Code:** `render.unjoinable{line, reason, name?}`. **Method:** `naming.output` (the file name `artifact.write_file` would write; nothing written). Without `join` every render request and response is unchanged |
 | `2.4` | 0.14.0 | Unicode slugs and cross-platform vault names (format spec §14.1–§14.1b). **Code:** `naming.not_nfc`. **Param:** `segment?` on `naming.*` (a directory segment was refused; a stem error never carries it). **Behaviour:** default names keep Unicode letters and digits (`Café notes` → `café-notes`; were ASCII-only — ASCII titles unchanged) for `naming.check`, `vars.file.new`, `varsets.save`, `index.create`; the Windows reserved list is complete (`COM0`, `LPT0`, `COM¹²³`, `LPT¹²³`, `CONIN$`, `CONOUT$`, `CON .txt`), also for output names; new vault names refuse non-NFC text and invisible format characters (`naming.control_char`); new directory segments of name-creating writes are checked (an existing directory is exempt unless its name is reserved), so `index.create` refuses a source folder named like a device; on Windows, paths leaving the engine are plain, not `\\?\` (§11). **Request:** optional `updateLinks` on `artifact.rename`. **Response:** `updatedIndexes: [{path, hash}]` when it was sent. **Code:** `rename.link_update_failed{index, reason}` (a warning) |
+| `2.5` *(unreleased)* | 0.15.0 | Type locations (format spec §15): every path stays `<TypeDir>/<rel>`, now virtual. **Codes:** `config.location_conflict{type, other}`, `config.location_invalid{type, reason}`. **Behaviour:** a corrupt machine `config.toml` is now read, and refused with `config.invalid`, by type-scoped ops even under `--vault` (it was ignored there). Without location keys every request and response is unchanged |
 
 ### 7.2 What 2.0 removed
 

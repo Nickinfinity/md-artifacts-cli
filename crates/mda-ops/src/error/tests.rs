@@ -434,9 +434,32 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 81);
+    assert_eq!(ALL_CODES.len(), 83);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE
+    );
+}
+
+#[test]
+fn location_codes_exact_json() {
+    assert!(ALL_CODES.contains(&CONFIG_LOCATION_CONFLICT));
+    assert!(ALL_CODES.contains(&CONFIG_LOCATION_INVALID));
+    let e = OpError::from(VaultError::LocationInvalid {
+        ty: "Snippet".into(),
+        reason: "dir",
+    });
+    assert_eq!(
+        serde_json::to_value(e).unwrap(),
+        serde_json::json!({"code": "config.location_invalid", "params": {"type": "Snippet", "reason": "dir"}})
+    );
+    assert_eq!(
+        serde_json::to_value(
+            OpError::new(CONFIG_LOCATION_CONFLICT)
+                .with("type", "Snippet")
+                .with("other", "Variables")
+        )
+        .unwrap(),
+        serde_json::json!({"code": "config.location_conflict", "params": {"type": "Snippet", "other": "Variables"}})
     );
 }
