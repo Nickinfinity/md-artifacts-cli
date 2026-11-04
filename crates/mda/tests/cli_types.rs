@@ -39,7 +39,9 @@ fn set_location_prints_the_new_place() {
     );
     assert_eq!(out.status.code(), Some(0), "{:?}", out.stderr);
     let t = String::from_utf8(out.stdout).unwrap();
-    assert_eq!(t.trim(), format!("location → {}/Lib", v.display()));
+    // The engine prints the plain path (no Windows `\\?\` from `canonicalize`).
+    let shown = mda_ops::plain_path(&v);
+    assert_eq!(t.trim(), format!("location → {}/Lib", shown.display()));
 }
 
 #[cfg(unix)]

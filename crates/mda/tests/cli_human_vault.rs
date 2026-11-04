@@ -23,8 +23,13 @@ fn types_list_prints_rows() {
     let t = out_text(run(&["--vault", VAULT, "types", "list"], b""));
     assert!(t.contains("Command  Commands/  disabled  (no dir)"), "{t}");
     assert!(t.lines().any(|l| l.contains("  enabled  → ")), "{t}");
+    // The location is the canonical vault in plain form (Windows: `\` separators, no `\\?\`).
+    let vault = mda_ops::plain_path(&std::path::Path::new(VAULT).canonicalize().unwrap());
     assert!(
-        t.contains(&format!("Snippet  Snippets/  enabled  → {VAULT}/Snippets")),
+        t.contains(&format!(
+            "Snippet  Snippets/  enabled  → {}/Snippets",
+            vault.display()
+        )),
         "{t}"
     );
 }
