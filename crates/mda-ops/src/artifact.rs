@@ -7,9 +7,12 @@ use mda_core::model::ParsedArtifact;
 use mda_core::naming::{NameError, validate_dir_segment};
 use mda_core::parse::{decode, parse_from_content};
 use mda_core::registry::{ArtifactType, type_for_dir};
-use mda_vault::{DirState, Root, VaultError, content_hash, dir_state, list_dir, read_bounded};
+use mda_vault::{
+    DirState, Root, VaultError, contain, content_hash, dir_state, list_dir, read_bounded,
+};
 
-use crate::error::vault_error;
+use crate::error::vault_error_at;
+use crate::location::{Place, Resolved, physical, resolve};
 use crate::{Ctx, OpError, error};
 
 /// Largest artifact file read (checked by `read_bounded` before reading).
@@ -131,13 +134,20 @@ pub(crate) fn bad_path(p: &str) -> OpError {
     OpError::new(error::ARTIFACT_BAD_PATH).with("path", p)
 }
 
-/// D-28: every new directory segment below `type_dir` passes `validate_dir_segment`. The pure
-/// check runs first (no filesystem touch); `Reserved` is always refused, any other failure only
-/// when the directory does not already exist (a Finder-made NFD folder keeps its files, D-8).
-pub(crate) fn check_dirs(root: &Root, type_dir: &str, dirs: &[&str]) -> Result<(), OpError> {
-    let mut prefix = type_dir.to_string();
+/// D-28: every new directory segment below a resolved place's base (or the vault root) passes
+/// `validate_dir_segment`. The pure check runs first (no filesystem touch); `Reserved` is always
+/// refused, any other failure only when the directory does not already exist (a Finder-made NFD
+/// folder keeps its files, D-8).
+pub(crate) fn check_dirs_at(place: &Place, dirs: &[&str]) -> Result<(), OpError> {
+    check_dirs_in(&place.root, place.base.as_deref(), dirs)
+}
+
+fn check_dirs_in(root: &Root, base: Option<&str>, dirs: &[&str]) -> Result<(), OpError> {
+    let mut prefix = base.unwrap_or_default().to_string();
     for sk in dirs {
-        prefix.push('/');
+        if !prefix.is_empty() {
+            prefix.push('/');
+        }
         prefix.push_str(sk);
         let Err(e) = validate_dir_segment(sk) else {
             continue;
@@ -179,11 +189,40 @@ pub(crate) fn artifact_path(p: &str) -> Result<ArtifactType, OpError> {
     }
 }
 
-pub(crate) fn load(root: &Root, rel: &str) -> Result<ReadResponse, OpError> {
-    let bytes =
-        read_bounded(root, Path::new(rel), MAX_ARTIFACT_BYTES).map_err(|e| vault_error(e, root))?;
+/// D-5 + W1 review (b): the artifact path rule, then the virtual → physical mapping, then at a
+/// root location the canonical path may hold no `.`-component (a symlink into `.obsidian`).
+pub(crate) fn locate(ctx: &Ctx, virt: &str) -> Result<Resolved, OpError> {
+    artifact_path(virt)?;
+    let r = physical(ctx, virt)?;
+    no_dot_below_root(&r.place, &r.rel, virt)?;
+    Ok(r)
+}
+
+/// At a root place, refuse a physical `rel` whose canonical form has a `.`-prefixed component.
+pub(crate) fn no_dot_below_root(place: &Place, rel: &str, virt: &str) -> Result<(), OpError> {
+    if place.base.is_some() {
+        return Ok(());
+    }
+    let full =
+        contain(&place.root, Path::new(rel)).map_err(|e| vault_error_at(e, &place.root, virt))?;
+    let dotted = full.strip_prefix(place.root.path()).is_ok_and(|p| {
+        p.components()
+            .any(|c| c.as_os_str().to_str().is_none_or(|s| s.starts_with('.')))
+    });
+    if dotted { Err(bad_path(virt)) } else { Ok(()) }
+}
+
+/// Read and parse one artifact on a resolved location: reads the physical `rel`, parses (types)
+/// and names errors by the virtual path.
+pub(crate) fn load_at(r: &Resolved) -> Result<ReadResponse, OpError> {
+    load_in(&r.place.root, &r.rel, &r.virt)
+}
+
+fn load_in(root: &Root, rel: &str, virt: &str) -> Result<ReadResponse, OpError> {
+    let bytes = read_bounded(root, Path::new(rel), MAX_ARTIFACT_BYTES)
+        .map_err(|e| vault_error_at(e, root, virt))?;
     Ok(ReadResponse {
-        artifact: parse_from_content(&decode(&bytes), rel),
+        artifact: parse_from_content(&decode(&bytes), virt),
         hash: content_hash(&bytes),
     })
 }
@@ -198,9 +237,7 @@ pub(crate) fn load(root: &Root, rel: &str) -> Result<ReadResponse, OpError> {
 /// assert_eq!(artifact::read(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn read(ctx: &Ctx, req: ReadRequest) -> Result<ReadResponse, OpError> {
-    let root = &root_of(ctx)?;
-    artifact_path(&req.path)?;
-    load(root, &req.path)
+    load_at(&locate(ctx, &req.path)?)
 }
 
 /// `artifact.tree`: one level of a type directory.
@@ -213,36 +250,59 @@ pub fn read(ctx: &Ctx, req: ReadRequest) -> Result<ReadResponse, OpError> {
 /// assert!(artifact::tree(&Ctx::new(None), req).is_err());
 /// ```
 pub fn tree(ctx: &Ctx, req: TreeRequest) -> Result<TreeResponse, OpError> {
-    let root = &root_of(ctx)?;
+    let ty = req.artifact_type;
+    let place = resolve(ctx, ty)?;
+    let root = &place.root;
     if let Some(d) = &req.dir {
         segments(d).map_err(|()| bad_path(d))?;
+        // Root location: `.obsidian` and friends are not a type's files (D-13).
+        if place.base.is_none() && d.split('/').any(|s| s.starts_with('.')) {
+            return Err(bad_path(d));
+        }
     }
-    let rel = match &req.dir {
-        Some(d) => format!("{}/{d}", req.artifact_type.info().dir),
-        None => req.artifact_type.info().dir.to_owned(),
+    let join = |base: Option<&str>| match (base, &req.dir) {
+        (Some(b), Some(d)) => format!("{b}/{d}"),
+        (Some(b), None) => b.to_owned(),
+        (None, Some(d)) => d.clone(),
+        (None, None) => String::new(),
     };
+    let (rel, virt) = (join(place.base.as_deref()), join(Some(ty.info().dir)));
+    no_dot_below_root(&place, &rel, &virt)?;
     let listing = match list_dir(root, Path::new(&rel)) {
         Ok(l) => l,
         // A fresh vault has no type directories yet (TS parity).
         Err(VaultError::NotFound { .. }) if req.dir.is_none() => return Ok(TreeResponse::default()),
-        Err(e) => return Err(vault_error(e, root)),
+        Err(e) => return Err(vault_error_at(e, root, &virt)),
     };
+    let visible = |n: &String| place.base.is_some() || !n.starts_with('.');
     // ponytail: every file is parsed per call; cache only if a real vault proves slow (E-11)
     let files = listing
         .files
         .iter()
-        .map(|f| tree_file(root, &rel, f))
+        .filter(|f| visible(f))
+        .map(|f| tree_file(ty, &place, &rel, &virt, f))
         .collect();
     Ok(TreeResponse {
-        dirs: listing.dirs,
+        dirs: listing.dirs.into_iter().filter(visible).collect(),
         files,
     })
 }
 
-fn tree_file(root: &Root, rel: &str, file: &str) -> TreeFile {
-    let path = format!("{rel}/{file}");
+fn tree_file(ty: ArtifactType, place: &Place, rel: &str, virt: &str, file: &str) -> TreeFile {
+    let path = format!("{virt}/{file}");
     let name = file.strip_suffix(".md").unwrap_or(file).to_owned();
-    match load(root, &path).map(|r| r.artifact) {
+    let phys = if rel.is_empty() {
+        file.to_owned()
+    } else {
+        format!("{rel}/{file}")
+    };
+    let r = Resolved {
+        ty,
+        place: place.clone(),
+        rel: phys,
+        virt: path.clone(),
+    };
+    match load_at(&r).map(|r| r.artifact) {
         Ok(a) => TreeFile {
             path,
             name,

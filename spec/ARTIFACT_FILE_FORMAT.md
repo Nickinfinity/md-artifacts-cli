@@ -926,6 +926,15 @@ default = "/abs/path/to/vault"          # optional; must be one of `vaults`
 vaults  = ["/abs/path/to/vault", "…"]   # known vaults: absolute, deduplicated by canonical path, at most 64
 ```
 
+Optional per-type **locations** (§15), one table per `artifactType`:
+
+```toml
+[types.Snippet]
+vault = "/abs/path/to/other/vault"      # optional; absent = the session vault
+dir   = "Lib"                           # optional; one segment, never `.`-prefixed; or:
+# root = true                           # the vault root (the type has that vault to itself)
+```
+
 If no config dir can be determined (no `HOME`, or a relative `MDA_CONFIG_DIR`, which never falls back to the OS dir), operations that need the machine file return `config.invalid{path:""}`. The engine writes keys in alphabetical order; comments are not kept.
 
 **Precedence:** `--vault <path>` (one process, never persisted; the machine file is then not read at startup) > a valid `default` > none. Stored paths are canonical. A `default` that no longer validates
@@ -1081,3 +1090,47 @@ case-insensitive file system renames in place.
   update mode a self-link of the moved index is neither rewritten nor warned about (default mode warns).
 - **Obsidian wikilinks** in other notes are neither scanned, rewritten nor reported. Obsidian resolves them by
   name and rewrites them only for renames made inside Obsidian.
+
+---
+
+## 15. Type locations and virtual paths *(ruled — type-locations plan W1, 2026-11-04)*
+
+Every path on the wire is **virtual**: `<TypeDir>/<rel>`, where `<TypeDir>` is the type's fixed directory name (§5). The engine
+maps it to a physical file through the type's **location** (machine file §12.1, `[types.<T>]`). Clients never see, build or
+store a physical path; the location is the only place a user names one.
+
+| Keys in `[types.<T>]` | Physical path of `<TypeDir>/<rel>` |
+|---|---|
+| none (no table) | `<session vault>/<TypeDir>/<rel>` — today's layout, identity mapping |
+| `vault` only | `<vault>/<TypeDir>/<rel>` |
+| `dir = "D"` (± `vault`) | `<vault or session vault>/D/<rel>` — `D` pinned: its canonical path must stay `D` |
+| `root = true` (± `vault`) | `<vault or session vault>/<rel>` |
+
+- **Shape rules** (else `config.location_invalid{type, reason}`): `vault` absolute (`vault`); `dir` one valid directory
+  segment (§14.1b), no `/` or `\`, not `.`-prefixed (`dir`); not both `dir` and `root` (`both`); a table with `root = false`
+  and no `dir` (`neither`); a non-table entry (`shape`).
+- **No overlap** (else `config.location_conflict{type, other}`, checked over every type's effective location, defaults
+  included): no two types share one canonical vault + directory; a type at `root = true` has its vault to itself.
+- **Session vault** (`--vault`, `vault.use`, the default) applies to types without their own `vault`.
+- **Root locations** hide `.`-prefixed entries from listings and walks, and refuse any path with a `.`-prefixed segment.
+- Index links and `paths:` (§8) are relative inside a type, so they are unaffected by its location.
+- The machine file is read per operation: a hand edit takes effect on the next call; a corrupt file makes type-scoped
+  operations return `config.invalid`, also under `--vault`.
+
+**Setting a location** (`types.set_location`, W2) changes where a type's files are read and written; it never moves a file. The
+request names `vault?`, `dir?`, `root?` and maps to the keys above: nothing → the table is removed (default layout); `vault`
+alone → `vault` only; `dir` → `dir` (pinned, even when it equals `<TypeDir>`, unlike the default); `root: true` → `root = true`;
+`dir` with `root: true` is `both`, `root: false` without `dir` is `neither`. A location without `vault` follows the session
+vault. The type dir is created at the new location only when that vault's own `.mda/config.toml` says `enabled = true`.
+
+**Moving a type** is two calls. `types.move.plan` writes nothing and lists the `.md` files at the current location with their
+hashes, every target that already exists, and the bytes to copy. `types.move.apply` takes that `files` list and: walks the source
+again (a different file set is `move.plan_stale`, a changed file `file.conflict`), copies each file to the target without
+clobbering (`move.target_exists`), verifies each copy, **switches the location**, then deletes each source. Any failure before the
+switch removes this call's copies and leaves the location and the sources as they were. A crash between the switch and the deletes
+leaves the sources at the old location, reachable by no operation: delete leftovers by hand (an undeletable source is the warning
+`move.source_kept`). The move creates the target dir even when the type is not enabled in the target vault. Only `.md` files move:
+other entries and symlinks stay, warned as `move.left_behind{count}`. Refused before any copy: a file that would land on a
+`.`-segment path at a root location (`move.bad_path`), and a target dir inside a root source in the same vault (`move.overlap`).
+A `to` equal to the current location needs no special case: every file is `move.target_exists`. A copy the undo cannot remove
+(edited meanwhile, or an I/O failure) stays; the next `plan` lists it in `conflicts`.

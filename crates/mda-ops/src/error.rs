@@ -117,6 +117,12 @@ pub const VAULT_UNKNOWN: &str = "vault.unknown";
 pub const VAULT_UNAVAILABLE: &str = "vault.unavailable";
 /// A configuration file is corrupt or breaks a spec §12 rule, or no config dir exists. Param `path`.
 pub const CONFIG_INVALID: &str = "config.invalid";
+/// Two types' locations overlap (spec §15): same vault + dir, or a root type sharing its vault.
+/// Params `type`, `other`.
+pub const CONFIG_LOCATION_CONFLICT: &str = "config.location_conflict";
+/// A machine-file location table is malformed (spec §15). Params `type`, `reason`
+/// (`vault`, `dir`, `both`, `neither`, `shape`).
+pub const CONFIG_LOCATION_INVALID: &str = "config.location_invalid";
 
 /// `vars.var.add` / `vars.var.rename`: not `VK-` + a letter, then letters, digits or `_`. Param `name`.
 pub const VARS_BAD_NAME: &str = "vars.bad_name";
@@ -158,6 +164,22 @@ pub const RENAME_LINKS_UNCHECKED: &str = "rename.links_unchecked";
 /// the rename stands (spec §14.3). Params `index` (its vault path), `reason` (`unreachable` | `unlinkable` |
 /// `not_patchable` | `conflict` | `write_failed`).
 pub const RENAME_LINK_UPDATE_FAILED: &str = "rename.link_update_failed";
+/// `types.move.apply`: a target file already exists; nothing is clobbered (spec §15). Param `path`
+/// (virtual).
+pub const MOVE_TARGET_EXISTS: &str = "move.target_exists";
+/// `types.move.apply`: the source set differs from the `files` of the plan (spec §15, D-19). Param
+/// `path` (the first differing virtual path, sorted).
+pub const MOVE_PLAN_STALE: &str = "move.plan_stale";
+/// `types.move.*`: a file would land on a `.`-segment path at a root location (D-19). Param `path`.
+pub const MOVE_BAD_PATH: &str = "move.bad_path";
+/// `types.move.*`: the target dir lies inside a root source in the same vault (D-19). Param `dir`.
+pub const MOVE_OVERLAP: &str = "move.overlap";
+/// `types.move.*` warning: entries that are not moved (non-`.md`, symlinks) stay at the source
+/// (spec §15). Param `count`.
+pub const MOVE_LEFT_BEHIND: &str = "move.left_behind";
+/// `types.move.apply` warning: a source could not be deleted after the switch; delete it by hand
+/// (D-18). Param `path` (virtual).
+pub const MOVE_SOURCE_KEPT: &str = "move.source_kept";
 /// Transport: a protocol line is not valid JSON (−32700, `id: null`; spec PROTOCOL §4, S-20). No params.
 pub const PROTOCOL_PARSE_ERROR: &str = "protocol.parse_error";
 /// Transport: a protocol line exceeds the frame cap (−32600, `id: null`; S-8, S-21). Param `max` (bytes).
@@ -231,6 +253,8 @@ pub const ALL_CODES: &[&str] = &[
     VAULT_UNKNOWN,
     VAULT_UNAVAILABLE,
     CONFIG_INVALID,
+    CONFIG_LOCATION_CONFLICT,
+    CONFIG_LOCATION_INVALID,
     VARS_BAD_NAME,
     VARS_VAR_EXISTS,
     VARS_VAR_NOT_FOUND,
@@ -249,6 +273,12 @@ pub const ALL_CODES: &[&str] = &[
     RENAME_INDEX_LINK,
     RENAME_LINKS_UNCHECKED,
     RENAME_LINK_UPDATE_FAILED,
+    MOVE_TARGET_EXISTS,
+    MOVE_PLAN_STALE,
+    MOVE_BAD_PATH,
+    MOVE_OVERLAP,
+    MOVE_LEFT_BEHIND,
+    MOVE_SOURCE_KEPT,
     PROTOCOL_PARSE_ERROR,
     PROTOCOL_LINE_TOO_LONG,
     PROTOCOL_ALREADY_INITIALIZED,
@@ -292,6 +322,26 @@ pub fn vault_error(mut e: VaultError, root: &Root) -> OpError {
     OpError::from(e)
 }
 
+/// [`vault_error`] for a file named by a **virtual** path (spec §15, D-1): the `path` param
+/// becomes `virt`, so no physical or location-dependent name reaches a client.
+///
+/// # Examples
+///
+/// ```
+/// use mda_ops::{Root, error::vault_error_at};
+/// use mda_vault::VaultError;
+/// let root = Root::new(&std::env::temp_dir()).unwrap();
+/// let e = vault_error_at(VaultError::NotFound { path: root.path().join("Lib/x.md") }, &root, "Snippets/x.md");
+/// assert_eq!(e.params["path"], "Snippets/x.md");
+/// ```
+pub fn vault_error_at(e: VaultError, root: &Root, virt: &str) -> OpError {
+    let mut o = vault_error(e, root);
+    if let Some(p) = o.params.get_mut("path") {
+        virt.clone_into(p);
+    }
+    o
+}
+
 // For root-less errors only (`Root::new` on the user's own `--vault`): the path is the user's.
 // ponytail: paths become params via display(), lossy on non-UTF-8 names; carry raw bytes if a
 // client ever needs to round-trip such a name.
@@ -325,6 +375,9 @@ impl From<VaultError> for OpError {
             VaultError::ConfigInvalid { path } => {
                 Self::new(CONFIG_INVALID).with("path", shown(&path))
             }
+            VaultError::LocationInvalid { ty, reason } => Self::new(CONFIG_LOCATION_INVALID)
+                .with("type", ty)
+                .with("reason", reason),
             VaultError::Limit { limit, max } => Self::new(WALK_LIMIT)
                 .with("limit", limit.as_str())
                 .with("max", max.to_string()),

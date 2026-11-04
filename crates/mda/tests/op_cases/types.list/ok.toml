@@ -1,10 +1,10 @@
 vault = "vault"
 params = {}
 expect = [
-  { type = "Snippet", dir = "Snippets", enabled = true, dirExists = true },
-  { type = "AIAgentsConfig", dir = "AIAgentsConf", enabled = true, dirExists = true },
-  { type = "Command", dir = "Commands", enabled = false, dirExists = false },
-  { type = "Template", dir = "Templates", enabled = true, dirExists = true },
-  { type = "Variables", dir = "Variables", enabled = true, dirExists = true },
-  { type = "AIPrompt", dir = "AIPrompts", enabled = true, dirExists = true },
+  { type = "Snippet", dir = "Snippets", enabled = true, dirExists = true, location = { vault = "$VAULT", dir = "Snippets" } },
+  { type = "AIAgentsConfig", dir = "AIAgentsConf", enabled = true, dirExists = true, location = { vault = "$VAULT", dir = "AIAgentsConf" } },
+  { type = "Command", dir = "Commands", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "Commands" } },
+  { type = "Template", dir = "Templates", enabled = true, dirExists = true, location = { vault = "$VAULT", dir = "Templates" } },
+  { type = "Variables", dir = "Variables", enabled = true, dirExists = true, location = { vault = "$VAULT", dir = "Variables" } },
+  { type = "AIPrompt", dir = "AIPrompts", enabled = true, dirExists = true, location = { vault = "$VAULT", dir = "AIPrompts" } },
 ]

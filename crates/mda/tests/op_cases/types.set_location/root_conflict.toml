@@ -1,0 +1,9 @@
+# D-3: Variables owns vault B at its root, so no other type may point there; nothing is written.
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Variables]\nvault=\"$WORKSPACE\"\nroot=true"
+params = { type = "Snippet", vault = "$WORKSPACE" }
+expect_error = "config.location_conflict"
+expect_error_params = { type = "Snippet", other = "Variables" }
+[expect_config_files]
+"config.toml" = "[types.Variables]\nvault=\"$WORKSPACE\"\nroot=true"

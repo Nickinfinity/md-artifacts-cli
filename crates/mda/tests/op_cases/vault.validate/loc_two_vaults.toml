@@ -1,0 +1,12 @@
+# Template lives in vault B (`deep/t.md`); Snippet stays in A. One walk counts both.
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Template]\nvault=\"$WORKSPACE\"\ndir=\"deep\""
+params = {}
+
+[expect]
+files = 2
+errors = 0
+warnings = 0
+truncated = false
+issues = []

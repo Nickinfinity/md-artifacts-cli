@@ -1,0 +1,5 @@
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Template]\nvault=\"$WORKSPACE\"\ndir=\"deep\""
+params = { path = "Templates/t.md" }
+expect = { fileName = "T.sh" }

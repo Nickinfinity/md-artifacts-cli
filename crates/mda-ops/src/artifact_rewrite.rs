@@ -12,14 +12,20 @@ use mda_vault::{Root, content_hash, read_bounded, replace};
 
 use crate::artifact::MAX_ARTIFACT_BYTES;
 use crate::artifact_write::{WriteResponse, map_serialize, max_bytes, not_serializable, written};
-use crate::error::vault_error;
+use crate::error::vault_error_at;
+use crate::location::Resolved;
 use crate::{OpError, error};
 
-/// The file's bytes, read bounded, whose hash must be `expected` — checked before anything is
-/// parsed, so a file another client changed reports `file.conflict`, not a refusal.
-pub(crate) fn read_checked(root: &Root, path: &str, expected: &str) -> Result<Vec<u8>, OpError> {
-    let bytes = read_bounded(root, Path::new(path), MAX_ARTIFACT_BYTES)
-        .map_err(|e| vault_error(e, root))?;
+/// The file's bytes, read bounded from the physical `rel`, whose hash must be `expected` — checked
+/// before anything is parsed, so a file another client changed reports `file.conflict`, not a
+/// refusal. Errors name the virtual path (D-1).
+pub(crate) fn read_checked_at(r: &Resolved, expected: &str) -> Result<Vec<u8>, OpError> {
+    read_checked_in(&r.place.root, &r.rel, &r.virt, expected)
+}
+
+fn read_checked_in(root: &Root, rel: &str, path: &str, expected: &str) -> Result<Vec<u8>, OpError> {
+    let bytes = read_bounded(root, Path::new(rel), MAX_ARTIFACT_BYTES)
+        .map_err(|e| vault_error_at(e, root, path))?;
     let actual = content_hash(&bytes);
     if actual != expected {
         return Err(OpError::new(error::FILE_CONFLICT)
@@ -30,17 +36,28 @@ pub(crate) fn read_checked(root: &Root, path: &str, expected: &str) -> Result<Ve
     Ok(bytes)
 }
 
-/// The pre-write half of the rewrite path (X-12): read bounded → hash check (on `src`) → refuse
-/// varsError → `edit` → layout guards → serialize + guard; returns the text to write. `err_path`
-/// names the file in serialize/size errors (differs from `src` for `artifact.rename`).
-pub(crate) fn prepare(
+/// The pre-write half of the rewrite path (X-12) on a resolved location: read bounded → hash check
+/// → refuse varsError → `edit` → layout guards → serialize + guard; returns the text to write.
+/// Physical read, virtual parse (the type) and errors. `err_path` names the file in serialize/size
+/// errors (differs from the source for `artifact.rename`).
+pub(crate) fn prepare_at(
+    r: &Resolved,
+    err_path: &str,
+    expected: &str,
+    edit: impl FnOnce(ParsedArtifact) -> Result<ArtifactModel, OpError>,
+) -> Result<String, OpError> {
+    prepare_in(&r.place.root, &r.rel, &r.virt, err_path, expected, edit)
+}
+
+fn prepare_in(
     root: &Root,
+    rel: &str,
     src: &str,
     err_path: &str,
     expected: &str,
     edit: impl FnOnce(ParsedArtifact) -> Result<ArtifactModel, OpError>,
 ) -> Result<String, OpError> {
-    let bytes = read_checked(root, src, expected)?;
+    let bytes = read_checked_in(root, rel, src, expected)?;
     let content = decode(&bytes);
     let cur = parse_from_content(&content, src);
     let flagged = cur.layout.payload == PayloadKind::Flags;
@@ -65,24 +82,33 @@ pub(crate) fn prepare(
     serialize(&model, max_bytes()).map_err(|e| map_serialize(e, err_path))
 }
 
-/// The one rewrite path (X-12): [`prepare`] then replace. Shared by `artifact.update` and every
-/// `vars.*` edit, so lossy UTF-8 (#35), no BOM (#36) and legacy → YAML (W-3) hold for all of them.
-/// Since W7c a flagged or index file is rewritten when the model carries its layout / `paths`
-/// (spec §7.6).
-pub(crate) fn rewrite(
+/// The one rewrite path (X-12): [`prepare_at`] then replace, on a resolved location (physical
+/// `rel`, virtual answer). Shared by `artifact.update` and every `vars.*` edit, so lossy UTF-8
+/// (#35), no BOM (#36) and legacy → YAML (W-3) hold for all of them; a flagged or index file is
+/// rewritten when the model carries its layout / `paths` (spec §7.6).
+pub(crate) fn rewrite_at(
+    r: &Resolved,
+    expected: &str,
+    edit: impl FnOnce(ParsedArtifact) -> Result<ArtifactModel, OpError>,
+) -> Result<WriteResponse, OpError> {
+    rewrite_in(&r.place.root, &r.rel, &r.virt, expected, edit)
+}
+
+fn rewrite_in(
     root: &Root,
+    rel: &str,
     path: &str,
     expected: &str,
     edit: impl FnOnce(ParsedArtifact) -> Result<ArtifactModel, OpError>,
 ) -> Result<WriteResponse, OpError> {
-    let text = prepare(root, path, path, expected, edit)?;
+    let text = prepare_in(root, rel, path, path, expected, edit)?;
     replace(
         root,
-        Path::new(path),
+        Path::new(rel),
         text.as_bytes(),
         expected,
         MAX_ARTIFACT_BYTES,
     )
-    .map_err(|e| vault_error(e, root))?;
+    .map_err(|e| vault_error_at(e, root, path))?;
     Ok(written(path.to_owned(), &text))
 }

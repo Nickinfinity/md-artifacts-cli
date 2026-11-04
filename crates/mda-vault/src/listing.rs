@@ -73,6 +73,8 @@ pub const MAX_WALK_BYTES: u64 = 64 << 20;
 /// `visit(rel, bytes-or-error)` once per file. One budget for the whole call (depth per start,
 /// entries and bytes across starts). Symlinked directories are never descended; limits refuse the
 /// whole call (spec §11, §13.2). A missing start, or one that is not a directory, is skipped.
+/// A `""` start is the vault root: paths have no leading `/` and `.`-prefixed entries are hidden
+/// at every level (spec §15; only exactly `""`, never `"."`).
 ///
 /// # Examples
 ///
@@ -85,17 +87,78 @@ pub fn walk_md<F: FnMut(&str, Result<Vec<u8>, VaultError>)>(
     root: &Root,
     starts: &[&str],
     max_file: u64,
+    mut visit: F,
+) -> Result<(), VaultError> {
+    let pairs: Vec<(&Root, &str)> = starts.iter().map(|s| (root, *s)).collect();
+    walk_md_multi(&pairs, max_file, |_, rel, r| visit(rel, r))
+}
+
+/// Every `.md` under each `(root, start)` pair, possibly across vaults: `visit(start index,
+/// root-relative path, bytes-or-error)`. One budget for the whole call, vaults included (depth per
+/// start). A `""` start is the root itself (paths `x.md`, no leading `/`) and hides every
+/// `.`-prefixed entry at every level (D-13); any other start lists what it lists. Spec §15, D-10.
+///
+/// # Examples
+///
+/// ```
+/// let root = mda_vault::Root::new(&std::env::temp_dir()).unwrap();
+/// let r = mda_vault::walk_md_multi(&[(&root, "mda-no-such-dir-walk")], 1024, |_, _, _| {});
+/// assert!(r.is_ok());
+/// ```
+pub fn walk_md_multi<F: FnMut(usize, &str, Result<Vec<u8>, VaultError>)>(
+    starts: &[(&Root, &str)],
+    max_file: u64,
     visit: F,
 ) -> Result<(), VaultError> {
+    walk_core(starts, max_file, false, visit).map(|_| ())
+}
+
+/// `walk_md_multi` for `types.move.*` (D-9): the same walk, but a symlinked `.md` and every
+/// entry that is neither a directory nor a `.md` (symlinked directories included) is **counted,
+/// not visited**; the count (`leftBehind`) is returned. Dot entries at a `""` start are skipped
+/// before counting, so `.obsidian`/`.git`/`.mda` never count.
+///
+/// # Examples
+///
+/// ```
+/// let root = mda_vault::Root::new(&std::env::temp_dir()).unwrap();
+/// let n = mda_vault::walk_md_move(&[(&root, "mda-no-such-dir-walk")], 1024, |_, _, _| {});
+/// assert_eq!(n.unwrap(), 0);
+/// ```
+pub fn walk_md_move<F: FnMut(usize, &str, Result<Vec<u8>, VaultError>)>(
+    starts: &[(&Root, &str)],
+    max_file: u64,
+    visit: F,
+) -> Result<usize, VaultError> {
+    walk_core(starts, max_file, true, visit)
+}
+
+/// The one multi-root walk; `move_mode` counts what a move leaves behind instead of skipping it.
+fn walk_core<F: FnMut(usize, &str, Result<Vec<u8>, VaultError>)>(
+    starts: &[(&Root, &str)],
+    max_file: u64,
+    move_mode: bool,
+    mut visit: F,
+) -> Result<usize, VaultError> {
+    let Some((first, _)) = starts.first() else {
+        return Ok(0);
+    };
+    let idx = std::cell::Cell::new(0);
     // One `Walk` for every start: the entry and byte caps bound the whole call (M-8).
     let mut st = Walk {
-        root,
+        root: first,
         max_file,
+        skip_dot: false,
+        move_mode,
+        left: 0,
         files: 0,
         bytes: 0,
-        visit,
+        visit: |rel: &str, r| visit(idx.get(), rel, r),
     };
-    for start in starts {
+    for (i, (root, start)) in starts.iter().enumerate() {
+        idx.set(i);
+        st.root = root;
+        st.skip_dot = start.is_empty();
         let abs = contain(root, Path::new(start))?;
         // A missing start, or one that is not a directory, is an empty walk (TS `catch → return`).
         if !fs::metadata(&abs).is_ok_and(|m| m.is_dir()) {
@@ -103,13 +166,27 @@ pub fn walk_md<F: FnMut(&str, Result<Vec<u8>, VaultError>)>(
         }
         walk_dir(&mut st, start, 0)?;
     }
-    Ok(())
+    Ok(st.left)
+}
+
+/// `rel/name`, or `name` under the root start (`""`): never a leading `/`.
+fn join_rel(rel: &str, name: &str) -> String {
+    if rel.is_empty() {
+        name.to_owned()
+    } else {
+        format!("{rel}/{name}")
+    }
 }
 
 /// Walk state: the work counters are shared by the whole call.
 struct Walk<'a, F> {
     root: &'a Root,
     max_file: u64,
+    /// Root-location start: `.`-prefixed entries are invisible (D-13).
+    skip_dot: bool,
+    /// `walk_md_move`: count, never visit, a symlinked `.md` and every other non-dir entry.
+    move_mode: bool,
+    left: usize,
     files: usize,
     bytes: u64,
     visit: F,
@@ -146,12 +223,17 @@ fn walk_dir<F: FnMut(&str, Result<Vec<u8>, VaultError>)>(
             let Ok(name) = entry.file_name().into_string() else {
                 continue;
             };
+            if st.skip_dot && name.starts_with('.') {
+                continue;
+            }
             if ft.is_dir() {
                 dirs.push(name);
-            } else if name.ends_with(".md") {
+            } else if name.ends_with(".md") && !(st.move_mode && ft.is_symlink()) {
                 files.push((name, ft.is_symlink(), entry));
             } else {
-                continue; // other names, symlinks included, cost nothing
+                // Other names, symlinks included, cost nothing; a move counts what it leaves.
+                st.left += usize::from(st.move_mode);
+                continue;
             }
             // Per-dir memory is bounded before sorting.
             if st.files + files.len() + dirs.len() > MAX_WALK_FILES {
@@ -176,7 +258,7 @@ fn walk_dir<F: FnMut(&str, Result<Vec<u8>, VaultError>)>(
     sort_names(&mut dirs, |d| d);
     for (name, is_link, entry) in files {
         count(st)?;
-        walk_file(st, &format!("{rel}/{name}"), is_link, &entry)?;
+        walk_file(st, &join_rel(rel, &name), is_link, &entry)?;
     }
     for name in dirs {
         count(st)?;
@@ -186,7 +268,7 @@ fn walk_dir<F: FnMut(&str, Result<Vec<u8>, VaultError>)>(
                 max: MAX_WALK_DEPTH as u64,
             });
         }
-        walk_dir(st, &format!("{rel}/{name}"), level + 1)?;
+        walk_dir(st, &join_rel(rel, &name), level + 1)?;
     }
     Ok(())
 }

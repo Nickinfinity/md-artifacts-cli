@@ -9,8 +9,8 @@ use mda_core::naming::output_name;
 use mda_core::render::{Values, Warning, check_values, render_artifact};
 use mda_vault::{Root, VaultError, content_hash, create_new, read_bounded, replace};
 
-use crate::artifact::{MAX_ARTIFACT_BYTES, artifact_path, load, root_of, segments};
-use crate::error::vault_error;
+use crate::artifact::{MAX_ARTIFACT_BYTES, load_at, locate, segments};
+use crate::error::{vault_error, vault_error_at};
 use crate::render::render_error;
 use crate::{Ctx, OpError, error};
 
@@ -69,8 +69,7 @@ pub struct WriteFileResponse {
 /// assert_eq!(write_file::write_file(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn write_file(ctx: &Ctx, req: WriteFileRequest) -> Result<WriteFileResponse, OpError> {
-    let root = &root_of(ctx)?;
-    artifact_path(&req.path)?;
+    let r = locate(ctx, &req.path)?;
     if !Path::new(&req.workspace_root).is_absolute() {
         return Err(
             OpError::new(error::OP_BAD_REQUEST).with("reason", "workspaceRoot must be absolute")
@@ -79,7 +78,7 @@ pub fn write_file(ctx: &Ctx, req: WriteFileRequest) -> Result<WriteFileResponse,
     check_dest(&req.dest_dir)?;
     check_values(&req.values)?;
     let ws = Root::new(Path::new(&req.workspace_root)).map_err(OpError::from)?;
-    let p = load(root, &req.path)?.artifact;
+    let p = load_at(&r)?.artifact;
     emit_whole_file(
         &ws,
         &req.dest_dir,
@@ -128,7 +127,7 @@ pub(crate) fn emit_whole_file(
     let bytes = out.output.as_bytes();
     let path = Path::new(&rel);
     match expected {
-        None => create_new(ws, path, bytes).map_err(|e| exists_actual(ws, path, e))?,
+        None => create_new(ws, path, bytes).map_err(|e| exists_actual(ws, path, &rel, e))?,
         Some(h) => {
             replace(ws, path, bytes, h, MAX_ARTIFACT_BYTES).map_err(|e| vault_error(e, ws))?;
         }
@@ -161,10 +160,10 @@ pub(crate) fn dest_rel(dest_dir: &str, name: &str) -> Result<String, OpError> {
 }
 
 /// Map a create-time vault error: `file.exists` also carries `actual`, the hash of the file in the
-/// way, so a client can retry as a replace. Every other error maps through `vault_error(root)`.
-pub(crate) fn exists_actual(root: &Root, rel: &Path, e: VaultError) -> OpError {
+/// way, so a client can retry as a replace. The `path` param names the virtual path `virt` (D-1).
+pub(crate) fn exists_actual(root: &Root, rel: &Path, virt: &str, e: VaultError) -> OpError {
     let exists = matches!(e, VaultError::Exists { .. });
-    let op = vault_error(e, root);
+    let op = vault_error_at(e, root, virt);
     if !exists {
         return op;
     }

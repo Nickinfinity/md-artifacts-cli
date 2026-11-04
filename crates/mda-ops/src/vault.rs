@@ -171,7 +171,7 @@ fn canon(r: &Root) -> String {
 /// The machine file with every stored path in plain form (D-33), duplicates dropped: an old
 /// `\\?\C:\v` entry then equals `canon()`, and no `\\?\` reaches a client. The hash is the file's,
 /// so the next write (which stores the plain form) is still conflict-checked.
-fn read_plain(dir: &Path) -> Result<MachineConfig, VaultError> {
+pub(crate) fn read_plain(dir: &Path) -> Result<MachineConfig, VaultError> {
     read_machine(dir).map(plainify)
 }
 
@@ -190,7 +190,7 @@ fn plainify(mut cfg: MachineConfig) -> MachineConfig {
 }
 
 /// The machine config dir and its parsed file; no dir at all is `config.invalid` with `path: ""`.
-fn machine(ctx: &Ctx) -> Result<(PathBuf, MachineConfig), OpError> {
+pub(crate) fn machine(ctx: &Ctx) -> Result<(PathBuf, MachineConfig), OpError> {
     let dir = ctx
         .config_dir
         .clone()

@@ -1,0 +1,6 @@
+# Variables at B's root: only Variables-typed files list; `s.md`/`t.md` are other types.
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Variables]\nvault=\"$WORKSPACE\"\nroot=true"
+params = {}
+expect = { files = [] }

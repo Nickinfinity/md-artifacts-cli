@@ -4,7 +4,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use mda_vault::{Root, VaultError, WalkLimit, walk_md};
+use mda_vault::{Root, VaultError, WalkLimit, walk_md, walk_md_move, walk_md_multi};
 
 /// Fresh temp dir with `vault/` and `outside/`, removed on drop (std only).
 struct Tmp(PathBuf);
@@ -320,4 +320,100 @@ fn starts_in_order_missing_skipped() {
     });
     r.unwrap();
     assert_eq!(seen, ["B/b.md", "A/a.md"]);
+}
+
+/// Two roots, one budget (D-10): 33 + 33 MiB across vaults passes 64 MiB.
+#[test]
+fn multi_roots_share_one_budget() {
+    let t = Tmp::new("multi");
+    for d in ["ra", "rb"] {
+        fs::create_dir_all(t.0.join(d)).unwrap();
+        for i in 0..33 {
+            let f = fs::File::create(t.0.join(format!("{d}/f{i:02}.md"))).unwrap();
+            f.set_len(1 << 20).unwrap();
+        }
+    }
+    let (a, b) = (
+        Root::new(&t.0.join("ra")).unwrap(),
+        Root::new(&t.0.join("rb")).unwrap(),
+    );
+    let r = walk_md_multi(&[(&a, ""), (&b, "")], 1 << 20, |_, _, _| {});
+    assert_eq!(limit(&r), (WalkLimit::Bytes, 67_108_864));
+}
+
+/// A `""` start walks the root: plain paths, no dot entries at any level, start index passed.
+#[test]
+fn root_start_paths_and_dots() {
+    let t = Tmp::new("rootstart");
+    for f in [
+        "x.md",
+        "a/y.md",
+        ".obsidian/plugins/p/README.md",
+        "a/.git/z.md",
+        ".h.md",
+    ] {
+        t.write(f, b"x");
+    }
+    let root = t.root();
+    let mut seen = Vec::new();
+    walk_md_multi(&[(&root, "")], 1024, |i, rel, _| {
+        seen.push((i, rel.to_owned()))
+    })
+    .unwrap();
+    assert_eq!(seen, [(0, "x.md".to_owned()), (0, "a/y.md".to_owned())]);
+}
+
+/// Dots stay visible under a non-root start (D-13).
+#[test]
+fn dir_start_keeps_dots() {
+    let t = Tmp::new("dirdots");
+    t.write("Variables/.a/b.md", b"x");
+    let (r, seen) = walk(&t, 1024);
+    r.unwrap();
+    assert_eq!(names(&seen), ["Variables/.a/b.md"]);
+}
+
+/// `walk_md_move` counts what a move leaves (non-`.md`), never the dot entries of a root start.
+#[test]
+fn move_walk_counts_left_behind() {
+    let t = Tmp::new("moveleft");
+    for f in [
+        "x.md",
+        "a/y.md",
+        "a/img.png",
+        "n.txt",
+        ".obsidian/app.json",
+        ".h.md",
+    ] {
+        t.write(f, b"x");
+    }
+    let root = t.root();
+    let mut seen = Vec::new();
+    let n = walk_md_move(&[(&root, "")], 1024, |_, rel, _| seen.push(rel.to_owned())).unwrap();
+    assert_eq!(seen, ["x.md", "a/y.md"]);
+    assert_eq!(n, 2);
+    // The plain walk counts nothing and visits the same files.
+    let mut plain = Vec::new();
+    walk_md_multi(&[(&root, "")], 1024, |_, rel, _| plain.push(rel.to_owned())).unwrap();
+    assert_eq!(plain, seen);
+}
+
+/// 🔒 A symlinked `.md` (out of the vault) and a symlinked dir are counted, never read.
+#[cfg(unix)]
+#[test]
+fn move_walk_never_reads_links() {
+    let t = Tmp::new("movelinks");
+    t.write("Variables/a.md", b"x");
+    fs::write(t.out("secret.md"), b"MARKER").unwrap();
+    std::os::unix::fs::symlink(t.out("secret.md"), t.v("Variables/l.md")).unwrap();
+    std::os::unix::fs::symlink(t.0.join("outside"), t.v("Variables/out")).unwrap();
+    let root = t.root();
+    let mut seen = Vec::new();
+    let n = walk_md_move(&[(&root, "Variables")], 1024, |_, rel, r| {
+        seen.push((rel.to_owned(), r.is_ok()))
+    })
+    .unwrap();
+    assert_eq!(seen, [("Variables/a.md".to_owned(), true)]);
+    assert_eq!(n, 2);
+    assert_eq!(fs::read(t.out("secret.md")).unwrap(), b"MARKER");
 }

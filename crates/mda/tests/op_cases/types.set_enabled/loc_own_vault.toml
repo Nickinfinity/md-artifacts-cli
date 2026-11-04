@@ -1,0 +1,8 @@
+# D-6: the flag is written in the type's own vault (B), not the session vault (A).
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Template]\nvault=\"$WORKSPACE\"\ndir=\"deep\""
+params = { type = "Template", enabled = true }
+expect = { type = "Template", enabled = true, created = false }
+expect_files = { ".mda/config.toml" = false }
+expect_workspace_files = { ".mda/config.toml" = "[types.Template]\nenabled = true\n" }

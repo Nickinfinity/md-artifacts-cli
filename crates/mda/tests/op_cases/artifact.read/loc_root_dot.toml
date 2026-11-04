@@ -1,0 +1,5 @@
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Snippet]\nvault=\"$WORKSPACE\"\nroot=true"
+params = { path = "Snippets/.obsidian/app.json.md" }
+expect_error = "artifact.bad_path"

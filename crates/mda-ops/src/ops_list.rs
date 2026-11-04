@@ -3,7 +3,7 @@
 use crate::registry::{OpSpec, typed};
 use crate::{
     artifact, artifact_rename, artifact_write, index, index_create, migrate, naming, prefill,
-    render, system, types, validate, vars, varsets, vault, write_file,
+    render, system, types, types_move, validate, vars, varsets, vault, write_file,
 };
 
 pub(crate) static OPS: &[OpSpec] = &[
@@ -114,13 +114,28 @@ pub(crate) static OPS: &[OpSpec] = &[
     },
     OpSpec {
         name: "types.list",
-        summary: "Each artifact type: dir, enabled, dir exists",
+        summary: "Each artifact type: dir, enabled, dir exists, location",
         handler: |c, v| typed(c, v, types::list),
+    },
+    OpSpec {
+        name: "types.move.apply",
+        summary: "Move a type's files to a new location, then switch to it",
+        handler: |c, v| typed(c, v, types_move::apply),
+    },
+    OpSpec {
+        name: "types.move.plan",
+        summary: "List the files a type move would copy and its conflicts",
+        handler: |c, v| typed(c, v, types_move::plan),
     },
     OpSpec {
         name: "types.set_enabled",
         summary: "Enable or disable a type in the current vault",
         handler: |c, v| typed(c, v, types::set_enabled),
+    },
+    OpSpec {
+        name: "types.set_location",
+        summary: "Point a type at a location without moving files",
+        handler: |c, v| typed(c, v, types::set_location),
     },
     OpSpec {
         name: "vars.file.new",

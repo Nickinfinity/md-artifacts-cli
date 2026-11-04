@@ -1,0 +1,5 @@
+vault = "vault_loc_b"
+machine_config = "[types.Snippet]\nvault=\"$VAULT\"\ndir=\"Lib\""
+params = { path = "Snippets/n.md", model = { artifactType = "Snippet", title = "N", blocks = [{ code = "echo n" }] } }
+expect = { path = "Snippets/n.md", hash = "c8d31c0ac7f03afe2d624f6ae360ce95d9d9bcc53c73259569d86ea77c1c6381" }
+expect_files = { "Lib/n.md" = "---\nartifactType: Snippet\ntitle: N\n---\n\n```\necho n\n```\n", "Snippets/n.md" = false }

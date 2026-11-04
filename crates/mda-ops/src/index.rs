@@ -10,8 +10,8 @@ use mda_core::parse::{decode, parse_from_content};
 use mda_core::render::{Values, Warning, check_values};
 use mda_vault::{Root, contain, read_bounded};
 
-use crate::artifact::{MAX_ARTIFACT_BYTES, artifact_path, load, root_of};
-use crate::error::vault_error;
+use crate::artifact::{MAX_ARTIFACT_BYTES, load_at, locate};
+use crate::error::vault_error_at;
 use crate::write_file::{WriteFileResponse, check_whole_file, emit_whole_file};
 use crate::{Ctx, OpError, error};
 
@@ -243,15 +243,15 @@ pub fn limit_error(limit: &str, max: usize) -> OpError {
 /// assert_eq!(index::plan(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn plan(ctx: &Ctx, req: PlanRequest) -> Result<PlanResponse, OpError> {
-    let root = &root_of(ctx)?;
-    artifact_path(&req.path)?;
+    let r = locate(ctx, &req.path)?;
+    let root = &r.place.root;
     // The mirrored folder is client text: reject, never sanitise.
     let mirror = if req.mirror_from.is_empty() {
         String::new()
     } else {
         safe_rel_path(&req.mirror_from).map_err(|e| path_error(e, &req.mirror_from))?
     };
-    let idx = load(root, &req.path)?.artifact;
+    let idx = load_at(&r)?.artifact;
     check_index(&idx, &req.path)?;
     let declared = idx.frontmatter.paths.as_deref().unwrap_or_default();
     if declared.len() > MAX_PATHS {
@@ -268,7 +268,7 @@ pub fn plan(ctx: &Ctx, req: PlanRequest) -> Result<PlanResponse, OpError> {
     if lp.steps.len() + lp.rejected.len() > MAX_LINKS {
         return Err(limit_error("links", MAX_LINKS));
     }
-    let (ir, dir) = index_root(root, &req.path)?;
+    let (ir, dir) = index_root(&r)?;
     let mut skips: HashMap<String, Option<OpError>> = HashMap::new();
     let steps = lp
         .steps
@@ -312,12 +312,13 @@ fn check_index(p: &ParsedArtifact, path: &str) -> Result<(), OpError> {
 }
 
 /// A `Root` on the index's own directory (🔒 R-22): a symlink inside it reaching another vault folder
-/// is contained to the vault but not to here. Returns the root and the vault-relative `index_dir`.
-fn index_root<'a>(root: &Root, path: &'a str) -> Result<(Root, &'a str), OpError> {
-    let dir = path.rsplit_once('/').map_or("", |(d, _)| d);
-    let real = contain(root, Path::new(dir)).map_err(|e| vault_error(e, root))?;
-    let ir = Root::new(&real).map_err(|e| vault_error(e, root))?;
-    Ok((ir, dir))
+/// is contained to the vault but not to here. Returns the root and the virtual `index_dir`.
+fn index_root(r: &crate::location::Resolved) -> Result<(Root, &str), OpError> {
+    let (root, pdir) = (&r.place.root, r.rel.rsplit_once('/').map_or("", |(d, _)| d));
+    let vdir = r.virt.rsplit_once('/').map_or("", |(d, _)| d);
+    let real = contain(root, Path::new(pdir)).map_err(|e| vault_error_at(e, root, vdir))?;
+    let ir = Root::new(&real).map_err(|e| vault_error_at(e, root, vdir))?;
+    Ok((ir, vdir))
 }
 
 /// Read and parse one linked file through the index-dir root; errors map against the vault root so
@@ -328,12 +329,10 @@ fn read_linked(
     index_dir: &str,
     rel: &str,
 ) -> Result<ParsedArtifact, OpError> {
-    let bytes =
-        read_bounded(ir, Path::new(rel), MAX_ARTIFACT_BYTES).map_err(|e| vault_error(e, root))?;
-    Ok(parse_from_content(
-        &decode(&bytes),
-        &format!("{index_dir}/{rel}"),
-    ))
+    let virt = format!("{index_dir}/{rel}");
+    let bytes = read_bounded(ir, Path::new(rel), MAX_ARTIFACT_BYTES)
+        .map_err(|e| vault_error_at(e, root, &virt))?;
+    Ok(parse_from_content(&decode(&bytes), &virt))
 }
 
 /// `index.run`: write every step's linked artifact into the workspace; never aborts after step 1.
@@ -347,8 +346,8 @@ fn read_linked(
 /// assert_eq!(index::run(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn run(ctx: &Ctx, req: RunRequest) -> Result<BatchResponse, OpError> {
-    let root = &root_of(ctx)?;
-    artifact_path(&req.path)?;
+    let r = locate(ctx, &req.path)?;
+    let root = &r.place.root;
     if !Path::new(&req.workspace_root).is_absolute() {
         return Err(
             OpError::new(error::OP_BAD_REQUEST).with("reason", "workspaceRoot must be absolute")
@@ -359,9 +358,9 @@ pub fn run(ctx: &Ctx, req: RunRequest) -> Result<BatchResponse, OpError> {
     }
     check_values(&req.values)?;
     let ws = Root::new(Path::new(&req.workspace_root)).map_err(OpError::from)?;
-    let idx = load(root, &req.path)?.artifact;
+    let idx = load_at(&r)?.artifact;
     check_index(&idx, &req.path)?;
-    let (ir, dir) = index_root(root, &req.path)?;
+    let (ir, dir) = index_root(&r)?;
     // ponytail: total work per run ~ 1 000 x (1 MiB read + <= 1 MiB render + write) ~ 3 GiB worst case -- add a run-wide byte budget if a real client needs it
     let results = req
         .steps

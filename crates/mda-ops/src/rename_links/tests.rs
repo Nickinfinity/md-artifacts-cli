@@ -1,7 +1,8 @@
 use super::*;
+use mda_vault::Root;
 use std::fs;
 
-fn vault(name: &str, files: &[(&str, &str)]) -> (std::path::PathBuf, Root) {
+fn vault(name: &str, files: &[(&str, &str)]) -> (std::path::PathBuf, Place) {
     let p = std::env::temp_dir().join(format!("mda-rlinks-{}-{name}", std::process::id()));
     let _ = fs::remove_dir_all(&p);
     for (rel, body) in files {
@@ -11,7 +12,8 @@ fn vault(name: &str, files: &[(&str, &str)]) -> (std::path::PathBuf, Root) {
     }
     fs::create_dir_all(p.join("vault/Snippets")).unwrap();
     let root = Root::new(&p.join("vault")).unwrap();
-    (p, root)
+    let base = Some("Templates".to_owned());
+    (p, Place { root, base })
 }
 
 fn idx(body: &str) -> String {
@@ -70,7 +72,7 @@ fn walk_error_keeps_earlier_warnings_and_appends_unchecked() {
     let seen = warnings(collect(&root, "Templates/a.md", "Templates", |visit| {
         visit(
             "Templates/idx.md",
-            Ok(fs::read(root.path().join("Templates/idx.md")).unwrap()),
+            Ok(fs::read(root.root.path().join("Templates/idx.md")).unwrap()),
         );
         Err(VaultError::Limit {
             limit: mda_vault::WalkLimit::Files,
@@ -92,7 +94,7 @@ fn walk_error_keeps_earlier_warnings_and_appends_unchecked() {
 #[test]
 fn unreadable_file_skipped_later_files_still_warn() {
     let (p, root) = vault("skip", &[("Templates/z.md", &idx("[[a]]"))]);
-    let z = fs::read(root.path().join("Templates/z.md")).unwrap();
+    let z = fs::read(root.root.path().join("Templates/z.md")).unwrap();
     let got = warnings(collect(&root, "Templates/a.md", "Templates", |visit| {
         visit(
             "Templates/bad.md",
@@ -109,8 +111,8 @@ fn unreadable_file_skipped_later_files_still_warn() {
 const OLD: &str = "Templates/a.md";
 const NEW: &str = "Templates/b.md";
 
-fn bytes(root: &Root, rel: &str) -> Vec<u8> {
-    fs::read(root.path().join(rel)).unwrap()
+fn bytes(root: &Place, rel: &str) -> Vec<u8> {
+    fs::read(root.root.path().join(rel)).unwrap()
 }
 
 fn failed(w: &[OpError]) -> Vec<(&str, &str)> {
@@ -135,10 +137,10 @@ fn update_rewrites_only_the_link_target() {
 fn conflict_when_file_changes_between_scan_and_write() {
     let (p, root) = vault("conf", &[("Templates/idx.md", &idx("[[a]]"))]);
     let scan = collect(&root, OLD, "Templates", |v| {
-        walk_md(&root, &["Templates"], MAX_ARTIFACT_BYTES, v)
+        walk_md(&root.root, &["Templates"], MAX_ARTIFACT_BYTES, v)
     });
     let changed = idx("[[a]]\nchanged");
-    fs::write(root.path().join("Templates/idx.md"), &changed).unwrap();
+    fs::write(root.root.path().join("Templates/idx.md"), &changed).unwrap();
     let (w, done) = apply(&root, OLD, NEW, scan);
     assert_eq!(failed(&w), [("Templates/idx.md", "conflict")]);
     assert_eq!(w[1].code, RENAME_INDEX_LINK);
@@ -152,8 +154,8 @@ fn non_utf8_index_is_not_patchable_and_untouched() {
     let (p, root) = vault("bin", &[]);
     let mut raw = idx("[[a]]").into_bytes();
     raw.push(0xff);
-    fs::create_dir_all(root.path().join("Templates")).unwrap();
-    fs::write(root.path().join("Templates/idx.md"), &raw).unwrap();
+    fs::create_dir_all(root.root.path().join("Templates")).unwrap();
+    fs::write(root.root.path().join("Templates/idx.md"), &raw).unwrap();
     let (w, done) = update_index_links(&root, OLD, NEW);
     assert_eq!(failed(&w), [("Templates/idx.md", "not_patchable")]);
     assert!(done.is_empty());
@@ -188,8 +190,8 @@ fn size_bound_refuses_before_rewriting() {
     let head = idx("[[a]]\n");
     let pad = usize::try_from(MAX_ARTIFACT_BYTES).unwrap() - 2 - head.len();
     let big = format!("{head}{}", "x".repeat(pad));
-    fs::create_dir_all(root.path().join("Templates")).unwrap();
-    fs::write(root.path().join("Templates/idx.md"), &big).unwrap();
+    fs::create_dir_all(root.root.path().join("Templates")).unwrap();
+    fs::write(root.root.path().join("Templates/idx.md"), &big).unwrap();
     let (w, done) = update_index_links(&root, OLD, NEW);
     assert_eq!(failed(&w), [("Templates/idx.md", "not_patchable")]);
     assert!(done.is_empty());
@@ -275,13 +277,13 @@ fn new_dir_prefix_is_compared_exactly() {
 fn file_deleted_between_scan_and_write_is_conflict() {
     let (p, root) = vault("gone", &[("Templates/idx.md", &idx("[[a]]"))]);
     let scan = collect(&root, OLD, "Templates", |v| {
-        walk_md(&root, &["Templates"], MAX_ARTIFACT_BYTES, v)
+        walk_md(&root.root, &["Templates"], MAX_ARTIFACT_BYTES, v)
     });
-    fs::remove_file(root.path().join("Templates/idx.md")).unwrap();
+    fs::remove_file(root.root.path().join("Templates/idx.md")).unwrap();
     let (w, done) = apply(&root, OLD, NEW, scan);
     assert_eq!(failed(&w), [("Templates/idx.md", "conflict")]);
     assert!(done.is_empty());
-    assert!(!root.path().join("Templates/idx.md").exists());
+    assert!(!root.root.path().join("Templates/idx.md").exists());
     let _ = fs::remove_dir_all(p);
 }
 
@@ -302,8 +304,8 @@ fn symlinked_index_pointing_outside_writes_nothing_outside() {
     let (p, root) = vault("symout", &[]);
     let outside = p.join("outside.md");
     fs::write(&outside, idx("[[a]]")).unwrap();
-    fs::create_dir_all(root.path().join("Templates")).unwrap();
-    std::os::unix::fs::symlink(&outside, root.path().join("Templates/l.md")).unwrap();
+    fs::create_dir_all(root.root.path().join("Templates")).unwrap();
+    std::os::unix::fs::symlink(&outside, root.root.path().join("Templates/l.md")).unwrap();
     let (_, done) = update_index_links(&root, OLD, NEW);
     assert!(done.is_empty());
     assert_eq!(fs::read(&outside).unwrap(), idx("[[a]]").into_bytes());
@@ -314,8 +316,9 @@ fn symlinked_index_pointing_outside_writes_nothing_outside() {
 #[test]
 fn in_vault_symlink_to_another_type_dir_writes_nothing_there() {
     let (p, root) = vault("pin", &[("Snippets/x.md", &idx("[[a]]"))]);
-    fs::create_dir_all(root.path().join("Templates")).unwrap();
-    std::os::unix::fs::symlink("../Snippets/x.md", root.path().join("Templates/l.md")).unwrap();
+    fs::create_dir_all(root.root.path().join("Templates")).unwrap();
+    std::os::unix::fs::symlink("../Snippets/x.md", root.root.path().join("Templates/l.md"))
+        .unwrap();
     let (w, done) = update_index_links(&root, OLD, NEW);
     assert_eq!(failed(&w), [("Templates/l.md", "not_patchable")]);
     assert!(done.is_empty());

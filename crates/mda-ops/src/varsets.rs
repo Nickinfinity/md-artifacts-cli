@@ -9,7 +9,7 @@ use mda_core::serialize::from_parsed;
 use mda_core::variables::{SubsetRef, is_var_name, target};
 use mda_core::varset::{Applied, Profile, Score, order, subsets};
 
-use crate::artifact::{artifact_path, bad_path, load, root_of};
+use crate::artifact::{artifact_path, bad_path, load_at, locate};
 use crate::artifact_write::WriteResponse;
 use crate::render::render_error;
 use crate::vars::{create_variables_file, scan};
@@ -117,9 +117,7 @@ pub struct Match {
 /// assert_eq!(match_(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn match_(ctx: &Ctx, req: MatchRequest) -> Result<MatchResponse, OpError> {
-    let root = &root_of(ctx)?;
-    artifact_path(&req.path)?;
-    let art = load(root, &req.path)?.artifact;
+    let art = load_at(&locate(ctx, &req.path)?)?.artifact;
     let (code, vars) = select_block(&art, req.block).map_err(render_error)?;
     let names = variable_names(code, vars);
     // Built once per call: every candidate is scored against these maps, never the artifact's lists.
@@ -129,7 +127,7 @@ pub fn match_(ctx: &Ctx, req: MatchRequest) -> Result<MatchResponse, OpError> {
     );
     let mut paths = Vec::new();
     let mut ranked: Vec<(usize, Match)> = Vec::new();
-    for sc in scan(root)? {
+    for sc in scan(ctx)? {
         let Ok(p) = sc.file else { continue };
         if p.vars_error.is_some() || p.blocks.iter().any(|b| b.vars_error.is_some()) {
             continue;
@@ -177,12 +175,11 @@ pub fn match_(ctx: &Ctx, req: MatchRequest) -> Result<MatchResponse, OpError> {
 /// assert_eq!(apply(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn apply(ctx: &Ctx, req: ApplyRequest) -> Result<Applied, OpError> {
-    let root = &root_of(ctx)?;
     if artifact_path(&req.path)? != ArtifactType::Variables {
         return Err(bad_path(&req.path));
     }
     check_values(&req.values)?;
-    let p = load(root, &req.path)?.artifact;
+    let p = load_at(&locate(ctx, &req.path)?)?.artifact;
     if p.frontmatter.artifact_type != ArtifactType::Variables {
         return Err(bad_path(&req.path));
     }
@@ -209,7 +206,6 @@ pub fn apply(ctx: &Ctx, req: ApplyRequest) -> Result<Applied, OpError> {
 /// assert_eq!(save(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn save(ctx: &Ctx, req: SaveRequest) -> Result<WriteResponse, OpError> {
-    let root = root_of(ctx)?;
     let title = js_trim(&req.title);
     if title.is_empty() {
         return Err(OpError::new(error::VARS_BAD_TITLE));
@@ -230,7 +226,7 @@ pub fn save(ctx: &Ctx, req: SaveRequest) -> Result<WriteResponse, OpError> {
             ..ModelBlock::default()
         });
     }
-    create_variables_file(&root, req.dir.as_deref(), model)
+    create_variables_file(ctx, req.dir.as_deref(), model)
 }
 
 /// TS `subSetLabel`: the heading, else the file's title, else its file name.

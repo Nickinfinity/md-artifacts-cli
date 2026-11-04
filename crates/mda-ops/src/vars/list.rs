@@ -5,7 +5,7 @@ use mda_core::error::VarsError;
 use mda_core::varset::{Query, Shape, Subset, file_text, filter_subsets, shape, subsets};
 
 use super::{Scanned, scan};
-use crate::artifact::{TreeError, root_of};
+use crate::artifact::TreeError;
 use crate::{Ctx, OpError};
 
 /// `vars.list` params: none.
@@ -87,7 +87,7 @@ pub struct VarsFile {
 /// ```
 pub fn list(ctx: &Ctx, req: ListRequest) -> Result<ListResponse, OpError> {
     let ListRequest {} = req;
-    let files = scan(&root_of(ctx)?)?.into_iter().map(entry).collect();
+    let files = scan(ctx)?.into_iter().map(entry).collect();
     Ok(ListResponse { files })
 }
 
@@ -104,7 +104,7 @@ pub fn search(ctx: &Ctx, req: SearchRequest) -> Result<ListResponse, OpError> {
     let Some(q) = Query::new(&req.query) else {
         return list(ctx, ListRequest {});
     };
-    let files = scan(&root_of(ctx)?)?
+    let files = scan(ctx)?
         .into_iter()
         .filter_map(|s| keep(entry(s), &q))
         .collect();

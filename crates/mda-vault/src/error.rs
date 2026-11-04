@@ -45,6 +45,10 @@ pub enum VaultError {
     /// A configuration file is corrupt, too large, not UTF-8, or breaks a spec §12 rule.
     #[error("invalid config: {path:?}")]
     ConfigInvalid { path: PathBuf },
+    /// A machine-file `[types.<T>]` location table breaks spec §15 (`reason`: `vault`, `dir`, `both`,
+    /// `neither`, `shape`).
+    #[error("invalid location for {ty}: {reason}")]
+    LocationInvalid { ty: String, reason: &'static str },
     /// A walk cap was reached; refused before the work it bounds (no path: the whole call is refused).
     #[error("walk limit {limit:?} ({max})")]
     Limit { limit: WalkLimit, max: u64 },

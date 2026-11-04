@@ -1,0 +1,10 @@
+# D-9, D-33: copy → verify → switch → delete; the target dir is created.
+vault = "vault_move_src"
+workspace = "vault_loc_b"
+params = { type = "Snippet", to = { vault = "$WORKSPACE", dir = "New" }, files = [
+  { path = "Snippets/a.md", hash = "fd99dedae7c3f7532f8a65d60f811a05dc9dc3e1c5936b0c554c98aafdad8c10" },
+  { path = "Snippets/s.md", hash = "21933aa92f2e8815f8b1a47e81b1243112e2c0f25b6cceaf7936e977a7713d28" },
+] }
+expect = { moved = 2, location = { vault = "$WORKSPACE", dir = "New" }, warnings = [] }
+expect_files = { "Snippets/a.md" = false, "Snippets/s.md" = false }
+expect_workspace_files = { "New/a.md" = "# a\n", "New/s.md" = "# s\n" }

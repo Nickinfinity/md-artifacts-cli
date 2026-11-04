@@ -9,11 +9,14 @@ use mda_core::naming::{default_stem, validate_stem};
 use mda_core::parse::text::js_trim;
 use mda_core::serialize::serialize;
 use mda_core::variables::{self, EditError};
-use mda_vault::{Root, content_hash, create_new};
+use mda_vault::{content_hash, create_new};
 
-use crate::artifact::{artifact_path, bad_path, check_dirs, root_of, segments};
-use crate::artifact_rewrite::rewrite;
+use crate::artifact::{
+    artifact_path, bad_path, check_dirs_at, locate, no_dot_below_root, segments,
+};
+use crate::artifact_rewrite::rewrite_at;
 use crate::artifact_write::{WriteResponse, map_serialize, max_bytes};
+use crate::location::physical;
 use crate::write_file::exists_actual;
 use crate::{ArtifactType, Ctx, OpError, error, index_create};
 
@@ -22,7 +25,8 @@ mod requests;
 mod scan;
 pub use list::*;
 pub use requests::*;
-pub(crate) use scan::{Scanned, scan};
+pub(crate) use scan::to_virtual;
+pub(crate) use scan::{Scanned, scan, walk_types};
 
 /// The one edit path: the file must sit under `Variables/` **and** parse as a Variables file (a
 /// Snippet parked there must not be rewritten as vars), then `f` edits the model and `rewrite`
@@ -33,11 +37,10 @@ fn edit(
     hash: &str,
     f: impl FnOnce(&mut ArtifactModel) -> Result<(), EditError>,
 ) -> Result<WriteResponse, OpError> {
-    let root = &root_of(ctx)?;
     if artifact_path(path)? != ArtifactType::Variables {
         return Err(bad_path(path));
     }
-    rewrite(root, path, hash, |cur| {
+    rewrite_at(&locate(ctx, path)?, hash, |cur| {
         if cur.frontmatter.artifact_type != ArtifactType::Variables {
             return Err(bad_path(path));
         }
@@ -50,7 +53,7 @@ fn edit(
 /// Create `<dir>/<slug(title)>.md` from `model`, never overwriting (`file.exists`). `dir` defaults
 /// to `Variables` and must be it or under it. Shared with `varsets.save` (W5b).
 pub(crate) fn create_variables_file(
-    root: &Root,
+    ctx: &Ctx,
     dir: Option<&str>,
     model: ArtifactModel,
 ) -> Result<WriteResponse, OpError> {
@@ -59,17 +62,21 @@ pub(crate) fn create_variables_file(
     if segs.first() != Some(&ArtifactType::Variables.info().dir) {
         return Err(bad_path(dir));
     }
-    check_dirs(
-        root,
-        ArtifactType::Variables.info().dir,
-        segs.get(1..).unwrap_or_default(),
-    )?;
+    let at = physical(ctx, dir)?;
+    no_dot_below_root(&at.place, &at.rel, dir)?;
+    check_dirs_at(&at.place, mid_dirs_of(&segs))?;
     let stem = default_stem(&model.title);
     validate_stem(&stem)?;
     let path = format!("{dir}/{stem}.md");
     let text = serialize(&model, max_bytes()).map_err(|e| map_serialize(e, &path))?;
-    let rel = Path::new(&path);
-    create_new(root, rel, text.as_bytes()).map_err(|e| exists_actual(root, rel, e))?;
+    // `rel` is empty for `Variables` at a root location (the vault root itself).
+    let phys = if at.rel.is_empty() {
+        format!("{stem}.md")
+    } else {
+        format!("{}/{stem}.md", at.rel)
+    };
+    let (root, rel) = (&at.place.root, Path::new(&phys));
+    create_new(root, rel, text.as_bytes()).map_err(|e| exists_actual(root, rel, &path, e))?;
     let hash = content_hash(text.as_bytes());
     Ok(WriteResponse { path, hash })
 }
@@ -84,7 +91,6 @@ pub(crate) fn create_variables_file(
 /// assert_eq!(file_new(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn file_new(ctx: &Ctx, req: NewFileRequest) -> Result<WriteResponse, OpError> {
-    let root = root_of(ctx)?;
     let title = js_trim(&req.title);
     if title.is_empty() {
         return Err(OpError::new(error::VARS_BAD_TITLE));
@@ -92,7 +98,7 @@ pub fn file_new(ctx: &Ctx, req: NewFileRequest) -> Result<WriteResponse, OpError
     let mut model = index_create::model(ArtifactType::Variables, title);
     model.description = req.description;
     model.tags = req.tags;
-    create_variables_file(&root, req.dir.as_deref(), model)
+    create_variables_file(ctx, req.dir.as_deref(), model)
 }
 
 /// `vars.meta.tags`: replace the file's tags.
@@ -238,4 +244,9 @@ pub fn var_delete(ctx: &Ctx, req: VarDeleteRequest) -> Result<WriteResponse, OpE
     edit(ctx, &req.path, &req.expected_hash, |m| {
         variables::delete_var(m, req.subset.as_ref(), &req.name)
     })
+}
+
+/// The directory segments below the type dir of `dir`'s segments (all of them; `dir` has no file).
+fn mid_dirs_of<'a>(segs: &'a [&'a str]) -> &'a [&'a str] {
+    segs.get(1..).unwrap_or_default()
 }

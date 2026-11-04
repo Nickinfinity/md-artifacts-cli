@@ -1,0 +1,12 @@
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Template]\nvault=\"$WORKSPACE\"\ndir=\"deep\""
+params = {}
+expect = [
+  { type = "Snippet", dir = "Snippets", enabled = true, dirExists = true, location = { vault = "$VAULT", dir = "Snippets" } },
+  { type = "AIAgentsConfig", dir = "AIAgentsConf", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "AIAgentsConf" } },
+  { type = "Command", dir = "Commands", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "Commands" } },
+  { type = "Template", dir = "Templates", enabled = true, dirExists = true, location = { vault = "$WORKSPACE", dir = "deep" } },
+  { type = "Variables", dir = "Variables", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "Variables" } },
+  { type = "AIPrompt", dir = "AIPrompts", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "AIPrompts" } },
+]

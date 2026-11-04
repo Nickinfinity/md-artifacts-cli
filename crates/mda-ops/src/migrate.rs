@@ -9,13 +9,14 @@ use mda_core::parse::decode;
 use mda_core::registry::{ArtifactType, TYPES};
 use mda_vault::{
     MAX_WALK_BYTES, Root, VaultError, WalkLimit, content_hash, file_len, read_bounded, replace,
-    walk_md,
 };
 
-use crate::artifact::{MAX_ARTIFACT_BYTES, artifact_path, root_of};
+use crate::artifact::{MAX_ARTIFACT_BYTES, artifact_path, bad_path, no_dot_below_root, root_of};
 use crate::error::{
-    FILE_CONFLICT, FILE_TOO_LARGE, MIGRATE_UP_TO_DATE, OP_BAD_REQUEST, vault_error,
+    FILE_CONFLICT, FILE_TOO_LARGE, MIGRATE_UP_TO_DATE, OP_BAD_REQUEST, vault_error_at,
 };
+use crate::location::{Place, map, resolve};
+use crate::vars::walk_types;
 use crate::{Ctx, OpError};
 
 /// Most entries one apply takes.
@@ -40,7 +41,7 @@ pub struct PlanRequest {}
 /// let f: mda_ops::migrate::FileRef = serde_json::from_value(serde_json::json!({"path": "Snippets/a.md", "hash": "h"})).unwrap();
 /// assert_eq!(f.path, "Snippets/a.md");
 /// ```
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct FileRef {
     pub path: String,
@@ -153,19 +154,13 @@ pub struct ApplyResponse {
     pub skipped: usize,
 }
 
-/// Walk the six type dirs (spec §11) with one shared budget; per-file failures reach `visit`, caps
-/// refuse the call (`walk.limit`).
+/// Walk every type's location (spec §11, D-10) with one shared budget; visits carry virtual paths,
+/// per-file failures reach `visit`, caps refuse the call (`walk.limit`).
 pub(crate) fn scope(
-    root: &Root,
-    visit: impl FnMut(&str, Result<Vec<u8>, VaultError>),
+    ctx: &Ctx,
+    visit: impl FnMut(&str, Result<Vec<u8>, OpError>),
 ) -> Result<(), OpError> {
-    walk_md(
-        root,
-        &TYPES.each_ref().map(|t| t.dir),
-        MAX_ARTIFACT_BYTES,
-        visit,
-    )
-    .map_err(|e| vault_error(e, root))
+    walk_types(ctx, &TYPES.each_ref().map(|t| t.artifact_type), visit)
 }
 
 impl From<Skip> for OpError {
@@ -183,16 +178,15 @@ fn plan_all<C>(
     ctx: &Ctx,
     make: impl Fn(&str, &[u8]) -> Result<Option<C>, Skip>,
 ) -> Result<PlanResponse<C>, OpError> {
-    let root = root_of(ctx)?;
     let (mut changes, mut skipped) = (Vec::new(), Vec::new());
-    scope(&root, |path, read| {
+    scope(ctx, |path, read| {
         let err = match read {
             Ok(bytes) => match make(path, &bytes) {
                 Ok(Some(c)) => return changes.push(c),
                 Ok(None) => return,
                 Err(s) => OpError::from(s),
             },
-            Err(e) => vault_error(e, &root),
+            Err(e) => e,
         };
         skipped.push(Skipped {
             path: path.to_owned(),
@@ -219,8 +213,14 @@ fn skip(path: &str, e: OpError) -> ApplyResult {
     }
 }
 
-fn apply_one(root: &Root, f: &FileRef, budget: &mut Budget, rewrite: Rewrite) -> ApplyResult {
-    match apply_inner(root, f, budget, rewrite) {
+fn apply_one(
+    place: &Place,
+    rel: &str,
+    f: &FileRef,
+    budget: &mut Budget,
+    rewrite: Rewrite,
+) -> ApplyResult {
+    match apply_inner(&place.root, rel, f, budget, rewrite) {
         Ok(hash) => ApplyResult::Written {
             path: f.path.clone(),
             hash,
@@ -231,12 +231,13 @@ fn apply_one(root: &Root, f: &FileRef, budget: &mut Budget, rewrite: Rewrite) ->
 
 fn apply_inner(
     root: &Root,
+    rel: &str,
     f: &FileRef,
     budget: &mut Budget,
     rewrite: Rewrite,
 ) -> Result<String, OpError> {
-    let rel = Path::new(&f.path);
-    let ve = |e| vault_error(e, root);
+    let rel = Path::new(rel);
+    let ve = |e| vault_error_at(e, root, &f.path);
     let limit = || {
         ve(VaultError::Limit {
             limit: WalkLimit::Bytes,
@@ -280,12 +281,29 @@ fn apply_inner(
 /// Apply core (M-9, M-10): cap and path-check the whole request before any I/O, then one
 /// independent, hash-checked, budgeted entry at a time.
 fn apply_all(ctx: &Ctx, req: ApplyRequest, rewrite: Rewrite) -> Result<ApplyResponse, OpError> {
-    let root = root_of(ctx)?;
     if req.files.len() > MAX_APPLY_FILES {
         return Err(OpError::new(OP_BAD_REQUEST).with("reason", "at most 10000 files"));
     }
+    if req.files.is_empty() {
+        root_of(ctx)?; // no path to resolve: still refuse with no vault, as before
+    }
+    // Resolve once per type, then map every path by hand (never `physical` per file).
+    let mut places: Vec<(ArtifactType, Place)> = Vec::new();
+    let mut targets = Vec::with_capacity(req.files.len());
     for f in &req.files {
-        artifact_path(&f.path)?;
+        let ty = artifact_path(&f.path)?;
+        let i = match places.iter().position(|(t, _)| *t == ty) {
+            Some(i) => i,
+            None => {
+                places.push((ty, resolve(ctx, ty)?));
+                places.len() - 1
+            }
+        };
+        let rel = match places.get(i) {
+            Some((_, place)) => map(ty, place, &f.path)?,
+            None => return Err(bad_path(&f.path)),
+        };
+        targets.push((i, rel));
     }
     let mut budget = Budget {
         used: 0,
@@ -294,7 +312,16 @@ fn apply_all(ctx: &Ctx, req: ApplyRequest, rewrite: Rewrite) -> Result<ApplyResp
     let results: Vec<ApplyResult> = req
         .files
         .iter()
-        .map(|f| apply_one(&root, f, &mut budget, rewrite))
+        .zip(&targets)
+        .map(|(f, (i, rel))| match places.get(*i) {
+            // Binding (b): at a root place the canonical path may hold no `.`-component. Per
+            // entry, so one missing file does not abort the batch.
+            Some((_, p)) => match no_dot_below_root(p, rel, &f.path) {
+                Ok(()) => apply_one(p, rel, f, &mut budget, rewrite),
+                Err(e) => skip(&f.path, e),
+            },
+            None => skip(&f.path, bad_path(&f.path)),
+        })
         .collect();
     let written = results
         .iter()

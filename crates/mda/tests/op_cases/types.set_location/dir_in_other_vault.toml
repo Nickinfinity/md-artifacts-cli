@@ -1,0 +1,6 @@
+# D-8: point Snippet at vault B's existing `Lib/` without moving a file.
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+params = { type = "Snippet", vault = "$WORKSPACE", dir = "Lib" }
+expect = { location = { vault = "$WORKSPACE", dir = "Lib" } }
+expect_files = { "Snippets/a.md" = "---\nartifactType: Snippet\ntitle: A\n---\n\n```bash\necho a\n```\n" }

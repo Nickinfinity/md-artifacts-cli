@@ -434,9 +434,51 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 81);
+    assert_eq!(ALL_CODES.len(), 89);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE
     );
+}
+
+#[test]
+fn location_codes_exact_json() {
+    assert!(ALL_CODES.contains(&CONFIG_LOCATION_CONFLICT));
+    assert!(ALL_CODES.contains(&CONFIG_LOCATION_INVALID));
+    let e = OpError::from(VaultError::LocationInvalid {
+        ty: "Snippet".into(),
+        reason: "dir",
+    });
+    assert_eq!(
+        serde_json::to_value(e).unwrap(),
+        serde_json::json!({"code": "config.location_invalid", "params": {"type": "Snippet", "reason": "dir"}})
+    );
+    assert_eq!(
+        serde_json::to_value(
+            OpError::new(CONFIG_LOCATION_CONFLICT)
+                .with("type", "Snippet")
+                .with("other", "Variables")
+        )
+        .unwrap(),
+        serde_json::json!({"code": "config.location_conflict", "params": {"type": "Snippet", "other": "Variables"}})
+    );
+}
+
+#[test]
+fn move_codes_exact_json() {
+    let cases = [
+        (MOVE_TARGET_EXISTS, "path", "Snippets/s.md"),
+        (MOVE_PLAN_STALE, "path", "Snippets/n.md"),
+        (MOVE_BAD_PATH, "path", "Snippets/.git/x.md"),
+        (MOVE_OVERLAP, "dir", "Lib"),
+        (MOVE_LEFT_BEHIND, "count", "2"),
+        (MOVE_SOURCE_KEPT, "path", "Snippets/a.md"),
+    ];
+    for (code, key, val) in cases {
+        assert!(ALL_CODES.contains(&code), "{code} not in ALL_CODES");
+        assert_eq!(
+            serde_json::to_value(OpError::new(code).with(key, val)).unwrap(),
+            serde_json::json!({"code": code, "params": {key: val}})
+        );
+    }
 }

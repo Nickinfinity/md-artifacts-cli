@@ -31,6 +31,8 @@ pub fn english(code: &str) -> Option<&'static str> {
         VAULT_UNKNOWN => "not a known vault (add it with \"mda vault select\")",
         VAULT_UNAVAILABLE => "the default vault is no longer available",
         CONFIG_INVALID => "the configuration file is invalid; fix or remove it",
+        CONFIG_LOCATION_CONFLICT => "two artifact types are configured for the same location",
+        CONFIG_LOCATION_INVALID => "an artifact type's location in the configuration is invalid",
         VARS_BAD_NAME => "variable names are VK- then a letter, then letters, digits or _",
         VARS_VAR_EXISTS => "a variable with that name already exists in this sub-set",
         VARS_VAR_NOT_FOUND => "no variable with that name in this sub-set",
@@ -52,6 +54,12 @@ pub fn english(code: &str) -> Option<&'static str> {
         RENAME_INDEX_LINK => "an index links the old name",
         RENAME_LINKS_UNCHECKED => "index links not checked",
         RENAME_LINK_UPDATE_FAILED => "an index link could not be updated",
+        MOVE_TARGET_EXISTS => "a file already exists at the move target; nothing was moved",
+        MOVE_PLAN_STALE => "the files changed since the move was planned; plan again",
+        MOVE_BAD_PATH => "a file cannot be moved to a dot path at a root location",
+        MOVE_OVERLAP => "the move target lies inside the type's current root location",
+        MOVE_LEFT_BEHIND => "entries that are not .md files (or are symlinks) stay where they are",
+        MOVE_SOURCE_KEPT => "a moved file's original could not be deleted; delete it by hand",
         VARS_MIXED_FILE => {
             "a variables fence sits before the first ## section; edits refuse this file"
         }

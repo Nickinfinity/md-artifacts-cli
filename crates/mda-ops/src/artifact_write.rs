@@ -11,11 +11,9 @@ use mda_core::patch::{CodeTarget, FmField, PatchError, patch_code, patch_field};
 use mda_core::serialize::{SerializeError, serialize};
 use mda_vault::{content_hash, create_new, delete as vault_delete, replace};
 
-use crate::artifact::{
-    MAX_ARTIFACT_BYTES, artifact_path, bad_path, check_dirs, mid_dirs, root_of, segments,
-};
-use crate::artifact_rewrite::{read_checked, rewrite};
-use crate::error::vault_error;
+use crate::artifact::{MAX_ARTIFACT_BYTES, bad_path, check_dirs_at, locate, mid_dirs, segments};
+use crate::artifact_rewrite::{read_checked_at, rewrite_at};
+use crate::error::vault_error_at;
 use crate::write_file::exists_actual;
 use crate::{Ctx, OpError, error};
 
@@ -209,23 +207,20 @@ pub(crate) fn written(path: String, text: &str) -> WriteResponse {
 /// assert_eq!(create(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
-    let root = &root_of(ctx)?;
-    if artifact_path(&req.path)? != req.model.artifact_type {
+    let r = locate(ctx, &req.path)?;
+    let root = &r.place.root;
+    if r.ty != req.model.artifact_type {
         return Err(bad_path(&req.path));
     }
     // D-7/D-8: only the last segment's stem is name-checked, and only on a new name; new
     // directory segments (D-28) are checked first.
     let segs = segments(&req.path).map_err(|()| bad_path(&req.path))?;
-    check_dirs(
-        root,
-        segs.first().copied().unwrap_or_default(),
-        mid_dirs(&segs),
-    )?;
+    check_dirs_at(&r.place, mid_dirs(&segs))?;
     let file = req.path.rsplit('/').next().unwrap_or_default();
     mda_core::naming::validate_stem(file.strip_suffix(".md").unwrap_or(file))?;
     let text = serialize(&req.model, max_bytes()).map_err(|e| map_serialize(e, &req.path))?;
-    let rel = Path::new(&req.path);
-    create_new(root, rel, text.as_bytes()).map_err(|e| exists_actual(root, rel, e))?;
+    let rel = Path::new(&r.rel);
+    create_new(root, rel, text.as_bytes()).map_err(|e| exists_actual(root, rel, &req.path, e))?;
     Ok(written(req.path, &text))
 }
 
@@ -240,14 +235,14 @@ pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
 /// assert_eq!(update(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn update(ctx: &Ctx, req: UpdateRequest) -> Result<WriteResponse, OpError> {
-    let root = &root_of(ctx)?;
-    let t = artifact_path(&req.path)?;
+    let r = locate(ctx, &req.path)?;
+    let t = r.ty;
     let UpdateRequest {
         path,
         expected_hash,
         model,
     } = req;
-    rewrite(root, &path, &expected_hash, |_| {
+    rewrite_at(&r, &expected_hash, |_| {
         if t == model.artifact_type {
             Ok(model)
         } else {
@@ -267,8 +262,8 @@ pub fn update(ctx: &Ctx, req: UpdateRequest) -> Result<WriteResponse, OpError> {
 /// assert_eq!(patch(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn patch(ctx: &Ctx, req: PatchRequest) -> Result<WriteResponse, OpError> {
-    let root = &root_of(ctx)?;
-    artifact_path(&req.path)?;
+    let r = locate(ctx, &req.path)?;
+    let root = &r.place.root;
     let edit = req.edit;
     let bad = |r: &str| OpError::new(error::OP_BAD_REQUEST).with("reason", r);
     let target = match &edit {
@@ -297,7 +292,7 @@ pub fn patch(ctx: &Ctx, req: PatchRequest) -> Result<WriteResponse, OpError> {
         PatchEdit::Code { .. } => Some(CodeTarget::Single),
         _ => None,
     };
-    let bytes = read_checked(root, &req.path, &req.expected_hash)?;
+    let bytes = read_checked_at(&r, &req.expected_hash)?;
     // Lossy like `update` and Obsidian's own save: invalid UTF-8 becomes U+FFFD (decision #35).
     let content = decode(&bytes);
     let added = match &edit {
@@ -322,12 +317,12 @@ pub fn patch(ctx: &Ctx, req: PatchRequest) -> Result<WriteResponse, OpError> {
     too_large(&req.path, out.len())?;
     replace(
         root,
-        Path::new(&req.path),
+        Path::new(&r.rel),
         out.as_bytes(),
         &req.expected_hash,
         MAX_ARTIFACT_BYTES,
     )
-    .map_err(|e| vault_error(e, root))?;
+    .map_err(|e| vault_error_at(e, root, &req.path))?;
     Ok(written(req.path, &out))
 }
 
@@ -342,15 +337,15 @@ pub fn patch(ctx: &Ctx, req: PatchRequest) -> Result<WriteResponse, OpError> {
 /// assert_eq!(delete(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn delete(ctx: &Ctx, req: DeleteRequest) -> Result<DeleteResponse, OpError> {
-    let root = &root_of(ctx)?;
-    artifact_path(&req.path)?;
+    let r = locate(ctx, &req.path)?;
+    let root = &r.place.root;
     vault_delete(
         root,
-        Path::new(&req.path),
+        Path::new(&r.rel),
         &req.expected_hash,
         MAX_ARTIFACT_BYTES,
     )
-    .map_err(|e| vault_error(e, root))?;
+    .map_err(|e| vault_error_at(e, root, &req.path))?;
     Ok(DeleteResponse { path: req.path })
 }
 

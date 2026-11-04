@@ -18,6 +18,8 @@ mod input;
 mod migrate;
 mod naming;
 pub mod print;
+mod types;
+mod types_move;
 mod vars;
 mod varsets;
 mod vault;
@@ -65,7 +67,7 @@ pub enum Command {
     Config(vault::ConfigCmd),
     /// Artifact types in the current vault.
     #[command(subcommand)]
-    Types(vault::TypesCmd),
+    Types(types::TypesCmd),
     /// Variables files: create, edit sub-sets and variables.
     #[command(subcommand)]
     Vars(vars::VarsCmd),
@@ -181,7 +183,7 @@ fn request(cmd: Command, ctx: &mda_ops::Ctx) -> Option<(String, Result<Value, Op
         Command::Index(cmd) => return Some(index::index_request(cmd)),
         Command::Vault(cmd) => return Some(vault::vault_request(cmd)),
         Command::Config(cmd) => return Some(vault::config_request(cmd)),
-        Command::Types(cmd) => return Some(vault::types_request(cmd)),
+        Command::Types(cmd) => return Some(types::types_request(cmd)),
         Command::Vars(cmd) => return Some(vars::vars_request(cmd)),
         Command::Varsets(cmd) => return Some(varsets::varsets_request(cmd)),
         Command::Migrate(cmd) => return Some(migrate::migrate_request(cmd, ctx)),
