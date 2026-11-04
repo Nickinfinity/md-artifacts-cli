@@ -25,6 +25,7 @@ mod requests;
 mod scan;
 pub use list::*;
 pub use requests::*;
+pub(crate) use scan::to_virtual;
 pub(crate) use scan::{Scanned, scan, walk_types};
 
 /// The one edit path: the file must sit under `Variables/` **and** parse as a Variables file (a

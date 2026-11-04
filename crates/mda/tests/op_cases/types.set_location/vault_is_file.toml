@@ -1,0 +1,8 @@
+# A vault that is a regular file is refused; the machine file is untouched.
+vault = "vault_loc_a"
+machine_config = "[types.AIPrompt]\ndir=\"P\""
+params = { type = "Snippet", vault = "$VAULT/Snippets/a.md" }
+expect_error = "config.location_invalid"
+expect_error_params = { type = "Snippet", reason = "vault" }
+[expect_config_files]
+"config.toml" = "[types.AIPrompt]\ndir=\"P\""

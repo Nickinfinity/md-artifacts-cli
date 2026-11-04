@@ -18,6 +18,7 @@ mod rename_links;
 pub mod render;
 pub mod system;
 pub mod types;
+pub mod types_move;
 pub mod validate;
 pub mod vars;
 pub mod varsets;
@@ -34,6 +35,6 @@ pub use registry::{Ctx, OpSpec, Source, check_names, dispatch, dispatch_in, ops,
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_ops::PROTOCOL, "2.4");
+/// assert_eq!(mda_ops::PROTOCOL, "2.5");
 /// ```
-pub const PROTOCOL: &str = "2.4";
+pub const PROTOCOL: &str = "2.5";

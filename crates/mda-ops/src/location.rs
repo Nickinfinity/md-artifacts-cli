@@ -15,6 +15,10 @@ use crate::artifact::{bad_path, root_of, segments};
 use crate::vault::read_plain;
 use crate::{Ctx, OpError, error};
 
+mod set;
+pub use set::{LocationSpec, LocationView};
+pub(crate) use set::{check_location, persist_location, place_for};
+
 /// A type's resolved place: its vault and the base directory inside it (`None` = vault root).
 ///
 /// # Examples
@@ -67,19 +71,27 @@ impl Eff {
     }
 }
 
-/// `t`'s effective location from the already-read `cfg`. An explicit vault must pass
-/// `validate_vault` (canonical: the stored string is untrusted, D-5); else the session vault.
+/// `t`'s effective location from the already-read `cfg` (its table, else the default).
 fn effective(
     ctx: &Ctx,
     cfg: &mda_vault::config::MachineConfig,
     t: ArtifactType,
 ) -> Result<Eff, OpError> {
-    let loc = location(cfg, t)?.unwrap_or(Location {
-        vault: None,
-        place: Where::Default,
-    });
-    let root = match loc.vault {
-        Some(v) => validate_vault(&plain_path(Path::new(&v))).map_err(|_| {
+    let loc = location(cfg, t)?.unwrap_or(DEFAULT);
+    eff_of(ctx, t, &loc)
+}
+
+/// The default location: the session vault, the registry dir (unpinned).
+const DEFAULT: Location = Location {
+    vault: None,
+    place: Where::Default,
+};
+
+/// `t`'s effective location from a (stored or hypothetical) `loc`. An explicit vault must pass
+/// `validate_vault` (canonical: the stored string is untrusted, D-5); else the session vault.
+fn eff_of(ctx: &Ctx, t: ArtifactType, loc: &Location) -> Result<Eff, OpError> {
+    let root = match &loc.vault {
+        Some(v) => validate_vault(&plain_path(Path::new(v))).map_err(|_| {
             OpError::new(error::CONFIG_LOCATION_INVALID)
                 .with("type", t.as_str())
                 .with("reason", "vault")
@@ -88,7 +100,41 @@ fn effective(
     };
     Ok(Eff {
         root,
-        place: loc.place,
+        place: loc.place.clone(),
+    })
+}
+
+/// D-3 for `t` at `mine` against every other type's effective location in `cfg` (defaults
+/// included). An unreadable other type cannot be claimed against; it fails on its own ops.
+fn conflicts(
+    ctx: &Ctx,
+    cfg: &mda_vault::config::MachineConfig,
+    t: ArtifactType,
+    mine: &Eff,
+) -> Result<(), OpError> {
+    for o in TYPES.iter().map(|i| i.artifact_type).filter(|o| *o != t) {
+        if let Ok(theirs) = effective(ctx, cfg, o)
+            && clash(mine, t, &theirs, o)
+        {
+            return Err(OpError::new(error::CONFIG_LOCATION_CONFLICT)
+                .with("type", t.as_str())
+                .with("other", o.as_str()));
+        }
+    }
+    Ok(())
+}
+
+/// The D-5 b pin on an explicit `dir`, then the place.
+fn finish(t: ArtifactType, mine: Eff) -> Result<Place, OpError> {
+    if let Where::Dir(d) = &mine.place
+        && !pinned(&mine.root, d)
+    {
+        return Err(bad_path(t.info().dir));
+    }
+    let base = mine.dir(t).map(str::to_owned);
+    Ok(Place {
+        root: mine.root,
+        base,
     })
 }
 
@@ -135,26 +181,8 @@ pub fn resolve(ctx: &Ctx, t: ArtifactType) -> Result<Place, OpError> {
         None => Default::default(),
     };
     let mine = effective(ctx, &cfg, t)?;
-    for o in TYPES.iter().map(|i| i.artifact_type).filter(|o| *o != t) {
-        // An unreadable other type cannot be claimed against; it fails on its own ops.
-        if let Ok(theirs) = effective(ctx, &cfg, o)
-            && clash(&mine, t, &theirs, o)
-        {
-            return Err(OpError::new(error::CONFIG_LOCATION_CONFLICT)
-                .with("type", t.as_str())
-                .with("other", o.as_str()));
-        }
-    }
-    if let Where::Dir(d) = &mine.place
-        && !pinned(&mine.root, d)
-    {
-        return Err(bad_path(t.info().dir));
-    }
-    let base = mine.dir(t).map(str::to_owned);
-    Ok(Place {
-        root: mine.root,
-        base,
-    })
+    conflicts(ctx, &cfg, t, &mine)?;
+    finish(t, mine)
 }
 
 /// Resolve the virtual path `virt` (first segment = a type dir). `rel` is the physical

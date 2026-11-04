@@ -1,0 +1,8 @@
+# `{type}` alone drops the stored location: back to the default.
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Snippet]\nvault=\"$WORKSPACE\"\ndir=\"Lib\""
+params = { type = "Snippet" }
+expect = { location = { vault = "$VAULT", dir = "Snippets" } }
+[expect_config_files]
+"config.toml" = "vaults = []\n"

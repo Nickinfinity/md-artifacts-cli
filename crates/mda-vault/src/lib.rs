@@ -16,7 +16,8 @@ mod write;
 pub use contain::{Root, contain, plain_path};
 pub use error::{VaultError, WalkLimit};
 pub use listing::{
-    DirListing, MAX_WALK_BYTES, MAX_WALK_DEPTH, MAX_WALK_FILES, list_dir, walk_md, walk_md_multi,
+    DirListing, MAX_WALK_BYTES, MAX_WALK_DEPTH, MAX_WALK_FILES, list_dir, walk_md, walk_md_move,
+    walk_md_multi,
 };
 pub use location::{Location, Where, location, set_location};
 pub use read::{file_len, read_bounded};

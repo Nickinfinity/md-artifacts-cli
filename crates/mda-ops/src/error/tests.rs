@@ -434,7 +434,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 83);
+    assert_eq!(ALL_CODES.len(), 89);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE
@@ -462,4 +462,23 @@ fn location_codes_exact_json() {
         .unwrap(),
         serde_json::json!({"code": "config.location_conflict", "params": {"type": "Snippet", "other": "Variables"}})
     );
+}
+
+#[test]
+fn move_codes_exact_json() {
+    let cases = [
+        (MOVE_TARGET_EXISTS, "path", "Snippets/s.md"),
+        (MOVE_PLAN_STALE, "path", "Snippets/n.md"),
+        (MOVE_BAD_PATH, "path", "Snippets/.git/x.md"),
+        (MOVE_OVERLAP, "dir", "Lib"),
+        (MOVE_LEFT_BEHIND, "count", "2"),
+        (MOVE_SOURCE_KEPT, "path", "Snippets/a.md"),
+    ];
+    for (code, key, val) in cases {
+        assert!(ALL_CODES.contains(&code), "{code} not in ALL_CODES");
+        assert_eq!(
+            serde_json::to_value(OpError::new(code).with(key, val)).unwrap(),
+            serde_json::json!({"code": code, "params": {key: val}})
+        );
+    }
 }

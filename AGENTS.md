@@ -3,6 +3,12 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
+> **Status (2026-11-04): type locations landed (MAC-24, MAC-25; plan `type-locations-leetcode` Phase 1)** — every wire path is
+> virtual `<TypeDir>/<rel>`, mapped through the type's machine-file location (`[types.<T>] vault/dir/root`; resolver
+> `mda-ops/src/location.rs`, write side `location/set.rs`, spec §15); `types.list` rows gain `location`; `types.set_location`,
+> `types.move.plan|apply` (`mda-ops/src/types_move/`, copy → verify → switch → delete; walk `mda_vault::walk_md_move`);
+> codes `config.location_*`, `move.*`; CLI `mda types set-location|move` (`cli/types.rs`, `cli/types_move.rs`, `--at`); protocol
+> **2.5**, engine `0.15.0`.
 > **Status (2026-10-31): W4 + W5 landed (MAC-21, MAC-22), one release** — W5: `updateLinks` on `artifact.rename` rewrites only the
 > link targets of linking template indexes (`multi_index::rewrite_links`, `patch::patch_index_body`, `mda-ops/src/rename_links.rs`), response
 > `updatedIndexes`, failures `rename.link_update_failed{index, reason}`, the rename never undone. W4: — Unicode slugs (`mda-core/src/naming/slug.rs`, NFC via `unicode-normalization`),
@@ -179,7 +185,7 @@ md-artifacts-cli/
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
-├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.4) — orchestrator-owned
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.5) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
 ├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
@@ -225,7 +231,7 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
-- **Authority: `spec/PROTOCOL.md`** (protocol `2.4`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`–`2.4` additive (ER-3; ER-4 + ER-6; ER-7 + ER-5; W4)). Its method, error-code and warning-code
+- **Authority: `spec/PROTOCOL.md`** (protocol `2.5`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`–`2.5` additive (ER-3; ER-4 + ER-6; ER-7 + ER-5; W4; type locations)). Its method, error-code and warning-code
   tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
   `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
@@ -391,7 +397,7 @@ analysis:
   so every client can apply the same rule. The CLI's human `render` refuses it
   (`render.contains_escape`); `--json` returns the response unchanged.
 - **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete|rename`,
-  `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled`, `vars.file.new`, `vars.meta.tags`,
+  `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled|set_location`, `types.move.apply`, `vars.file.new`, `vars.meta.tags`,
   `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`.
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the

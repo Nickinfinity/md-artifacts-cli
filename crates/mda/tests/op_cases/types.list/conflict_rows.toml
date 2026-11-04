@@ -1,0 +1,12 @@
+# Hand-edited clash (D-3): the two types are error rows, the rest list normally.
+vault = "vault_loc_a"
+machine_config = "[types.Snippet]\ndir=\"Shared\"\n[types.Template]\ndir=\"shared\""
+params = {}
+expect = [
+  { type = "Snippet", dir = "Snippets", error = { code = "config.location_conflict" } },
+  { type = "AIAgentsConfig", dir = "AIAgentsConf", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "AIAgentsConf" } },
+  { type = "Command", dir = "Commands", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "Commands" } },
+  { type = "Template", dir = "Templates", error = { code = "config.location_conflict" } },
+  { type = "Variables", dir = "Variables", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "Variables" } },
+  { type = "AIPrompt", dir = "AIPrompts", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "AIPrompts" } },
+]

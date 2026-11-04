@@ -1,0 +1,8 @@
+# A NUL in `dir` is refused; the machine file is untouched.
+vault = "vault_loc_a"
+machine_config = "[types.AIPrompt]\ndir=\"P\""
+params = { type = "Snippet", dir = "a\u0000b" }
+expect_error = "config.location_invalid"
+expect_error_params = { type = "Snippet", reason = "dir" }
+[expect_config_files]
+"config.toml" = "[types.AIPrompt]\ndir=\"P\""

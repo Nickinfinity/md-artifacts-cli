@@ -1,0 +1,13 @@
+# A root location always exists (dirExists true) and shows `root`.
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.Variables]\nvault=\"$WORKSPACE\"\nroot=true"
+params = {}
+expect = [
+  { type = "Snippet", dir = "Snippets", enabled = true, dirExists = true, location = { vault = "$VAULT", dir = "Snippets" } },
+  { type = "AIAgentsConfig", dir = "AIAgentsConf", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "AIAgentsConf" } },
+  { type = "Command", dir = "Commands", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "Commands" } },
+  { type = "Template", dir = "Templates", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "Templates" } },
+  { type = "Variables", dir = "Variables", enabled = true, dirExists = true, location = { vault = "$WORKSPACE", root = true } },
+  { type = "AIPrompt", dir = "AIPrompts", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "AIPrompts" } },
+]

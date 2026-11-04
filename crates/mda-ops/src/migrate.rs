@@ -41,7 +41,7 @@ pub struct PlanRequest {}
 /// let f: mda_ops::migrate::FileRef = serde_json::from_value(serde_json::json!({"path": "Snippets/a.md", "hash": "h"})).unwrap();
 /// assert_eq!(f.path, "Snippets/a.md");
 /// ```
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct FileRef {
     pub path: String,

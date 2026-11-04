@@ -22,7 +22,11 @@ fn out_text(out: std::process::Output) -> String {
 fn types_list_prints_rows() {
     let t = out_text(run(&["--vault", VAULT, "types", "list"], b""));
     assert!(t.contains("Command  Commands/  disabled  (no dir)"), "{t}");
-    assert!(t.lines().any(|l| l.ends_with("enabled")), "{t}");
+    assert!(t.lines().any(|l| l.contains("  enabled  → ")), "{t}");
+    assert!(
+        t.contains(&format!("Snippet  Snippets/  enabled  → {VAULT}/Snippets")),
+        "{t}"
+    );
 }
 
 #[test]

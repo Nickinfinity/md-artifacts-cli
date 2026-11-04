@@ -1,0 +1,9 @@
+# dir + root refused
+vault = "vault_loc_a"
+workspace = "vault_loc_b"
+machine_config = "[types.AIPrompt]\ndir=\"P\""
+params = { type = "Snippet", dir = "Lib", root = true }
+expect_error = "config.location_invalid"
+expect_error_params = { type = "Snippet", reason = "both" }
+[expect_config_files]
+"config.toml" = "[types.AIPrompt]\ndir=\"P\""

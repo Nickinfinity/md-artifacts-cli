@@ -4,7 +4,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use mda_vault::{Root, VaultError, WalkLimit, walk_md, walk_md_multi};
+use mda_vault::{Root, VaultError, WalkLimit, walk_md, walk_md_move, walk_md_multi};
 
 /// Fresh temp dir with `vault/` and `outside/`, removed on drop (std only).
 struct Tmp(PathBuf);
@@ -371,4 +371,49 @@ fn dir_start_keeps_dots() {
     let (r, seen) = walk(&t, 1024);
     r.unwrap();
     assert_eq!(names(&seen), ["Variables/.a/b.md"]);
+}
+
+/// `walk_md_move` counts what a move leaves (non-`.md`), never the dot entries of a root start.
+#[test]
+fn move_walk_counts_left_behind() {
+    let t = Tmp::new("moveleft");
+    for f in [
+        "x.md",
+        "a/y.md",
+        "a/img.png",
+        "n.txt",
+        ".obsidian/app.json",
+        ".h.md",
+    ] {
+        t.write(f, b"x");
+    }
+    let root = t.root();
+    let mut seen = Vec::new();
+    let n = walk_md_move(&[(&root, "")], 1024, |_, rel, _| seen.push(rel.to_owned())).unwrap();
+    assert_eq!(seen, ["x.md", "a/y.md"]);
+    assert_eq!(n, 2);
+    // The plain walk counts nothing and visits the same files.
+    let mut plain = Vec::new();
+    walk_md_multi(&[(&root, "")], 1024, |_, rel, _| plain.push(rel.to_owned())).unwrap();
+    assert_eq!(plain, seen);
+}
+
+/// 🔒 A symlinked `.md` (out of the vault) and a symlinked dir are counted, never read.
+#[cfg(unix)]
+#[test]
+fn move_walk_never_reads_links() {
+    let t = Tmp::new("movelinks");
+    t.write("Variables/a.md", b"x");
+    fs::write(t.out("secret.md"), b"MARKER").unwrap();
+    std::os::unix::fs::symlink(t.out("secret.md"), t.v("Variables/l.md")).unwrap();
+    std::os::unix::fs::symlink(t.0.join("outside"), t.v("Variables/out")).unwrap();
+    let root = t.root();
+    let mut seen = Vec::new();
+    let n = walk_md_move(&[(&root, "Variables")], 1024, |_, rel, r| {
+        seen.push((rel.to_owned(), r.is_ok()))
+    })
+    .unwrap();
+    assert_eq!(seen, [("Variables/a.md".to_owned(), true)]);
+    assert_eq!(n, 2);
+    assert_eq!(fs::read(t.out("secret.md")).unwrap(), b"MARKER");
 }

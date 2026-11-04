@@ -8,11 +8,11 @@ extension today; MCP later reuses the framing). `mda serve` implements it.
 > warning-code tables below are **guarded** by `crates/mda/tests/protocol_doc.rs`: they must stay
 > set-equal to `system.ops`, `ALL_CODES` and the render warning codes, or the gate fails.
 
-**Protocol version:** `2.4`
+**Protocol version:** `2.5`
 
 **Max line:** `16777216` bytes
 
-Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` (W7c) and `1.2` (W7d) were additive minors; `2.0` (W7e, 2026-10-20, §7.2) is the first major; `2.1` (ER-3, 2026-10-29) `2.2` (ER-4 + ER-6, 2026-10-30) `2.3` (ER-7 + ER-5, 2026-10-30) and `2.4` (Unicode slugs, cross-platform names, 2026-10-30) additive minors. Within a major every change is additive (§7).
+Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` (W7c) and `1.2` (W7d) were additive minors; `2.0` (W7e, 2026-10-20, §7.2) is the first major; `2.1` (ER-3, 2026-10-29) `2.2` (ER-4 + ER-6, 2026-10-30) `2.3` (ER-7 + ER-5, 2026-10-30) `2.4` (Unicode slugs, cross-platform names, 2026-10-30) and `2.5` (type locations, 2026-11-04) additive minors. Within a major every change is additive (§7).
 
 ## 1. Transport
 
@@ -51,7 +51,7 @@ The first request must be `initialize`:
 ```
 
 - `params.protocol` is `"MAJOR.MINOR"`; other keys (e.g. `clientInfo`) are tolerated and ignored.
-- Result: `{"protocol":"2.4","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
+- Result: `{"protocol":"2.5","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
   per type `type, dir, contexts, defaultEnabled, writesFile, outputNameKey?, multiBlock, language?`.
 - A missing or non-string `protocol` → −32000 `op.bad_request` (no `reason`).
 - The major is the text before the first `.`; a different major → −32000 `protocol.version_mismatch`
@@ -90,7 +90,10 @@ the op's cases, which double as examples (§9).
 | `system.ops` | [`crates/mda/tests/op_cases/system.ops/`](../crates/mda/tests/op_cases/system.ops/) |
 | `system.version` | [`crates/mda/tests/op_cases/system.version/`](../crates/mda/tests/op_cases/system.version/) |
 | `types.list` | [`crates/mda/tests/op_cases/types.list/`](../crates/mda/tests/op_cases/types.list/) |
+| `types.move.apply` | [`crates/mda/tests/op_cases/types.move.apply/`](../crates/mda/tests/op_cases/types.move.apply/) |
+| `types.move.plan` | [`crates/mda/tests/op_cases/types.move.plan/`](../crates/mda/tests/op_cases/types.move.plan/) |
 | `types.set_enabled` | [`crates/mda/tests/op_cases/types.set_enabled/`](../crates/mda/tests/op_cases/types.set_enabled/) |
+| `types.set_location` | [`crates/mda/tests/op_cases/types.set_location/`](../crates/mda/tests/op_cases/types.set_location/) |
 | `vars.file.new` | [`crates/mda/tests/op_cases/vars.file.new/`](../crates/mda/tests/op_cases/vars.file.new/) |
 | `vars.list` | [`crates/mda/tests/op_cases/vars.list/`](../crates/mda/tests/op_cases/vars.list/) |
 | `vars.meta.tags` | [`crates/mda/tests/op_cases/vars.meta.tags/`](../crates/mda/tests/op_cases/vars.meta.tags/) |
@@ -214,6 +217,12 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `rename.index_link` | `index`, `link` |
 | `rename.links_unchecked` | `limit?`, `max?` |
 | `rename.link_update_failed` | `index`, `reason` |
+| `move.target_exists` | `path` |
+| `move.plan_stale` | `path` |
+| `move.bad_path` | `path` |
+| `move.overlap` | `dir` |
+| `move.left_behind` | `count` |
+| `move.source_kept` | `path` |
 | `migrate.up_to_date` | — |
 | `migrate.leading_blank` | — |
 | `migrate.quoted_type` | `value` |
@@ -258,7 +267,7 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 | `2.2` | 0.12.0 | Vault file names and rename (format spec §14). **Methods:** `naming.check` (pure: the stem rule and the default stem), `artifact.rename` (move within a type directory, verbatim or from a model, never overwriting; `warnings`). **Codes:** `naming.md_extension`; warnings `rename.index_link{index, link}`, `rename.links_unchecked{limit?, max?}`. **Behaviour:** `artifact.create`, `index.create`, `vars.file.new` and `varsets.save` refuse a stem that breaks §14.1 (leading dot, `.md` ending, reserved, …) — they accepted some before; a Variables file's default name is truncated to a 252-byte stem instead of `naming.too_long`; `naming.control_char` includes C1 (also for output names). Writes of names over ~220 bytes no longer fail with `io.failed` |
 | `2.3` | 0.13.0 | One-line Command join (format spec §4.3) and the output name. **Request:** optional `join` (`and` \| `seq` \| `continuation` \| `pwsh` \| `cmd`) on `artifact.render` and `render.text`. **Response:** `joined: true` when `join` was sent (absent otherwise). **Code:** `render.unjoinable{line, reason, name?}`. **Method:** `naming.output` (the file name `artifact.write_file` would write; nothing written). Without `join` every render request and response is unchanged |
 | `2.4` | 0.14.0 | Unicode slugs and cross-platform vault names (format spec §14.1–§14.1b). **Code:** `naming.not_nfc`. **Param:** `segment?` on `naming.*` (a directory segment was refused; a stem error never carries it). **Behaviour:** default names keep Unicode letters and digits (`Café notes` → `café-notes`; were ASCII-only — ASCII titles unchanged) for `naming.check`, `vars.file.new`, `varsets.save`, `index.create`; the Windows reserved list is complete (`COM0`, `LPT0`, `COM¹²³`, `LPT¹²³`, `CONIN$`, `CONOUT$`, `CON .txt`), also for output names; new vault names refuse non-NFC text and invisible format characters (`naming.control_char`); new directory segments of name-creating writes are checked (an existing directory is exempt unless its name is reserved), so `index.create` refuses a source folder named like a device; on Windows, paths leaving the engine are plain, not `\\?\` (§11). **Request:** optional `updateLinks` on `artifact.rename`. **Response:** `updatedIndexes: [{path, hash}]` when it was sent. **Code:** `rename.link_update_failed{index, reason}` (a warning) |
-| `2.5` *(unreleased)* | 0.15.0 | Type locations (format spec §15): every path stays `<TypeDir>/<rel>`, now virtual. **Codes:** `config.location_conflict{type, other}`, `config.location_invalid{type, reason}`. **Behaviour:** a corrupt machine `config.toml` is now read, and refused with `config.invalid`, by type-scoped ops even under `--vault` (it was ignored there). Without location keys every request and response is unchanged |
+| `2.5` | 0.15.0 | Type locations (format spec §15): every path stays `<TypeDir>/<rel>`, now virtual. **Codes:** `config.location_conflict{type, other}`, `config.location_invalid{type, reason}`. **Behaviour:** a corrupt machine `config.toml` is now read, and refused with `config.invalid`, by type-scoped ops even under `--vault` (it was ignored there). **Methods:** `types.set_location`, `types.move.plan`, `types.move.apply`. **Response:** `types.list` rows gain `location: {vault, dir?, root?}`; a row whose location is broken (`config.location_conflict`, `config.location_invalid`, `artifact.bad_path`) is `{type, dir, error: {code}}` instead of failing the call. **Codes:** `move.target_exists{path}`, `move.plan_stale{path}`, `move.bad_path{path}`, `move.overlap{dir}`; warnings `move.left_behind{count}`, `move.source_kept{path}` (in `warnings` of `types.move.*`). Without location keys every other request and response is unchanged |
 
 ### 7.2 What 2.0 removed
 
@@ -313,6 +322,12 @@ plus its `rename.index_link` warnings; the rename is never undone. A moved index
 **Windows paths** (since `2.4`): paths in responses, errors and `config.toml` are plain (`C:\v`, `\\s\share\v`), never the `\\?\` form,
 with one exception: a vault whose own path has a component with a trailing dot or space or a reserved name keeps `\\?\`, because the
 plain spelling would name a different directory. Treat such a path as opaque and send it back unchanged.
+
+**Type locations** (since `2.5`, format spec §15): paths stay virtual (`<TypeDir>/<rel>`); only `types.list` and the
+`types.set_location` / `types.move.*` responses name a physical place (`location`). A move is `types.move.plan` (writes nothing:
+`files: [{path, hash}]`, `conflicts`, `bytes`, `warnings`) then `types.move.apply` with that `files` array: copy, verify, switch the
+location, delete the sources. A failure before the switch removes this call's copies; after it, an undeletable source is
+`move.source_kept{path}` (delete it by hand), never an undo.
 
 Names used by the extension's cutover plan that are not methods, mapped to the real op:
 

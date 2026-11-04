@@ -54,6 +54,12 @@ pub fn english(code: &str) -> Option<&'static str> {
         RENAME_INDEX_LINK => "an index links the old name",
         RENAME_LINKS_UNCHECKED => "index links not checked",
         RENAME_LINK_UPDATE_FAILED => "an index link could not be updated",
+        MOVE_TARGET_EXISTS => "a file already exists at the move target; nothing was moved",
+        MOVE_PLAN_STALE => "the files changed since the move was planned; plan again",
+        MOVE_BAD_PATH => "a file cannot be moved to a dot path at a root location",
+        MOVE_OVERLAP => "the move target lies inside the type's current root location",
+        MOVE_LEFT_BEHIND => "entries that are not .md files (or are symlinks) stay where they are",
+        MOVE_SOURCE_KEPT => "a moved file's original could not be deleted; delete it by hand",
         VARS_MIXED_FILE => {
             "a variables fence sits before the first ## section; edits refuse this file"
         }

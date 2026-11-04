@@ -1,0 +1,13 @@
+# D-9: `Lib/s.md` exists in B — the copy of `a.md` is removed, sources and config untouched.
+vault = "vault_move_src"
+workspace = "vault_loc_b"
+params = { type = "Snippet", to = { vault = "$WORKSPACE", dir = "Lib" }, files = [
+  { path = "Snippets/a.md", hash = "fd99dedae7c3f7532f8a65d60f811a05dc9dc3e1c5936b0c554c98aafdad8c10" },
+  { path = "Snippets/s.md", hash = "21933aa92f2e8815f8b1a47e81b1243112e2c0f25b6cceaf7936e977a7713d28" },
+] }
+expect_error = "move.target_exists"
+expect_error_params = { path = "Snippets/s.md" }
+expect_files = { "Snippets/a.md" = "# a\n", "Snippets/s.md" = "# s\n" }
+expect_workspace_files = { "Lib/a.md" = false, "Lib/s.md" = "---\nartifactType: Snippet\ntitle: S\n---\n\n```bash\necho s\n```\n" }
+[expect_config_files]
+"config.toml" = false

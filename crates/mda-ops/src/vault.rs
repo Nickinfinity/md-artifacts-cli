@@ -190,7 +190,7 @@ fn plainify(mut cfg: MachineConfig) -> MachineConfig {
 }
 
 /// The machine config dir and its parsed file; no dir at all is `config.invalid` with `path: ""`.
-fn machine(ctx: &Ctx) -> Result<(PathBuf, MachineConfig), OpError> {
+pub(crate) fn machine(ctx: &Ctx) -> Result<(PathBuf, MachineConfig), OpError> {
     let dir = ctx
         .config_dir
         .clone()

@@ -164,6 +164,22 @@ pub const RENAME_LINKS_UNCHECKED: &str = "rename.links_unchecked";
 /// the rename stands (spec §14.3). Params `index` (its vault path), `reason` (`unreachable` | `unlinkable` |
 /// `not_patchable` | `conflict` | `write_failed`).
 pub const RENAME_LINK_UPDATE_FAILED: &str = "rename.link_update_failed";
+/// `types.move.apply`: a target file already exists; nothing is clobbered (spec §15). Param `path`
+/// (virtual).
+pub const MOVE_TARGET_EXISTS: &str = "move.target_exists";
+/// `types.move.apply`: the source set differs from the `files` of the plan (spec §15, D-19). Param
+/// `path` (the first differing virtual path, sorted).
+pub const MOVE_PLAN_STALE: &str = "move.plan_stale";
+/// `types.move.*`: a file would land on a `.`-segment path at a root location (D-19). Param `path`.
+pub const MOVE_BAD_PATH: &str = "move.bad_path";
+/// `types.move.*`: the target dir lies inside a root source in the same vault (D-19). Param `dir`.
+pub const MOVE_OVERLAP: &str = "move.overlap";
+/// `types.move.*` warning: entries that are not moved (non-`.md`, symlinks) stay at the source
+/// (spec §15). Param `count`.
+pub const MOVE_LEFT_BEHIND: &str = "move.left_behind";
+/// `types.move.apply` warning: a source could not be deleted after the switch; delete it by hand
+/// (D-18). Param `path` (virtual).
+pub const MOVE_SOURCE_KEPT: &str = "move.source_kept";
 /// Transport: a protocol line is not valid JSON (−32700, `id: null`; spec PROTOCOL §4, S-20). No params.
 pub const PROTOCOL_PARSE_ERROR: &str = "protocol.parse_error";
 /// Transport: a protocol line exceeds the frame cap (−32600, `id: null`; S-8, S-21). Param `max` (bytes).
@@ -257,6 +273,12 @@ pub const ALL_CODES: &[&str] = &[
     RENAME_INDEX_LINK,
     RENAME_LINKS_UNCHECKED,
     RENAME_LINK_UPDATE_FAILED,
+    MOVE_TARGET_EXISTS,
+    MOVE_PLAN_STALE,
+    MOVE_BAD_PATH,
+    MOVE_OVERLAP,
+    MOVE_LEFT_BEHIND,
+    MOVE_SOURCE_KEPT,
     PROTOCOL_PARSE_ERROR,
     PROTOCOL_LINE_TOO_LONG,
     PROTOCOL_ALREADY_INITIALIZED,

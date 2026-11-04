@@ -84,11 +84,23 @@ summary = "Engine and protocol versions"
 
 [[expect.ops]]
 name = "types.list"
-summary = "Each artifact type: dir, enabled, dir exists"
+summary = "Each artifact type: dir, enabled, dir exists, location"
+
+[[expect.ops]]
+name = "types.move.apply"
+summary = "Move a type's files to a new location, then switch to it"
+
+[[expect.ops]]
+name = "types.move.plan"
+summary = "List the files a type move would copy and its conflicts"
 
 [[expect.ops]]
 name = "types.set_enabled"
 summary = "Enable or disable a type in the current vault"
+
+[[expect.ops]]
+name = "types.set_location"
+summary = "Point a type at a location without moving files"
 
 [[expect.ops]]
 name = "vars.file.new"
