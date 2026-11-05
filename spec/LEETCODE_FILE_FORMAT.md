@@ -740,6 +740,39 @@ absent, malformed, or missing a required field is skipped (no partial entry).
   ` ```javascript `. A **bare** ` ``` ` fence is not matched and the block is
   skipped. Trailing whitespace inside a fence is trimmed on parse.
 
+### 3.8 The skeleton *(engine-written: `leetcode.create`, W6)*
+
+`leetcode.create` writes exactly these bytes (LF line ends, one trailing newline), the same for
+every `leetcodeType` apart from that one value. Lines in `‹…›` are present only when the request
+gives the field; `title` and `algorithm` are written raw on one line (`single_line`; the parser
+takes the rest of the line, so no quoting), `tags` inline. `status` is always `unsolved`; no
+`# Attempts` section is written. This text is the golden of `skeleton.rs` (T6.2).
+
+~~~md
+---
+artifactType: LeetCode
+leetcodeType: function
+title: Two Sum
+difficulty: easy
+status: unsolved
+‹algorithm: hash-map›
+‹tags: [leetcode, arrays]›
+---
+
+Describe the problem here.
+
+```yaml leetcode
+```
+
+## Examples
+
+## Tests
+
+# Setup
+
+# Solutions
+~~~
+
 ---
 
 ## 4. HTML-comment payloads

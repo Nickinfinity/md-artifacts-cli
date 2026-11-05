@@ -9,6 +9,8 @@ pub mod error;
 pub mod index;
 pub mod index_create;
 pub mod leetcode;
+pub mod leetcode_create;
+pub mod leetcode_write;
 pub mod location;
 pub mod migrate;
 pub mod naming;

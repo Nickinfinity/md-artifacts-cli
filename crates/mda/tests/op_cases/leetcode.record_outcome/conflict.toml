@@ -1,0 +1,5 @@
+# H6.0 seed (red until T6.3): a stale hash is `file.conflict`; T6.3 adds `expect_error_params` and the
+# unchanged-bytes sink.
+vault = "vault_leetcode"
+params = { path = "LeetCode/write.md", expectedHash = "stale", status = "solved", language = "python" }
+expect_error = "file.conflict"

@@ -1,0 +1,5 @@
+# H6.0 seed (red until T6.4): never clobbers; T6.4 adds `expect_error_params` (incl. `actual`) and the
+# unchanged-bytes sink.
+vault = "vault_leetcode"
+params = { path = "LeetCode/ex.md", title = "Two Sum", leetcodeType = "function", difficulty = "easy" }
+expect_error = "file.exists"

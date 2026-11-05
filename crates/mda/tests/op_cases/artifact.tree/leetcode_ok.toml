@@ -7,4 +7,5 @@ expect = { dirs = [], files = [
   { path = "LeetCode/pkg.md", name = "pkg", title = "LRU Cache", tags = ["leetcode", "design"] },
   { path = "LeetCode/rules.md", name = "rules", title = "Rules" },
   { path = "LeetCode/stack.md", name = "stack", title = "Orders API" },
+  { path = "LeetCode/write.md", name = "write", title = "Valid Anagram", tags = ["leetcode", "strings"] },
 ] }

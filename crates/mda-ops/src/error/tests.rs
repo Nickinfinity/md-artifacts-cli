@@ -455,7 +455,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 95);
+    assert_eq!(ALL_CODES.len(), 96);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE
@@ -498,6 +498,7 @@ fn move_codes_exact_json() {
         (LEETCODE_NOT_EXERCISE, "path", "LeetCode/note.md"),
         (LEETCODE_RULE_BODY_KEY, "keys", "function, params"),
         (LEETCODE_RULE_DISCRIMINATOR, "found", "Leetcode"),
+        (LEETCODE_NOT_SERIALIZABLE, "reason", "fence"),
     ];
     for (code, key, val) in cases {
         assert!(ALL_CODES.contains(&code), "{code} not in ALL_CODES");

@@ -137,6 +137,9 @@ pub fn english(code: &str) -> Option<&'static str> {
         LEETCODE_RULE_LEGACY_TYPE => "legacy type: leetcode without artifactType: LeetCode",
         LEETCODE_RULE_KEY_ORDER => "frontmatter key out of canonical order",
         LEETCODE_RULE_DISCRIMINATOR => "artifactType is not exactly LeetCode",
+        LEETCODE_NOT_SERIALIZABLE => {
+            "the LeetCode write would not re-parse as asked; nothing was written"
+        }
         MOVE_SOURCE_KEPT => "a moved file's original could not be deleted; delete it by hand",
         VARS_MIXED_FILE => {
             "a variables fence sits before the first ## section; edits refuse this file"

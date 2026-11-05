@@ -1,0 +1,5 @@
+# H6.0 seed (red until T6.4): placeholder body. T6.4 pins `{path, hash}` and the skeleton bytes
+# (`expect_files`, the spec §3.8 golden).
+vault = "vault_leetcode"
+params = { path = "LeetCode/two-sum.md", title = "Two Sum", leetcodeType = "function", difficulty = "easy" }
+expect = {}

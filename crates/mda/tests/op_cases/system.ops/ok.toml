@@ -55,8 +55,16 @@ name = "index.run"
 summary = "Write every step of a template index into a workspace"
 
 [[expect.ops]]
+name = "leetcode.create"
+summary = "Create a LeetCode exercise from the canonical skeleton"
+
+[[expect.ops]]
 name = "leetcode.read"
 summary = "Parse one LeetCode exercise"
+
+[[expect.ops]]
+name = "leetcode.record_outcome"
+summary = "Record a run outcome: status, solved meta, attempt"
 
 [[expect.ops]]
 name = "migrate.frontmatter.apply"

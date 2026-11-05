@@ -1,6 +1,6 @@
 //! The exercise itself: TS `ParsedLeetCode` plus `unimplementedKinds`.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{
     Attempt, Example, ExerciseSetup, FileSpec, LeetCodeSolution, LibSpec, OrderedMap, PackageSpec,
@@ -16,7 +16,8 @@ use crate::render::Warning;
 /// use mda_core::leetcode::LeetcodeType;
 /// assert_eq!(serde_json::to_value(LeetcodeType::Stack).unwrap(), "stack");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+// D-41 amended (W6 Q-50): `Deserialize` for the W6 write requests; the other wire types stay Serialize-only.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LeetcodeType {
     Function,
@@ -32,7 +33,8 @@ pub enum LeetcodeType {
 /// use mda_core::leetcode::LeetCodeDifficulty;
 /// assert_eq!(serde_json::to_value(LeetCodeDifficulty::Hard).unwrap(), "hard");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+// D-41 amended (W6 Q-50): `Deserialize` for the W6 write requests; the other wire types stay Serialize-only.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LeetCodeDifficulty {
     Easy,
@@ -48,7 +50,8 @@ pub enum LeetCodeDifficulty {
 /// use mda_core::leetcode::LeetCodeStatus;
 /// assert_eq!(serde_json::to_value(LeetCodeStatus::Solved).unwrap(), "solved");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+// D-41 amended (W6 Q-50): `Deserialize` for the W6 write requests; the other wire types stay Serialize-only.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LeetCodeStatus {
     Unsolved,

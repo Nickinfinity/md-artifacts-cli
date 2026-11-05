@@ -83,7 +83,9 @@ the op's cases, which double as examples (§9).
 | `index.create` | [`crates/mda/tests/op_cases/index.create/`](../crates/mda/tests/op_cases/index.create/) |
 | `index.plan` | [`crates/mda/tests/op_cases/index.plan/`](../crates/mda/tests/op_cases/index.plan/) |
 | `index.run` | [`crates/mda/tests/op_cases/index.run/`](../crates/mda/tests/op_cases/index.run/) |
+| `leetcode.create` | [`crates/mda/tests/op_cases/leetcode.create/`](../crates/mda/tests/op_cases/leetcode.create/) |
 | `leetcode.read` | [`crates/mda/tests/op_cases/leetcode.read/`](../crates/mda/tests/op_cases/leetcode.read/) |
+| `leetcode.record_outcome` | [`crates/mda/tests/op_cases/leetcode.record_outcome/`](../crates/mda/tests/op_cases/leetcode.record_outcome/) |
 | `migrate.frontmatter.apply` | [`crates/mda/tests/op_cases/migrate.frontmatter.apply/`](../crates/mda/tests/op_cases/migrate.frontmatter.apply/) |
 | `migrate.frontmatter.plan` | [`crates/mda/tests/op_cases/migrate.frontmatter.plan/`](../crates/mda/tests/op_cases/migrate.frontmatter.plan/) |
 | `naming.check` | [`crates/mda/tests/op_cases/naming.check/`](../crates/mda/tests/op_cases/naming.check/) |
@@ -231,6 +233,7 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `leetcode.rule.legacy_type` | — |
 | `leetcode.rule.key_order` | `key`, `before` |
 | `leetcode.rule.discriminator` | `found` |
+| `leetcode.not_serializable` | `reason` |
 | `migrate.up_to_date` | — |
 | `migrate.leading_blank` | — |
 | `migrate.quoted_type` | `value` |

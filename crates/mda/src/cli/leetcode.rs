@@ -1,7 +1,10 @@
-//! `mda leetcode …`: LeetCode exercises. H5.0 skeleton; T5.1 fills the human printer.
+//! `mda leetcode …`: LeetCode exercises. H5.0/H6.0 skeleton; T5.1 fills the human printer. Write
+//! inputs (the attempt JSON) are read here, client side; the op does the vault I/O.
 
 use mda_ops::OpError;
-use serde_json::{Value, json};
+use serde_json::{Map, Value, json};
+
+use super::input::read_object;
 
 /// `mda leetcode …`
 #[derive(clap::Subcommand)]
@@ -11,12 +14,111 @@ pub enum LeetcodeCmd {
         /// Vault-relative path.
         path: String,
     },
+    /// Record a run outcome (status, solved meta, attempt) when the hash is `--hash`.
+    #[command(name = "outcome", alias = "record-outcome")]
+    Outcome {
+        /// Vault-relative path.
+        path: String,
+        /// The content hash last read (`leetcode read --json`).
+        #[arg(long)]
+        hash: String,
+        /// `unsolved`, `attempted` or `solved`.
+        #[arg(long)]
+        status: String,
+        /// The solution's language (an alias such as `py` is resolved).
+        #[arg(long)]
+        language: String,
+        /// ISO-8601 time of the solve (writes the solved meta with `--duration`).
+        #[arg(long = "solved-at")]
+        solved_at: Option<String>,
+        /// Elapsed time of the solve, e.g. `8m22s`.
+        #[arg(long, requires = "solved_at")]
+        duration: Option<String>,
+        /// The attempt as a JSON object file (`at`, `duration`, `passed`, `bigO?`, `confidence?`, `code`), `-` = stdin.
+        #[arg(long)]
+        attempt: Option<String>,
+    },
+    /// Create an exercise from the canonical skeleton; never overwrites.
+    #[command(name = "new", alias = "create")]
+    New {
+        /// Vault-relative path, `LeetCode/<rel>.md`.
+        path: String,
+        /// The exercise title.
+        #[arg(long)]
+        title: String,
+        /// `function`, `package` or `stack`.
+        #[arg(long = "type")]
+        leetcode_type: String,
+        /// `easy`, `medium` or `hard`.
+        #[arg(long)]
+        difficulty: String,
+        /// Category tag, e.g. `hash-map`.
+        #[arg(long)]
+        algorithm: Option<String>,
+        /// A tag (repeatable).
+        #[arg(long = "tag")]
+        tags: Vec<String>,
+    },
 }
 
 /// The op and params an `mda leetcode` subcommand stands for.
 pub(super) fn leetcode_request(cmd: LeetcodeCmd) -> (String, Result<Value, OpError>) {
     match cmd {
         LeetcodeCmd::Read { path } => ("leetcode.read".to_owned(), Ok(json!({ "path": path }))),
+        LeetcodeCmd::Outcome {
+            path,
+            hash,
+            status,
+            language,
+            solved_at,
+            duration,
+            attempt,
+        } => {
+            let mut p = Map::new();
+            p.insert("path".into(), json!(path));
+            p.insert("expectedHash".into(), json!(hash));
+            p.insert("status".into(), json!(status));
+            p.insert("language".into(), json!(language));
+            if let Some(at) = solved_at {
+                let mut s = Map::new();
+                s.insert("solvedAt".into(), json!(at));
+                if let Some(d) = duration {
+                    s.insert("duration".into(), json!(d));
+                }
+                p.insert("solved".into(), Value::Object(s));
+            }
+            let params = match attempt.map(|f| read_object(&f)).transpose() {
+                Ok(a) => {
+                    if let Some(a) = a {
+                        p.insert("attempt".into(), a);
+                    }
+                    Ok(Value::Object(p))
+                }
+                Err(e) => Err(e),
+            };
+            ("leetcode.record_outcome".to_owned(), params)
+        }
+        LeetcodeCmd::New {
+            path,
+            title,
+            leetcode_type,
+            difficulty,
+            algorithm,
+            tags,
+        } => {
+            let mut p = Map::new();
+            p.insert("path".into(), json!(path));
+            p.insert("title".into(), json!(title));
+            p.insert("leetcodeType".into(), json!(leetcode_type));
+            p.insert("difficulty".into(), json!(difficulty));
+            if let Some(a) = algorithm {
+                p.insert("algorithm".into(), json!(a));
+            }
+            if !tags.is_empty() {
+                p.insert("tags".into(), json!(tags));
+            }
+            ("leetcode.create".to_owned(), Ok(Value::Object(p)))
+        }
     }
 }
 

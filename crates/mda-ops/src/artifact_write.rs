@@ -143,7 +143,7 @@ pub struct DeleteResponse {
 
 /// `file.too_large` when `size` exceeds the read limit: the engine never writes a file its own
 /// `read_bounded` would refuse.
-fn too_large(path: &str, size: usize) -> Result<(), OpError> {
+pub(crate) fn too_large(path: &str, size: usize) -> Result<(), OpError> {
     if size > max_bytes() {
         return Err(OpError::new(error::FILE_TOO_LARGE)
             .with("path", path)

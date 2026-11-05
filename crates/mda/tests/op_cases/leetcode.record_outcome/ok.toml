@@ -1,0 +1,5 @@
+# H6.0 seed (red until T6.3): placeholder body. T6.3 pins the `{path, hash}` response and the patched bytes
+# (`expect_files`) of `LeetCode/write.md` (fixture hash 0f86b84b…84 pinned in the plan).
+vault = "vault_leetcode"
+params = { path = "LeetCode/write.md", expectedHash = "0f86b84b41a297c44b72adaf423e1d477ce159f47fe10581d80908ec52255184", status = "solved", language = "python", solved = { solvedAt = "2026-11-05T10:00:00Z", duration = "6m03s" } }
+expect = {}
