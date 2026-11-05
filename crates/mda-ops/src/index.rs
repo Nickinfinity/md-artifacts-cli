@@ -10,7 +10,7 @@ use mda_core::parse::{decode, parse_from_content};
 use mda_core::render::{Values, Warning, check_values};
 use mda_vault::{Root, contain, read_bounded};
 
-use crate::artifact::{MAX_ARTIFACT_BYTES, load_at, locate};
+use crate::artifact::{MAX_ARTIFACT_BYTES, load_at, locate_generic};
 use crate::error::vault_error_at;
 use crate::write_file::{WriteFileResponse, check_whole_file, emit_whole_file};
 use crate::{Ctx, OpError, error};
@@ -243,7 +243,7 @@ pub fn limit_error(limit: &str, max: usize) -> OpError {
 /// assert_eq!(index::plan(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn plan(ctx: &Ctx, req: PlanRequest) -> Result<PlanResponse, OpError> {
-    let r = locate(ctx, &req.path)?;
+    let r = locate_generic(ctx, &req.path)?;
     let root = &r.place.root;
     // The mirrored folder is client text: reject, never sanitise.
     let mirror = if req.mirror_from.is_empty() {
@@ -346,7 +346,7 @@ fn read_linked(
 /// assert_eq!(index::run(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn run(ctx: &Ctx, req: RunRequest) -> Result<BatchResponse, OpError> {
-    let r = locate(ctx, &req.path)?;
+    let r = locate_generic(ctx, &req.path)?;
     let root = &r.place.root;
     if !Path::new(&req.workspace_root).is_absolute() {
         return Err(

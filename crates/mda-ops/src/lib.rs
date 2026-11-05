@@ -26,7 +26,7 @@ pub mod vault;
 pub mod write_file;
 
 pub use error::OpError;
-pub use mda_core::registry::{ArtifactType, TYPES};
+pub use mda_core::registry::{ArtifactType, Format, TYPES};
 pub use mda_vault::{Root, plain_path};
 pub use registry::{Ctx, OpSpec, Source, check_names, dispatch, dispatch_in, ops, typed};
 

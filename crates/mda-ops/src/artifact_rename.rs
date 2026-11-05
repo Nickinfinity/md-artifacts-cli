@@ -8,7 +8,7 @@ use mda_core::model::ArtifactModel;
 use mda_vault::{Root, VaultError, contain, content_hash, rename_new};
 
 use crate::artifact::{
-    MAX_ARTIFACT_BYTES, artifact_path, bad_path, check_dirs_at, locate, mid_dirs,
+    MAX_ARTIFACT_BYTES, artifact_path, bad_path, check_dirs_at, generic_path, locate, mid_dirs,
     no_dot_below_root, segments,
 };
 use crate::artifact_rewrite::prepare_at;
@@ -87,6 +87,9 @@ pub struct RenameResponse {
 /// assert!(rename(&Ctx::new(None), req).is_err());
 /// ```
 pub fn rename(ctx: &Ctx, req: RenameRequest) -> Result<RenameResponse, OpError> {
+    if req.model.is_some() {
+        generic_path(&req.path)?;
+    }
     let r = locate(ctx, &req.path)?;
     let (root, t) = (&r.place.root, r.ty);
     let new = req.new_path.as_str();

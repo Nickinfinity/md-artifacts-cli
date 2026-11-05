@@ -52,7 +52,8 @@ The first request must be `initialize`:
 
 - `params.protocol` is `"MAJOR.MINOR"`; other keys (e.g. `clientInfo`) are tolerated and ignored.
 - Result: `{"protocol":"2.5","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
-  per type `type, dir, contexts, defaultEnabled, writesFile, outputNameKey?, multiBlock, language?`.
+  per type `type, dir, contexts, defaultEnabled, writesFile, outputNameKey?, multiBlock, language?, format?` (`format`
+  is `"leetcode"` for the exercise type and absent for the generic format, since 2.6).
 - A missing or non-string `protocol` → −32000 `op.bad_request` (no `reason`).
 - The major is the text before the first `.`; a different major → −32000 `protocol.version_mismatch`
   `{client, server}`. The session stays uninitialized and the client may retry. A minor difference is
@@ -223,6 +224,8 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `move.overlap` | `dir` |
 | `move.left_behind` | `count` |
 | `move.source_kept` | `path` |
+| `artifact.unsupported_type` | `type` |
+| `leetcode.not_exercise` | `path` |
 | `migrate.up_to_date` | — |
 | `migrate.leading_blank` | — |
 | `migrate.quoted_type` | `value` |
@@ -232,7 +235,8 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 
 Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `artifact.write_file`,
 `render.text` and `index.run`, never as errors. `line` is 1-based; one of `name` (`VK-x`) or `path`
-(`VK-a.b`) names the token.
+(`VK-a.b`) names the token. LeetCode parse warnings (`leetcode.*`, since 2.6) arrive in an exercise's `warnings`; their params
+are strings (lists `", "`-joined) and carry no `line` (`LEETCODE_FILE_FORMAT.md` §10.4).
 
 | Code | Params |
 |---|---|
@@ -244,6 +248,42 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 | `render.not_scalar` | `line`, `name?`, `path?` |
 | `render.join_record` | `line`, `name?`, `path?` |
 | `render.join_empty` | `line`, `name?`, `path?` |
+| `leetcode.frontmatter.ignored_key` | `key` |
+| `leetcode.type.unknown` | `declared`, `derived` |
+| `leetcode.config.indented` | `line` |
+| `leetcode.config.key_in_frontmatter` | `key` |
+| `leetcode.config.duplicate_key` | `key`, `count`, `winner` |
+| `leetcode.config.unterminated_fence` | — |
+| `leetcode.config.hidden_by_open_fence` | — |
+| `leetcode.program.no_channel` | — |
+| `leetcode.program.unknown_channel` | `channel` |
+| `leetcode.program.entry_rejected` | `entry`, `reason` |
+| `leetcode.files.unknown_role` | `role` |
+| `leetcode.libs.no_registry` | `language` |
+| `leetcode.libs.rejected` | `specs`, `ecosystem` |
+| `leetcode.checks.not_a_list` | `got` |
+| `leetcode.checks.reserved_kind` | `name`, `kind` |
+| `leetcode.checks.unknown_kind` | `name`, `kind` |
+| `leetcode.checks.http_needs_package` | `name` |
+| `leetcode.checks.build_needs_argv` | `name` |
+| `leetcode.checks.needs_file` | `name` |
+| `leetcode.checks.call_needs_function` | `name` |
+| `leetcode.checks.fence_unbound` | — |
+| `leetcode.checks.fence_unknown_check` | `name` |
+| `leetcode.config.unknown_key` | `key`, `suggestion` |
+| `leetcode.packages.not_a_list` | `got` |
+| `leetcode.packages.missing_name` | — |
+| `leetcode.packages.dir_rejected` | `name`, `dir`, `reason` |
+| `leetcode.packages.missing_field` | `name`, `field` |
+| `leetcode.packages.argv_not_array` | `name`, `field` |
+| `leetcode.packages.argv_empty` | `name`, `field` |
+| `leetcode.packages.argv_substitution` | `name`, `field`, `element` |
+| `leetcode.packages.expose_name_invalid` | `name` |
+| `leetcode.packages.expose_name_reserved` | `name` |
+| `leetcode.packages.expose_value_not_loopback` | `name`, `value` |
+| `leetcode.packages.too_many` | `count`, `max` |
+| `leetcode.packages.duplicate_name` | `name` |
+| `leetcode.packages.cycle` | `path` |
 
 ## 7. Compatibility
 
@@ -268,6 +308,7 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 | `2.3` | 0.13.0 | One-line Command join (format spec §4.3) and the output name. **Request:** optional `join` (`and` \| `seq` \| `continuation` \| `pwsh` \| `cmd`) on `artifact.render` and `render.text`. **Response:** `joined: true` when `join` was sent (absent otherwise). **Code:** `render.unjoinable{line, reason, name?}`. **Method:** `naming.output` (the file name `artifact.write_file` would write; nothing written). Without `join` every render request and response is unchanged |
 | `2.4` | 0.14.0 | Unicode slugs and cross-platform vault names (format spec §14.1–§14.1b). **Code:** `naming.not_nfc`. **Param:** `segment?` on `naming.*` (a directory segment was refused; a stem error never carries it). **Behaviour:** default names keep Unicode letters and digits (`Café notes` → `café-notes`; were ASCII-only — ASCII titles unchanged) for `naming.check`, `vars.file.new`, `varsets.save`, `index.create`; the Windows reserved list is complete (`COM0`, `LPT0`, `COM¹²³`, `LPT¹²³`, `CONIN$`, `CONOUT$`, `CON .txt`), also for output names; new vault names refuse non-NFC text and invisible format characters (`naming.control_char`); new directory segments of name-creating writes are checked (an existing directory is exempt unless its name is reserved), so `index.create` refuses a source folder named like a device; on Windows, paths leaving the engine are plain, not `\\?\` (§11). **Request:** optional `updateLinks` on `artifact.rename`. **Response:** `updatedIndexes: [{path, hash}]` when it was sent. **Code:** `rename.link_update_failed{index, reason}` (a warning) |
 | `2.5` | 0.15.0 | Type locations (format spec §15): every path stays `<TypeDir>/<rel>`, now virtual. **Codes:** `config.location_conflict{type, other}`, `config.location_invalid{type, reason}`. **Behaviour:** a corrupt machine `config.toml` is now read, and refused with `config.invalid`, by type-scoped ops even under `--vault` (it was ignored there). **Methods:** `types.set_location`, `types.move.plan`, `types.move.apply`. **Response:** `types.list` rows gain `location: {vault, dir?, root?}`; a row whose location is broken (`config.location_conflict`, `config.location_invalid`, `artifact.bad_path`) is `{type, dir, error: {code}}` instead of failing the call. **Codes:** `move.target_exists{path}`, `move.plan_stale{path}`, `move.bad_path{path}`, `move.overlap{dir}`; warnings `move.left_behind{count}`, `move.source_kept{path}` (in `warnings` of `types.move.*`). Without location keys every other request and response is unchanged |
+| `2.6` *(unreleased)* | 0.16.0 | The `LeetCode` artifact type (`spec/LEETCODE_FILE_FORMAT.md`). **Registry:** a 7th row `LeetCode` (`format: "leetcode"`, `defaultEnabled: false`, `contexts: []`) in `initialize.types`, `vault.inspect` `dirs` and `types.list`; a client iterating the registry sees it. **Field:** `format?` on registry rows and `types.list` rows (absent = the generic format). **Codes:** `artifact.unsupported_type{type}` (generic content ops on a LeetCode path or type), `leetcode.not_exercise{path}`; the `leetcode.*` warning table (§6) comes with the parser. **Behaviour:** a non-`LeetCode/` file with `artifactType: LeetCode` now parses as type `LeetCode`; an existing `LeetCode/` folder is walked by `vault.validate`, `migrate.*` and the rename link scan even when the type is disabled; `artifact.create` with a LeetCode model answers `artifact.unsupported_type` (was `op.bad_request`) |
 
 ### 7.2 What 2.0 removed
 

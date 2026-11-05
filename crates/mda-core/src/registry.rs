@@ -2,7 +2,7 @@
 //! `constants.ts:21-121` rows and `artifact-type-config.service.ts:327-330`. `initialize` sends it to
 //! clients verbatim.
 
-/// The six artifact types. Serialized as the exact frontmatter spelling (`artifactType: Snippet`).
+/// The seven artifact types. Serialized as the exact frontmatter spelling (`artifactType: Snippet`).
 ///
 /// # Examples
 ///
@@ -19,6 +19,7 @@ pub enum ArtifactType {
     Template,
     Variables,
     AIPrompt,
+    LeetCode,
 }
 
 /// Where a type's artifacts are offered for insertion.
@@ -55,6 +56,30 @@ pub enum OutputNameKey {
     Extension,
 }
 
+/// How a type's files are read: the generic artifact format, or the LeetCode exercise format
+/// (`spec/LEETCODE_FILE_FORMAT.md`). Generic content ops refuse a non-`Artifact` type.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::registry::{ArtifactType, Format};
+/// assert!(ArtifactType::Snippet.info().format.is_default());
+/// assert_eq!(ArtifactType::LeetCode.info().format, Format::LeetCode);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Format {
+    Artifact,
+    LeetCode,
+}
+
+impl Format {
+    /// `true` for [`Format::Artifact`]: the wire omits the default (existing rows serialize unchanged).
+    pub fn is_default(&self) -> bool {
+        *self == Format::Artifact
+    }
+}
+
 /// One registry row.
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -70,6 +95,8 @@ pub struct TypeInfo {
     pub multi_block: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub language: Option<Language>,
+    #[serde(skip_serializing_if = "Format::is_default")]
+    pub format: Format,
 }
 
 /// Every type, in the extension's order.
@@ -77,10 +104,10 @@ pub struct TypeInfo {
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_core::registry::TYPES.len(), 6);
+/// assert_eq!(mda_core::registry::TYPES.len(), 7);
 /// assert_eq!(mda_core::registry::TYPES[0].dir, "Snippets");
 /// ```
-pub static TYPES: [TypeInfo; 6] = [
+pub static TYPES: [TypeInfo; 7] = [
     TypeInfo {
         artifact_type: ArtifactType::Snippet,
         dir: "Snippets",
@@ -93,6 +120,7 @@ pub static TYPES: [TypeInfo; 6] = [
             mode: LanguageMode::Free,
             default: "",
         }),
+        format: Format::Artifact,
     },
     TypeInfo {
         artifact_type: ArtifactType::AIAgentsConfig,
@@ -106,6 +134,7 @@ pub static TYPES: [TypeInfo; 6] = [
             mode: LanguageMode::Free,
             default: "",
         }),
+        format: Format::Artifact,
     },
     TypeInfo {
         artifact_type: ArtifactType::Command,
@@ -119,6 +148,7 @@ pub static TYPES: [TypeInfo; 6] = [
             mode: LanguageMode::Locked,
             default: "bash",
         }),
+        format: Format::Artifact,
     },
     TypeInfo {
         artifact_type: ArtifactType::Template,
@@ -132,6 +162,7 @@ pub static TYPES: [TypeInfo; 6] = [
             mode: LanguageMode::Free,
             default: "",
         }),
+        format: Format::Artifact,
     },
     // `multi_block` = sub-sets (spec §5); no fence language.
     TypeInfo {
@@ -143,6 +174,7 @@ pub static TYPES: [TypeInfo; 6] = [
         output_name_key: None,
         multi_block: true,
         language: None,
+        format: Format::Artifact,
     },
     TypeInfo {
         artifact_type: ArtifactType::AIPrompt,
@@ -156,6 +188,19 @@ pub static TYPES: [TypeInfo; 6] = [
             mode: LanguageMode::Hidden,
             default: "markdown",
         }),
+        format: Format::Artifact,
+    },
+    // Exercises (D-20): their own format; no insertion context; disabled by default.
+    TypeInfo {
+        artifact_type: ArtifactType::LeetCode,
+        dir: "LeetCode",
+        contexts: &[],
+        default_enabled: false,
+        writes_file: false,
+        output_name_key: None,
+        multi_block: false,
+        language: None,
+        format: Format::LeetCode,
     },
 ];
 
@@ -169,6 +214,7 @@ impl ArtifactType {
             Self::Template => &TYPES[3],
             Self::Variables => &TYPES[4],
             Self::AIPrompt => &TYPES[5],
+            Self::LeetCode => &TYPES[6],
         }
     }
 
@@ -191,6 +237,7 @@ impl ArtifactType {
             Self::Template => "Template",
             Self::Variables => "Variables",
             Self::AIPrompt => "AIPrompt",
+            Self::LeetCode => "LeetCode",
         }
     }
 
@@ -203,6 +250,7 @@ impl ArtifactType {
             "Template" => Self::Template,
             "Variables" => Self::Variables,
             "AIPrompt" => Self::AIPrompt,
+            "LeetCode" => Self::LeetCode,
             _ => return None,
         })
     }

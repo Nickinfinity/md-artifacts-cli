@@ -264,7 +264,8 @@ def main():
         c = (Rpc(a.mda, root / "vault", env) if name == "rpc"
              else Cli(a.mda, root / "vault", env, root / "tmp"))
         legs.append(Leg(c, root))
-    types = {t["dir"]: t for t in legs[0].c.init["types"]}
+    # Exercises have their own format: the generic create/render flow does not apply (D-22).
+    types = {t["dir"]: t for t in legs[0].c.init["types"] if t.get("format") != "leetcode"}
 
     vroot = legs[0].root / "vault"
     sources = sorted(r for d in types if (vroot / d / a.scope).is_dir()

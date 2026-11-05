@@ -1,0 +1,5 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/ex.md" }
+expect_error = "artifact.unsupported_type"
+expect_error_params = { type = "LeetCode" }
+expect_files = { "LeetCode/ex.md" = "---\nartifactType: LeetCode\nleetcodeType: function\ntitle: Two Sum\ndifficulty: easy\nstatus: unsolved\nalgorithm: hash-map\ntags: [leetcode, arrays]\n---\n\nReturn the indices of the two numbers that add up to target.\n\n```yaml leetcode\nfunction: twoSum\nparams:\n  - name: nums\n    type: int[]\n  - name: target\n    type: int\nreturns: int[]\n```\n\n## Examples\n```example\ninput: nums = [2,7,11,15], target = 9\noutput: [0,1]\n```\n\n## Tests\n```json\n[\n  { \"input\": { \"nums\": [2,7,11,15], \"target\": 9 }, \"expected\": [0,1] }\n]\n```\n\n# Setup\n\n## JavaScript\n```javascript\nfunction twoSum(nums, target) {\n  // solution here\n}\n```\n\n# Solutions\n" }

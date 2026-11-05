@@ -11,7 +11,9 @@ use mda_core::patch::{CodeTarget, FmField, PatchError, patch_code, patch_field};
 use mda_core::serialize::{SerializeError, serialize};
 use mda_vault::{content_hash, create_new, delete as vault_delete, replace};
 
-use crate::artifact::{MAX_ARTIFACT_BYTES, bad_path, check_dirs_at, locate, mid_dirs, segments};
+use crate::artifact::{
+    MAX_ARTIFACT_BYTES, bad_path, check_dirs_at, locate, locate_generic, mid_dirs, segments,
+};
 use crate::artifact_rewrite::{read_checked_at, rewrite_at};
 use crate::error::vault_error_at;
 use crate::write_file::exists_actual;
@@ -207,7 +209,7 @@ pub(crate) fn written(path: String, text: &str) -> WriteResponse {
 /// assert_eq!(create(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
-    let r = locate(ctx, &req.path)?;
+    let r = locate_generic(ctx, &req.path)?;
     let root = &r.place.root;
     if r.ty != req.model.artifact_type {
         return Err(bad_path(&req.path));
@@ -235,7 +237,7 @@ pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
 /// assert_eq!(update(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn update(ctx: &Ctx, req: UpdateRequest) -> Result<WriteResponse, OpError> {
-    let r = locate(ctx, &req.path)?;
+    let r = locate_generic(ctx, &req.path)?;
     let t = r.ty;
     let UpdateRequest {
         path,
@@ -262,7 +264,7 @@ pub fn update(ctx: &Ctx, req: UpdateRequest) -> Result<WriteResponse, OpError> {
 /// assert_eq!(patch(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn patch(ctx: &Ctx, req: PatchRequest) -> Result<WriteResponse, OpError> {
-    let r = locate(ctx, &req.path)?;
+    let r = locate_generic(ctx, &req.path)?;
     let root = &r.place.root;
     let edit = req.edit;
     let bad = |r: &str| OpError::new(error::OP_BAD_REQUEST).with("reason", r);

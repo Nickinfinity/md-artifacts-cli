@@ -9,7 +9,7 @@ use mda_core::serialize::from_parsed;
 use mda_core::variables::{SubsetRef, is_var_name, target};
 use mda_core::varset::{Applied, Profile, Score, order, subsets};
 
-use crate::artifact::{artifact_path, bad_path, load_at, locate};
+use crate::artifact::{artifact_path, bad_path, load_at, locate, locate_generic};
 use crate::artifact_write::WriteResponse;
 use crate::render::render_error;
 use crate::vars::{create_variables_file, scan};
@@ -117,7 +117,7 @@ pub struct Match {
 /// assert_eq!(match_(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn match_(ctx: &Ctx, req: MatchRequest) -> Result<MatchResponse, OpError> {
-    let art = load_at(&locate(ctx, &req.path)?)?.artifact;
+    let art = load_at(&locate_generic(ctx, &req.path)?)?.artifact;
     let (code, vars) = select_block(&art, req.block).map_err(render_error)?;
     let names = variable_names(code, vars);
     // Built once per call: every candidate is scored against these maps, never the artifact's lists.

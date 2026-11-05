@@ -11,7 +11,7 @@ use mda_core::registry::{ArtifactType, OutputNameKey};
 use mda_core::serialize::serialize;
 use mda_vault::{contain, content_hash, create_new};
 
-use crate::artifact::{bad_path, check_dirs_at, no_dot_below_root, segments};
+use crate::artifact::{bad_path, check_dirs_at, generic_type, no_dot_below_root, segments};
 use crate::artifact_write::{map_serialize, max_bytes};
 use crate::error::vault_error_at;
 use crate::index::{BatchResponse, MAX_STEPS, StepResult, limit_error, path_error};
@@ -49,7 +49,7 @@ pub struct CreateIndexRequest {
 /// assert_eq!(index_create::create(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn create(ctx: &Ctx, req: CreateIndexRequest) -> Result<BatchResponse, OpError> {
-    let t = req.artifact_type;
+    let t = generic_type(req.artifact_type)?;
     let info = t.info();
     if !info.writes_file {
         return Err(OpError::new(error::ARTIFACT_NOT_WHOLE_FILE).with("type", t.as_str()));

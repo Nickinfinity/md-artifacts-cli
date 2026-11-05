@@ -1,0 +1,5 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/ex.md", workspaceRoot = "$WORKSPACE", destDir = "out" }
+expect_error = "artifact.unsupported_type"
+expect_error_params = { type = "LeetCode" }
+expect_workspace_files = { "out" = false }

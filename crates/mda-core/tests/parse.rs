@@ -201,6 +201,13 @@ fn snippets_file_without_frontmatter_is_a_snippet() {
     );
 }
 
+/// 2.6 behaviour note: `artifactType: LeetCode` outside `LeetCode/` now names the exercise type.
+#[test]
+fn leetcode_discriminator_outside_its_dir() {
+    let a = p("---\nartifactType: LeetCode\n---\n", "Snippets/x.md");
+    assert_eq!(a.frontmatter.artifact_type, ArtifactType::LeetCode);
+}
+
 #[test]
 fn explicit_frontmatter_wins_over_the_directory() {
     let c = format!("---\nartifactType: Snippet\n---\n\n{NO_FM}");

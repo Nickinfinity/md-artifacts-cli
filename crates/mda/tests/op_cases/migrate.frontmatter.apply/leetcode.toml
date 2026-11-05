@@ -1,0 +1,6 @@
+vault = "vault_leetcode"
+params = { files = [{ path = "LeetCode/legacy.md", hash = "5843232fc88002a79b515ab52fb40d8e51ac54fd7e45e3fddacc77e0ecdf6375" }] }
+expect = { results = [
+  { status = "written", path = "LeetCode/legacy.md", hash = "a9994238cbd03c83d060735a5d29544be6d3d32239d38ea7ca404867fcaa095d" },
+], written = 1, skipped = 0 }
+expect_files = { "LeetCode/legacy.md" = "---\nartifactType: LeetCode\nleetcodeType: function\ntitle: Legacy\ndifficulty: easy\nstatus: unsolved\ntags: [leetcode]\n---\n\nAn exercise still carrying the extension's lowercase discriminator.\n", "LeetCode/ex.md" = "---\nartifactType: LeetCode\nleetcodeType: function\ntitle: Two Sum\ndifficulty: easy\nstatus: unsolved\nalgorithm: hash-map\ntags: [leetcode, arrays]\n---\n\nReturn the indices of the two numbers that add up to target.\n\n```yaml leetcode\nfunction: twoSum\nparams:\n  - name: nums\n    type: int[]\n  - name: target\n    type: int\nreturns: int[]\n```\n\n## Examples\n```example\ninput: nums = [2,7,11,15], target = 9\noutput: [0,1]\n```\n\n## Tests\n```json\n[\n  { \"input\": { \"nums\": [2,7,11,15], \"target\": 9 }, \"expected\": [0,1] }\n]\n```\n\n# Setup\n\n## JavaScript\n```javascript\nfunction twoSum(nums, target) {\n  // solution here\n}\n```\n\n# Solutions\n", "LeetCode/note.md" = "# Notes\n\nNot an exercise.\n" }

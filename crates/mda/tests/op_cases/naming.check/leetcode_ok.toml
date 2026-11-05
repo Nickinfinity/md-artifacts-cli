@@ -1,0 +1,3 @@
+vault = "vault_leetcode"
+params = { type = "LeetCode", fileName = "two-sum" }
+expect = { fileName = "two-sum", ok = true }

@@ -59,6 +59,78 @@ pub fn english(code: &str) -> Option<&'static str> {
         MOVE_BAD_PATH => "a file cannot be moved to a dot path at a root location",
         MOVE_OVERLAP => "the move target lies inside the type's current root location",
         MOVE_LEFT_BEHIND => "entries that are not .md files (or are symlinks) stay where they are",
+        LEETCODE_FRONTMATTER_IGNORED_KEY => {
+            "a frontmatter key is ignored; move it into a yaml leetcode body fence"
+        }
+        LEETCODE_TYPE_UNKNOWN => "unknown leetcodeType; derived from test.type instead",
+        LEETCODE_CONFIG_INDENTED => "config fence line not at column 0 (kept verbatim)",
+        LEETCODE_CONFIG_KEY_IN_FRONTMATTER => {
+            "a frontmatter key is set in a config fence; the fence wins, but the picker reads frontmatter"
+        }
+        LEETCODE_CONFIG_DUPLICATE_KEY => {
+            "a config key is declared in several fences; one occurrence wins"
+        }
+        LEETCODE_CONFIG_UNTERMINATED_FENCE => {
+            "unterminated yaml leetcode fence; no config read from it"
+        }
+        LEETCODE_CONFIG_HIDDEN_BY_OPEN_FENCE => {
+            "an unterminated fence may hide the config fences after it"
+        }
+        LEETCODE_PROGRAM_NO_CHANNEL => "program: no channel declared; defaulted to argv",
+        LEETCODE_PROGRAM_UNKNOWN_CHANNEL => "program: unknown channel; defaulted to argv",
+        LEETCODE_PROGRAM_ENTRY_REJECTED => "program: entry path rejected",
+        LEETCODE_FILES_UNKNOWN_ROLE => "## Files: unknown role; treated as editable",
+        LEETCODE_LIBS_NO_REGISTRY => "libs: this language has no package registry; skipped",
+        LEETCODE_LIBS_REJECTED => "libs: some specs are not installable for this ecosystem",
+        LEETCODE_CHECKS_NOT_A_LIST => "checks: expected a list; no checks parsed",
+        LEETCODE_CHECKS_RESERVED_KIND => {
+            "checks: a check kind no environment implements yet; dropped"
+        }
+        LEETCODE_CHECKS_UNKNOWN_KIND => "checks: unknown check kind; dropped",
+        LEETCODE_CHECKS_HTTP_NEEDS_PACKAGE => "checks: an http check needs a package; dropped",
+        LEETCODE_CHECKS_BUILD_NEEDS_ARGV => {
+            "checks: a build check needs argv as a JSON array of strings; dropped"
+        }
+        LEETCODE_CHECKS_NEEDS_FILE => "checks: this check needs a file; dropped",
+        LEETCODE_CHECKS_CALL_NEEDS_FUNCTION => "checks: a call check needs a function; dropped",
+        LEETCODE_CHECKS_FENCE_UNBOUND => {
+            "## Tests: a fence names no check and the project has several; cases ignored"
+        }
+        LEETCODE_CHECKS_FENCE_UNKNOWN_CHECK => {
+            "## Tests: a fence binds to an unknown check; cases ignored"
+        }
+        LEETCODE_CONFIG_UNKNOWN_KEY => "unknown config key (a near-miss of a known one)",
+        LEETCODE_PACKAGES_NOT_A_LIST => "packages: expected a list; no packages parsed",
+        LEETCODE_PACKAGES_MISSING_NAME => "packages: an entry has no name; dropped",
+        LEETCODE_PACKAGES_DIR_REJECTED => "packages: a package dir is rejected",
+        LEETCODE_PACKAGES_MISSING_FIELD => "packages: a package needs install and start; dropped",
+        LEETCODE_PACKAGES_ARGV_NOT_ARRAY => {
+            "packages: a command must be a JSON array of strings; dropped"
+        }
+        LEETCODE_PACKAGES_ARGV_EMPTY => "packages: a command must not be empty; dropped",
+        LEETCODE_PACKAGES_ARGV_SUBSTITUTION => {
+            "packages: a command uses a substitution other than ${PORT}; dropped"
+        }
+        LEETCODE_PACKAGES_EXPOSE_NAME_INVALID => {
+            "packages: an exposeAs name must match ^[A-Z][A-Z0-9_]*$; dropped"
+        }
+        LEETCODE_PACKAGES_EXPOSE_NAME_RESERVED => {
+            "packages: an exposeAs name is a reserved variable name; dropped"
+        }
+        LEETCODE_PACKAGES_EXPOSE_VALUE_NOT_LOOPBACK => {
+            "packages: an exposeAs value must be a loopback URL template; dropped"
+        }
+        LEETCODE_PACKAGES_TOO_MANY => {
+            "packages: more entries than the cap; the whole block is refused"
+        }
+        LEETCODE_PACKAGES_DUPLICATE_NAME => {
+            "packages: duplicate package name; the whole block is refused"
+        }
+        LEETCODE_PACKAGES_CYCLE => "packages: dependsOn cycle; the whole block is refused",
+        ARTIFACT_UNSUPPORTED_TYPE => {
+            "this artifact type has its own format; this operation does not handle it"
+        }
+        LEETCODE_NOT_EXERCISE => "not a LeetCode exercise (no artifactType: LeetCode)",
         MOVE_SOURCE_KEPT => "a moved file's original could not be deleted; delete it by hand",
         VARS_MIXED_FILE => {
             "a variables fence sits before the first ## section; edits refuse this file"

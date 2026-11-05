@@ -1,0 +1,7 @@
+vault = "vault_leetcode"
+params = { type = "LeetCode" }
+expect = { dirs = [], files = [
+  { path = "LeetCode/ex.md", name = "ex", title = "Two Sum", tags = ["leetcode", "arrays"] },
+  { path = "LeetCode/legacy.md", name = "legacy", title = "Legacy", tags = ["leetcode"] },
+  { path = "LeetCode/note.md", name = "note" },
+] }

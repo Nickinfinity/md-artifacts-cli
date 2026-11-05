@@ -1768,3 +1768,71 @@ input = "migrate/fm-block-list.md"
 expected = "migrate/fm-block-list.expected.md"
 origin = "rust"
 deviates_from_ts = "Rust-only: block-list tags (#57) left as they are"
+
+[[cases]]
+id = "fm-leetcode"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leetcode.md"
+expected = "migrate/fm-leetcode.expected.md"
+origin = "rust"
+deviates_from_ts = "Rust-only: the LeetCode discriminator migration (D-37); the extension never had it"
+
+[[cases]]
+id = "fm-leetcode-padded"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leetcode-padded.md"
+expected = "migrate/fm-leetcode-padded.expected.md"
+origin = "rust"
+deviates_from_ts = "Rust-only: the LeetCode discriminator migration (D-37); the extension never had it"
+
+[[cases]]
+id = "fm-leetcode-crlf"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leetcode-crlf.md"
+expected = "migrate/fm-leetcode-crlf.expected.md"
+origin = "rust"
+deviates_from_ts = "Rust-only: the LeetCode discriminator migration (D-37); the extension never had it"
+
+[[cases]]
+id = "fm-leetcode-done"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leetcode-done.md"
+origin = "rust"
+deviates_from_ts = "Rust-only: the LeetCode discriminator migration (D-37); the extension never had it"
+
+[[cases]]
+id = "fm-leetcode-quoted"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leetcode-quoted.md"
+skip = "migrate.quoted_type"
+origin = "rust"
+deviates_from_ts = "Rust-only: the LeetCode discriminator migration (D-37); the extension never had it"
+
+[[cases]]
+id = "fm-leetcode-dupe"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leetcode-dupe.md"
+origin = "rust"
+deviates_from_ts = "Rust-only: the LeetCode discriminator migration (D-37); the extension never had it"
+
+[[cases]]
+id = "fm-leetcode-case"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leetcode-case.md"
+origin = "rust"
+deviates_from_ts = "Rust-only: the LeetCode discriminator migration (D-37); the extension never had it"
+
+[[cases]]
+id = "fm-leetcode-legacy-type"
+kind = "migrate"
+migration = "frontmatter"
+input = "migrate/fm-leetcode-legacy-type.md"
+origin = "rust"
+deviates_from_ts = "Rust-only: the LeetCode discriminator migration (D-37); the extension never had it"

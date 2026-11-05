@@ -151,3 +151,55 @@ fn normalises_flags() {
     );
     assert!(normalises(b"ascii").is_empty());
 }
+
+#[test]
+fn leetcode_rewrites() {
+    let r = ok("---\nartifactType: leetcode\nleetcodeType: function\n---\nx");
+    assert_eq!(r.new_line, "artifactType: LeetCode");
+    assert_eq!(r.artifact_type, ArtifactType::LeetCode);
+    assert_eq!(
+        r.content,
+        "---\nartifactType: LeetCode\nleetcodeType: function\n---\nx"
+    );
+    none("---\nartifactType: LeetCode\n---\nx");
+    assert_eq!(
+        ok("---\nartifactType:  leetcode \n---\nx").new_line,
+        "artifactType: LeetCode"
+    );
+}
+
+#[test]
+fn leetcode_quoted() {
+    quoted("---\nartifactType: \"leetcode\"\n---\nx", "\"leetcode\"");
+    quoted("---\nartifactType: 'leetcode'\n---\nx", "'leetcode'");
+}
+
+#[test]
+fn leetcode_dupe_none() {
+    none("---\nartifactType: leetcode\nartifactType: leetcode\n---\nx");
+    none("---\nartifactType: leetcode\nartifactType: Snippet\n---\nx");
+}
+
+#[test]
+fn leetcode_case_variant_none() {
+    none("---\nartifactType: LEETCODE\n---\nx");
+    none("---\nartifactType: Leetcode\n---\nx");
+    none("---\nartifactType: leetcode # c\n---\nx");
+    none("---\nartifactType: Snippet\ntype: \"snippet\"\n---\nx");
+    none("---\ntype: leetcode\n---\nx");
+}
+
+#[test]
+fn leetcode_crlf() {
+    let r = ok("---\r\nartifactType: leetcode\r\ntitle: A\r\n---\r\nx");
+    assert_eq!(r.new_line, "artifactType: LeetCode");
+    assert_eq!(
+        r.content,
+        "---\r\nartifactType: LeetCode\r\ntitle: A\r\n---\r\nx"
+    );
+}
+
+#[test]
+fn quoted_other_artifact_type_none() {
+    none("---\nartifactType: \"Snippet\"\n---\nx");
+}

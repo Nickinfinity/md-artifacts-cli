@@ -3,6 +3,12 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
+> **Status (2026-11-04): W3 of plan `type-locations-leetcode` Phase 2 landed (MAC-26)** — registry row 7 `LeetCode` (`Format`,
+> `format: "leetcode"`, disabled by default; `types.list` rows carry `format`); spec `spec/LEETCODE_FILE_FORMAT.md` (imported from the
+> extension at `84c437d`, §10 wire shape + the 36 `leetcode.*` warning codes `LEETCODE_WARNING_CODES`); wire model
+> `mda-core/src/leetcode/model/` (`Serialize` only, `OrderedMap` keeps declared key order, `Default` = undeclared values; parser stub
+> until W4); generic content ops refuse LeetCode paths/types `artifact.unsupported_type` before any I/O; `migrate.frontmatter`
+> rewrites exactly `artifactType: leetcode` → `LeetCode`; protocol 2.6 unreleased (header stays 2.5 until W6).
 > **Status (2026-11-04): type locations landed (MAC-24, MAC-25; plan `type-locations-leetcode` Phase 1)** — every wire path is
 > virtual `<TypeDir>/<rel>`, mapped through the type's machine-file location (`[types.<T>] vault/dir/root`; resolver
 > `mda-ops/src/location.rs`, write side `location/set.rs`, spec §15); `types.list` rows gain `location`; `types.set_location`,
@@ -148,6 +154,7 @@ md-artifacts-cli/
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
 │   │       ├── varset/        # shapes, sub-sets, search text; score.rs: scoring, order, apply (W5b)
 │   │       ├── variables.rs   # Variables-file edits: sub-sets, vars, name rule, shapes (W5)
+│   │       ├── leetcode/      # LeetCode exercises: model/ (the §10 wire types), the parser (W4)
 │   │       ├── migrate/       # {mod, frontmatter}.rs — the pure frontmatter migration rewrite (W6, spec §11; vks removed W7e)
 │   │       └── error.rs       # vks.* code constants + VarsError
 │   ├── mda-vault/             # ALL filesystem access
@@ -263,7 +270,7 @@ the engine validates (`validate_vault`: exists, a directory, `.obsidian/` a dire
   `MDA_CONFIG_DIR`; in-process tests use `Ctx::with_config_dir`; `std::env::set_var` is forbidden.
 
 Artifact directory names are fixed (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`,
-`AIPrompts/`, `Variables/`).
+`AIPrompts/`, `Variables/`, `LeetCode/` — exercises, own format `spec/LEETCODE_FILE_FORMAT.md`; generic content ops refuse it).
 
 ### Listing *(E-11)*
 

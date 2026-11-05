@@ -6,7 +6,7 @@ use std::path::Path;
 use mda_core::model::ParsedArtifact;
 use mda_core::naming::{NameError, validate_dir_segment};
 use mda_core::parse::{decode, parse_from_content};
-use mda_core::registry::{ArtifactType, type_for_dir};
+use mda_core::registry::{ArtifactType, Format, type_for_dir};
 use mda_vault::{
     DirState, Root, VaultError, contain, content_hash, dir_state, list_dir, read_bounded,
 };
@@ -189,6 +189,27 @@ pub(crate) fn artifact_path(p: &str) -> Result<ArtifactType, OpError> {
     }
 }
 
+/// The generic ops parse the artifact format; a type in another format (LeetCode) is refused by
+/// type, pure, before any I/O. Delete, verbatim rename, tree and `naming.check` skip this.
+pub(crate) fn generic_type(t: ArtifactType) -> Result<ArtifactType, OpError> {
+    if t.info().format == Format::Artifact {
+        Ok(t)
+    } else {
+        Err(OpError::new(error::ARTIFACT_UNSUPPORTED_TYPE).with("type", t.as_str()))
+    }
+}
+
+/// `artifact_path` then `generic_type`: the path rule first, so a bad path stays `bad_path`.
+pub(crate) fn generic_path(p: &str) -> Result<ArtifactType, OpError> {
+    generic_type(artifact_path(p)?)
+}
+
+/// `locate` for the generic ops: refuses non-artifact-format types before `locate`'s I/O.
+pub(crate) fn locate_generic(ctx: &Ctx, virt: &str) -> Result<Resolved, OpError> {
+    generic_path(virt)?;
+    locate(ctx, virt)
+}
+
 /// D-5 + W1 review (b): the artifact path rule, then the virtual → physical mapping, then at a
 /// root location the canonical path may hold no `.`-component (a symlink into `.obsidian`).
 pub(crate) fn locate(ctx: &Ctx, virt: &str) -> Result<Resolved, OpError> {
@@ -237,7 +258,7 @@ fn load_in(root: &Root, rel: &str, virt: &str) -> Result<ReadResponse, OpError> 
 /// assert_eq!(artifact::read(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn read(ctx: &Ctx, req: ReadRequest) -> Result<ReadResponse, OpError> {
-    load_at(&locate(ctx, &req.path)?)
+    load_at(&locate_generic(ctx, &req.path)?)
 }
 
 /// `artifact.tree`: one level of a type directory.

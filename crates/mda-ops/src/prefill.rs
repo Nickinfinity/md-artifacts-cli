@@ -7,6 +7,7 @@ use mda_core::model::{ArtifactModel, ModelBlock};
 use mda_core::naming::{NameField, check_injection, node_ext, validate_name};
 use mda_core::registry::{ArtifactType, LanguageMode, OutputNameKey};
 
+use crate::artifact::generic_type;
 use crate::{Ctx, OpError, error};
 
 /// Largest source text, in **bytes** (the extension counts UTF-16 units,
@@ -63,6 +64,7 @@ pub struct PrefillRequest {
 /// ```
 pub fn prefill(ctx: &Ctx, req: PrefillRequest) -> Result<ArtifactModel, OpError> {
     let _ = ctx; // pure: no vault, no I/O
+    generic_type(req.artifact_type)?;
     let name = req.file_name.as_deref();
     if req.text.len() > MAX_PREFILL_BYTES {
         return Err(OpError::new(error::FILE_TOO_LARGE)

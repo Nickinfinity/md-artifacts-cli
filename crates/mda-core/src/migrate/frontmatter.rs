@@ -52,8 +52,25 @@ pub fn rewrite(content: &str) -> Result<Option<FmRewrite>, Skip> {
         };
     };
     let lines = lines(content, block);
-    if lines.iter().any(|(_, l)| key_of(l) == Some("artifactType")) {
-        return Ok(None);
+    let mut found = lines
+        .iter()
+        .filter(|(_, l)| key_of(l) == Some("artifactType"));
+    if let Some(&(off, text)) = found.next() {
+        // D-37: only the lowercase LeetCode discriminator; a second line means the parser's
+        // last-wins rule decides, so leave it.
+        if found.next().is_some() {
+            return Ok(None);
+        }
+        let raw = text.split_once(':').map_or("", |(_, v)| js_trim(v));
+        if raw == "leetcode" {
+            return splice(content, off, text, ArtifactType::LeetCode);
+        }
+        let leetcode_quoted = unquote(raw) == "leetcode";
+        return if leetcode_quoted {
+            Err(Skip::QuotedType(raw.to_owned()))
+        } else {
+            Ok(None)
+        };
     }
     let mut type_lines = lines.iter().filter(|(_, l)| key_of(l) == Some("type"));
     if let Some(&(off, text)) = type_lines.next()
@@ -61,21 +78,7 @@ pub fn rewrite(content: &str) -> Result<Option<FmRewrite>, Skip> {
             .split_once(':')
             .and_then(|(_, v)| legacy_type(js_trim(v)))
     {
-        {
-            let new_line = format!("artifactType: {}", t.as_str());
-            let (Some(head), Some(tail)) = (content.get(..off), content.get(off + text.len()..))
-            else {
-                return Ok(None);
-            };
-            let out = format!("{head}{new_line}{tail}");
-            guard(content, &out, t)?;
-            return Ok(Some(FmRewrite {
-                old_line: text.to_owned(),
-                new_line,
-                artifact_type: t,
-                content: out,
-            }));
-        }
+        return splice(content, off, text, t);
     }
     // TS `explainUnrecognisedFrontmatter` scans every `type` line, not only the first.
     let quoted = lines
@@ -88,12 +91,34 @@ pub fn rewrite(content: &str) -> Result<Option<FmRewrite>, Skip> {
     quoted.map_or(Ok(None), |raw| Err(Skip::QuotedType(raw)))
 }
 
-/// The legacy lowercase `type:` value → its type (`aiprompt` never existed as a legacy value).
+/// Replace the line `text` at `off` with `artifactType: <t>`, guarded (shared by both branches).
+fn splice(
+    content: &str,
+    off: usize,
+    text: &str,
+    t: ArtifactType,
+) -> Result<Option<FmRewrite>, Skip> {
+    let new_line = format!("artifactType: {}", t.as_str());
+    let (Some(head), Some(tail)) = (content.get(..off), content.get(off + text.len()..)) else {
+        return Ok(None);
+    };
+    let out = format!("{head}{new_line}{tail}");
+    guard(content, &out, t)?;
+    Ok(Some(FmRewrite {
+        old_line: text.to_owned(),
+        new_line,
+        artifact_type: t,
+        content: out,
+    }))
+}
+
+/// The legacy lowercase `type:` value → its type (`aiprompt` and `leetcode` never existed as legacy
+/// `type:` values; LeetCode's own discriminator is `artifactType`, D-37).
 fn legacy_type(v: &str) -> Option<ArtifactType> {
     TYPES
         .iter()
         .map(|t| t.artifact_type)
-        .filter(|&t| t != ArtifactType::AIPrompt)
+        .filter(|&t| !matches!(t, ArtifactType::AIPrompt | ArtifactType::LeetCode))
         .find(|t| match t {
             ArtifactType::AIAgentsConfig => v == "agent",
             _ => t.as_str().to_ascii_lowercase() == v,

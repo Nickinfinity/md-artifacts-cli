@@ -1,0 +1,5 @@
+vault = "vault_leetcode"
+params = { type = "LeetCode", dir = "LeetCode/gen", paths = ["a.ts"] }
+expect_error = "artifact.unsupported_type"
+expect_error_params = { type = "LeetCode" }
+expect_files = { "LeetCode/gen" = false }

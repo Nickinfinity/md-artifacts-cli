@@ -116,7 +116,10 @@ fn every_code_has_english() {
 
 #[test]
 fn every_warning_has_english() {
-    for c in error::RENDER_WARNING_CODES {
+    for c in error::RENDER_WARNING_CODES
+        .iter()
+        .chain(error::LEETCODE_WARNING_CODES)
+    {
         assert!(mda::cli::print::english(c).is_some(), "{c}");
     }
 }

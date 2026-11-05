@@ -13,7 +13,7 @@ use crate::location::{
     LocationSpec, LocationView, check_location, persist_location, place_for, resolve,
 };
 use crate::vault::machine;
-use crate::{ArtifactType, Ctx, OpError, TYPES};
+use crate::{ArtifactType, Ctx, Format, OpError, TYPES};
 
 /// `types.list` request (no fields).
 #[derive(Debug, serde::Deserialize)]
@@ -27,6 +27,9 @@ pub struct TypeRow {
     #[serde(rename = "type")]
     pub artifact_type: ArtifactType,
     pub dir: &'static str,
+    /// `leetcode` for the exercise type; absent for the generic format (D-34).
+    #[serde(skip_serializing_if = "Format::is_default")]
+    pub format: Format,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -88,6 +91,7 @@ fn row(ctx: &Ctx, t: &TypeInfo) -> Result<TypeRow, OpError> {
             return Ok(TypeRow {
                 artifact_type: t.artifact_type,
                 dir: t.dir,
+                format: t.format,
                 enabled: None,
                 dir_exists: None,
                 location: None,
@@ -105,6 +109,7 @@ fn row(ctx: &Ctx, t: &TypeInfo) -> Result<TypeRow, OpError> {
     Ok(TypeRow {
         artifact_type: t.artifact_type,
         dir: t.dir,
+        format: t.format,
         enabled: Some(cfg.enabled(t.artifact_type).unwrap_or(dir_exists)),
         dir_exists: Some(dir_exists),
         location: Some(LocationView::of(&place)),

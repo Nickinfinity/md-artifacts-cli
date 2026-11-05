@@ -95,7 +95,7 @@ fn naming_codes_listed() {
 
 #[test]
 fn warning_codes_are_not_error_codes() {
-    for c in RENDER_WARNING_CODES {
+    for c in RENDER_WARNING_CODES.iter().chain(LEETCODE_WARNING_CODES) {
         assert!(!ALL_CODES.contains(c), "{c}");
     }
 }
@@ -434,7 +434,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 89);
+    assert_eq!(ALL_CODES.len(), 91);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE
@@ -473,6 +473,8 @@ fn move_codes_exact_json() {
         (MOVE_OVERLAP, "dir", "Lib"),
         (MOVE_LEFT_BEHIND, "count", "2"),
         (MOVE_SOURCE_KEPT, "path", "Snippets/a.md"),
+        (ARTIFACT_UNSUPPORTED_TYPE, "type", "LeetCode"),
+        (LEETCODE_NOT_EXERCISE, "path", "LeetCode/note.md"),
     ];
     for (code, key, val) in cases {
         assert!(ALL_CODES.contains(&code), "{code} not in ALL_CODES");

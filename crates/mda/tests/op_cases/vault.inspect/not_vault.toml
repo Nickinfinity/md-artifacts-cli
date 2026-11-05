@@ -29,5 +29,9 @@ state = "missing"
 type = "AIPrompt"
 dir = "AIPrompts"
 state = "missing"
+[[expect.dirs]]
+type = "LeetCode"
+dir = "LeetCode"
+state = "missing"
 [expect_config_files]
 "config.toml" = false
