@@ -28,6 +28,8 @@ struct Case {
     migration: Option<String>,
     /// Migrate only: the expected skip code (no `expected` then).
     skip: Option<String>,
+    /// LeetCode only: the TS helper test file the case exercises (W4 Q-23), named in failures.
+    group: Option<String>,
     #[allow(dead_code)] // reason: provenance, read by humans
     origin: Option<String>,
     #[allow(dead_code)] // recorded decision, read by humans and later kind handlers
@@ -176,6 +178,34 @@ fn run_render(dir: &Path, c: &Case) -> Result<(), String> {
     }
 }
 
+/// A LeetCode exercise case: `leetcode::parse` of the decoded input against the expected JSON —
+/// semantically (`first_diff`), then as serialised strings, so `OrderedMap` declared key order is
+/// asserted too (D-24, W4 Q-27). `want` is the file parsed with `preserve_order`, never raw bytes.
+fn run_leetcode(dir: &Path, c: &Case) -> Result<(), String> {
+    let id = match &c.group {
+        Some(g) => format!("{} [{g}]", c.id),
+        None => c.id.clone(),
+    };
+    let Some(exp) = &c.expected else {
+        return Err(format!("{id}: leetcode needs expected"));
+    };
+    let io = |e: std::io::Error| format!("{id}: {e}");
+    let bytes = std::fs::read(dir.join(&c.input)).map_err(io)?;
+    let exercise = mda_core::leetcode::parse(&mda_core::parse::decode(&bytes));
+    let got = serde_json::to_value(exercise).map_err(|e| format!("{id}: {e}"))?;
+    let want = std::fs::read_to_string(dir.join(exp)).map_err(io)?;
+    let want: serde_json::Value =
+        serde_json::from_str(&want).map_err(|e| format!("{id}: expected: {e}"))?;
+    if let Some(d) = first_diff(&got, &want, "") {
+        return Err(format!("{id}: differs at {d}"));
+    }
+    // Strings, not `Value ==`: map equality ignores key order even with `preserve_order`.
+    if serde_json::to_string(&got).ok() != serde_json::to_string(&want).ok() {
+        return Err(format!("{id}: key order differs"));
+    }
+    Ok(())
+}
+
 /// The per-kind handler. Never skips.
 fn run_case(dir: &Path, c: &Case) -> Result<(), String> {
     match c.kind.as_str() {
@@ -184,6 +214,7 @@ fn run_case(dir: &Path, c: &Case) -> Result<(), String> {
         "render" => run_render(dir, c),
         "idempotent" => run_idempotent(dir, c),
         "migrate" => run_migrate(dir, c),
+        "leetcode" => run_leetcode(dir, c),
         k => Err(format!("{}: unknown kind {k}", c.id)),
     }
 }
@@ -227,7 +258,7 @@ fn check(dir: &Path) -> Result<(), Vec<String>> {
         }
     }
     let mut files = Vec::new();
-    for sub in ["parse", "serialize", "render", "migrate"] {
+    for sub in ["parse", "serialize", "render", "migrate", "leetcode"] {
         walk(&dir.join(sub), &mut files);
     }
     for f in files {

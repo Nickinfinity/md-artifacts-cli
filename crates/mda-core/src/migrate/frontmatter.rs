@@ -126,7 +126,7 @@ fn legacy_type(v: &str) -> Option<ArtifactType> {
 }
 
 /// `(absolute offset, text without `\n` and one trailing `\r`)` per line of `span` (TS `linesWithOffsets`).
-fn lines(content: &str, span: Range<usize>) -> Vec<(usize, &str)> {
+pub(crate) fn lines(content: &str, span: Range<usize>) -> Vec<(usize, &str)> {
     let Some(block) = content.get(span.clone()) else {
         return vec![];
     };
@@ -143,7 +143,7 @@ fn lines(content: &str, span: Range<usize>) -> Vec<(usize, &str)> {
 }
 
 /// TS `/^['"]|['"]$/g`: one quote off each end, independently.
-fn unquote(raw: &str) -> &str {
+pub(crate) fn unquote(raw: &str) -> &str {
     let r = raw.strip_prefix(['\'', '"']).unwrap_or(raw);
     r.strip_suffix(['\'', '"']).unwrap_or(r)
 }

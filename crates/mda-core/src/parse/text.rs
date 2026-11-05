@@ -25,6 +25,21 @@ fn js_ws(c: char) -> bool {
     c == '\u{feff}' || (c.is_whitespace() && c != '\u{85}')
 }
 
+/// JS `\s` as a `regex` character class (JS ≠ Rust: JS includes U+FEFF and excludes U+0085). Port
+/// a TS `\s` as `JS_S`, never as Rust's `\s`; the same set `js_trim` strips.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::parse::text::{JS_S, compile, js_trim};
+/// let re = compile(&format!("^{JS_S}$"));
+/// for c in (0u32..=0xFFFF).filter_map(char::from_u32) {
+///     let s = c.to_string();
+///     assert_eq!(re.is_match(&s), js_trim(&s).is_empty(), "U+{:04X}", c as u32);
+/// }
+/// ```
+pub const JS_S: &str = r"[\t\n\x0B\x0C\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]";
+
 /// JS `s.trim()`.
 ///
 /// # Examples

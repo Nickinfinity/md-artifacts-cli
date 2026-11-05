@@ -325,3 +325,54 @@ fn migrate_wrong_expected_fails_by_id() {
     let e = err_of(&d);
     assert!(e.contains("mw:"), "{e}");
 }
+
+/// The undeclared exercise, as `leetcode::parse` of a non-trivial file returns it until T4.5.
+fn default_exercise() -> serde_json::Value {
+    serde_json::to_value(mda_core::leetcode::LeetCodeExercise::default()).unwrap()
+}
+
+fn leetcode_dir(name: &str, expected: &serde_json::Value) -> PathBuf {
+    let m = format!(
+        "{}group = \"golden\"\nexpected = \"leetcode/a.json\"\n",
+        case("lc1", "leetcode", "leetcode/a.md")
+    );
+    let exp = expected.to_string();
+    tmp_with(
+        name,
+        &m,
+        &[("leetcode/a.md", MD), ("leetcode/a.json", exp.as_bytes())],
+    )
+}
+
+#[test]
+fn leetcode_case_matches() {
+    let d = leetcode_dir("lcok", &default_exercise());
+    assert_eq!(check(&d), Ok(()));
+    std::fs::remove_dir_all(&d).unwrap();
+}
+
+#[test]
+fn leetcode_key_order_is_asserted() {
+    let serde_json::Value::Object(m) = default_exercise() else {
+        panic!("exercise is an object");
+    };
+    let mut rev: Vec<_> = m.into_iter().collect();
+    rev.reverse();
+    let reordered = serde_json::Value::Object(rev.into_iter().collect());
+    let e = err_of(&leetcode_dir("lcorder", &reordered));
+    assert!(e.contains("lc1 [golden]: key order differs"), "{e}");
+}
+
+#[test]
+fn leetcode_diff_names_id_group_and_pointer() {
+    let mut v = default_exercise();
+    v["title"] = "Wrong".into();
+    let e = err_of(&leetcode_dir("lcdiff", &v));
+    assert!(e.contains("lc1 [golden]: differs at /title"), "{e}");
+}
+
+#[test]
+fn leetcode_unlisted_file_named() {
+    let d = tmp("lcunl", "", &["leetcode/stray.md"]);
+    assert!(err_of(&d).contains("unlisted file"));
+}

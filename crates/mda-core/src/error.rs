@@ -484,6 +484,32 @@ pub const LEETCODE_WARNING_CODES: &[&str] = &[
     LEETCODE_PACKAGES_CYCLE,
 ];
 
+/// LeetCode structural rule 0 (D-29, TS `frontmatter.rules.ts`): body-set keys in the frontmatter.
+/// A `vault.validate` error. Params: `keys` (`", "`-joined, D-36).
+pub const LEETCODE_RULE_BODY_KEY: &str = "leetcode.rule.body_key";
+/// LeetCode structural rule 1 (D-29): a legacy `type: leetcode` without `artifactType`. No params.
+pub const LEETCODE_RULE_LEGACY_TYPE: &str = "leetcode.rule.legacy_type";
+/// LeetCode structural rule 2 (D-29): the first canonical-order violation. Params: `key`, `before`.
+pub const LEETCODE_RULE_KEY_ORDER: &str = "leetcode.rule.key_order";
+/// LeetCode structural rule 3 (D-29): a discriminator present but not `LeetCode`. Params: `found`
+/// (≤ 200 chars).
+pub const LEETCODE_RULE_DISCRIMINATOR: &str = "leetcode.rule.discriminator";
+
+/// The LeetCode structural rule codes (D-29): `vault.validate` **errors**, listed in `ALL_CODES`
+/// (unlike [`LEETCODE_WARNING_CODES`]). Emitted by the pure rules in `leetcode/rules.rs`.
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(mda_core::error::LEETCODE_RULE_CODES.len(), 4);
+/// ```
+pub const LEETCODE_RULE_CODES: &[&str] = &[
+    LEETCODE_RULE_BODY_KEY,
+    LEETCODE_RULE_LEGACY_TYPE,
+    LEETCODE_RULE_KEY_ORDER,
+    LEETCODE_RULE_DISCRIMINATOR,
+];
+
 /// The `limit` vocabulary of `render.limit` (spec §10).
 ///
 /// # Examples

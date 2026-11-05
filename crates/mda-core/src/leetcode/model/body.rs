@@ -18,6 +18,29 @@ use super::{LeetCodeDifficulty, LeetCodeStatus, LeetcodeType};
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct OrderedMap<V>(pub Vec<(String, V)>);
 
+impl<V> OrderedMap<V> {
+    /// Insert with JS object semantics: a repeated key keeps its **first position** and takes the
+    /// **last value**, so no key is ever emitted twice (spec §10 intro).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut m = mda_core::leetcode::OrderedMap(vec![]);
+    /// m.insert("a", 1);
+    /// m.insert("b", 2);
+    /// m.insert("a", 3);
+    /// assert_eq!(m.0, vec![("a".to_owned(), 3), ("b".to_owned(), 2)]);
+    /// ```
+    // ponytail: linear scan per insert; maps are a handful of keys — index by a HashMap if one grows.
+    pub fn insert(&mut self, key: impl Into<String>, value: V) {
+        let key = key.into();
+        match self.0.iter_mut().find(|(k, _)| *k == key) {
+            Some((_, v)) => *v = value,
+            None => self.0.push((key, value)),
+        }
+    }
+}
+
 impl<V: Serialize> Serialize for OrderedMap<V> {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         let mut m = s.serialize_map(Some(self.0.len()))?;

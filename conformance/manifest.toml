@@ -1,9 +1,10 @@
 # Conformance manifest: every case the harness (crates/mda-core/tests/conformance.rs) runs.
-# A file under parse/, serialize/, render/ or migrate/ that no case lists fails the suite.
+# A file under parse/, serialize/, render/, migrate/ or leetcode/ that no case lists fails the suite.
 #
 # [[cases]]
 # id = "unique-id"                 # unique
-# kind = "parse"                   # parse | serialize | render | idempotent | migrate
+# kind = "parse"                   # parse | serialize | render | idempotent | migrate | leetcode
+# group = "config-blocks"         # leetcode only: the TS helper test file the case exercises (W4 Q-23)
 # input = "parse/x.md"             # path relative to conformance/
 # expected = "parse/x.expected.json"
 # values = "render/x.values.json"  # render only; path relative to conformance/

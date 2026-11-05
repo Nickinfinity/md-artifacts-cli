@@ -227,6 +227,10 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `move.source_kept` | `path` |
 | `artifact.unsupported_type` | `type` |
 | `leetcode.not_exercise` | `path` |
+| `leetcode.rule.body_key` | `keys` |
+| `leetcode.rule.legacy_type` | — |
+| `leetcode.rule.key_order` | `key`, `before` |
+| `leetcode.rule.discriminator` | `found` |
 | `migrate.up_to_date` | — |
 | `migrate.leading_blank` | — |
 | `migrate.quoted_type` | `value` |

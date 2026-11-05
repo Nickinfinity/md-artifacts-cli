@@ -131,6 +131,12 @@ pub fn english(code: &str) -> Option<&'static str> {
             "this artifact type has its own format; this operation does not handle it"
         }
         LEETCODE_NOT_EXERCISE => "not a LeetCode exercise (no artifactType: LeetCode)",
+        LEETCODE_RULE_BODY_KEY => {
+            "execution keys in the frontmatter; move them into a yaml leetcode fence"
+        }
+        LEETCODE_RULE_LEGACY_TYPE => "legacy type: leetcode without artifactType: LeetCode",
+        LEETCODE_RULE_KEY_ORDER => "frontmatter key out of canonical order",
+        LEETCODE_RULE_DISCRIMINATOR => "artifactType is not exactly LeetCode",
         MOVE_SOURCE_KEPT => "a moved file's original could not be deleted; delete it by hand",
         VARS_MIXED_FILE => {
             "a variables fence sits before the first ## section; edits refuse this file"

@@ -161,6 +161,27 @@ fn vars_error_maps_unchanged() {
 }
 
 #[test]
+fn leetcode_rule_codes_listed_with_exact_json() {
+    for c in LEETCODE_RULE_CODES {
+        assert!(ALL_CODES.contains(c), "{c}");
+    }
+    assert_eq!(
+        serde_json::to_value(OpError::new(LEETCODE_RULE_LEGACY_TYPE)).unwrap(),
+        serde_json::json!({"code": "leetcode.rule.legacy_type", "params": {}})
+    );
+    assert_eq!(
+        serde_json::to_value(
+            OpError::new(LEETCODE_RULE_KEY_ORDER)
+                .with("key", "leetcodeType")
+                .with("before", "title")
+        )
+        .unwrap(),
+        serde_json::json!({"code": "leetcode.rule.key_order",
+            "params": {"key": "leetcodeType", "before": "title"}})
+    );
+}
+
+#[test]
 fn path_codes_listed() {
     for c in mda_core::error::PATH_CODES {
         assert!(ALL_CODES.contains(c), "{c}");
@@ -434,7 +455,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 91);
+    assert_eq!(ALL_CODES.len(), 95);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE
@@ -475,6 +496,8 @@ fn move_codes_exact_json() {
         (MOVE_SOURCE_KEPT, "path", "Snippets/a.md"),
         (ARTIFACT_UNSUPPORTED_TYPE, "type", "LeetCode"),
         (LEETCODE_NOT_EXERCISE, "path", "LeetCode/note.md"),
+        (LEETCODE_RULE_BODY_KEY, "keys", "function, params"),
+        (LEETCODE_RULE_DISCRIMINATOR, "found", "Leetcode"),
     ];
     for (code, key, val) in cases {
         assert!(ALL_CODES.contains(&code), "{code} not in ALL_CODES");

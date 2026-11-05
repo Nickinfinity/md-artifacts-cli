@@ -9,10 +9,11 @@ rust-version.workspace = true
 serde.workspace = true
 regex.workspace = true
 unicode-normalization.workspace = true
+# W4: LeetCode case JSON (`leetcode/safe_json.rs`); already in Cargo.lock (ladder rung 3).
+serde_json.workspace = true
 
 [dev-dependencies]
 toml.workspace = true
-serde_json.workspace = true
 
 [lints]
 workspace = true
