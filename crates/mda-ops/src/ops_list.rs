@@ -2,8 +2,8 @@
 
 use crate::registry::{OpSpec, typed};
 use crate::{
-    artifact, artifact_rename, artifact_write, index, index_create, migrate, naming, prefill,
-    render, system, types, types_move, validate, vars, varsets, vault, write_file,
+    artifact, artifact_rename, artifact_write, index, index_create, leetcode, migrate, naming,
+    prefill, render, system, types, types_move, validate, vars, varsets, vault, write_file,
 };
 
 pub(crate) static OPS: &[OpSpec] = &[
@@ -76,6 +76,11 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "index.run",
         summary: "Write every step of a template index into a workspace",
         handler: |c, v| typed(c, v, index::run),
+    },
+    OpSpec {
+        name: "leetcode.read",
+        summary: "Parse one LeetCode exercise",
+        handler: |c, v| typed(c, v, leetcode::read),
     },
     OpSpec {
         name: "migrate.frontmatter.apply",

@@ -4,4 +4,7 @@ expect = { dirs = [], files = [
   { path = "LeetCode/ex.md", name = "ex", title = "Two Sum", tags = ["leetcode", "arrays"] },
   { path = "LeetCode/legacy.md", name = "legacy", title = "Legacy", tags = ["leetcode"] },
   { path = "LeetCode/note.md", name = "note" },
+  { path = "LeetCode/pkg.md", name = "pkg", title = "LRU Cache", tags = ["leetcode", "design"] },
+  { path = "LeetCode/rules.md", name = "rules", title = "Rules" },
+  { path = "LeetCode/stack.md", name = "stack", title = "Orders API" },
 ] }

@@ -204,6 +204,16 @@ pub(crate) fn generic_path(p: &str) -> Result<ArtifactType, OpError> {
     generic_type(artifact_path(p)?)
 }
 
+/// The `leetcode.*` path rule (before any I/O): `artifact_path`, then the type's format must be
+/// LeetCode, else `artifact.bad_path` (the inverse of `generic_path`).
+#[allow(dead_code)] // reason: seam, used by T5.1/T5.2
+pub(crate) fn leetcode_path(p: &str) -> Result<ArtifactType, OpError> {
+    match artifact_path(p)? {
+        t if t.info().format == Format::LeetCode => Ok(t),
+        _ => Err(bad_path(p)),
+    }
+}
+
 /// `locate` for the generic ops: refuses non-artifact-format types before `locate`'s I/O.
 pub(crate) fn locate_generic(ctx: &Ctx, virt: &str) -> Result<Resolved, OpError> {
     generic_path(virt)?;
@@ -236,16 +246,18 @@ pub(crate) fn no_dot_below_root(place: &Place, rel: &str, virt: &str) -> Result<
 /// Read and parse one artifact on a resolved location: reads the physical `rel`, parses (types)
 /// and names errors by the virtual path.
 pub(crate) fn load_at(r: &Resolved) -> Result<ReadResponse, OpError> {
-    load_in(&r.place.root, &r.rel, &r.virt)
-}
-
-fn load_in(root: &Root, rel: &str, virt: &str) -> Result<ReadResponse, OpError> {
-    let bytes = read_bounded(root, Path::new(rel), MAX_ARTIFACT_BYTES)
-        .map_err(|e| vault_error_at(e, root, virt))?;
+    let bytes = read_at(r)?;
     Ok(ReadResponse {
-        artifact: parse_from_content(&decode(&bytes), virt),
+        artifact: parse_from_content(&decode(&bytes), &r.virt),
         hash: content_hash(&bytes),
     })
+}
+
+/// The raw bytes of one file on a resolved location: bounded by `MAX_ARTIFACT_BYTES` before
+/// reading, contained, errors named by the virtual path. One read serves both hash and parse.
+pub(crate) fn read_at(r: &Resolved) -> Result<Vec<u8>, OpError> {
+    read_bounded(&r.place.root, Path::new(&r.rel), MAX_ARTIFACT_BYTES)
+        .map_err(|e| vault_error_at(e, &r.place.root, &r.virt))
 }
 
 /// `artifact.read`: parse one artifact file.
@@ -340,5 +352,33 @@ fn tree_file(ty: ArtifactType, place: &Place, rel: &str, virt: &str, file: &str)
             tags: None,
             error: Some(TreeError { code: e.code }),
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn leetcode_path_accepts_only_the_leetcode_type() {
+        assert_eq!(
+            leetcode_path("LeetCode/ex.md").unwrap(),
+            ArtifactType::LeetCode
+        );
+        assert_eq!(
+            leetcode_path("LeetCode/a/b.md").unwrap(),
+            ArtifactType::LeetCode
+        );
+        for p in [
+            "Snippets/a.md",
+            "LeetCode/ex.txt",
+            "LeetCode/../x.md",
+            "LeetCode",
+            "x.md",
+        ] {
+            let e = leetcode_path(p).unwrap_err();
+            assert_eq!(e.code, error::ARTIFACT_BAD_PATH, "{p}");
+            assert_eq!(e.params.get("path").map(String::as_str), Some(p));
+        }
     }
 }

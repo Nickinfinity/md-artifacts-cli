@@ -1,0 +1,5 @@
+# H5.0 seed (red until T5.1): the lowercase discriminator is not an exercise (D-25, Q-13).
+vault = "vault_leetcode"
+params = { path = "LeetCode/legacy.md" }
+expect_error = "leetcode.not_exercise"
+expect_error_params = { path = "LeetCode/legacy.md" }

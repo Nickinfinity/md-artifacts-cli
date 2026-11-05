@@ -1,0 +1,5 @@
+# H5.0 seed (red until T5.1): placeholder body. T5.1 points `path` at `LeetCode/fn.md` (added at
+# H4.0, Q-20) and copies `exercise` from that conformance case's expected JSON, plus the H4.0 hash.
+vault = "vault_leetcode"
+params = { path = "LeetCode/ex.md" }
+expect = {}

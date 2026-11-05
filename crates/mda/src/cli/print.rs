@@ -149,6 +149,8 @@ pub fn success(op: &str, v: &Value) -> String {
             super::vault::success(op, v).unwrap_or_default()
         }
         op if op.starts_with("types.") => super::types::success(op, v).unwrap_or_default(),
+        op if op.starts_with("leetcode.") => super::leetcode::success(op, v)
+            .unwrap_or_else(|| serde_json::to_string_pretty(v).unwrap_or_default()),
         _ => serde_json::to_string_pretty(v).unwrap_or_default(),
     }
 }

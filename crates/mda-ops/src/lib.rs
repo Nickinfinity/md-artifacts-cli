@@ -8,6 +8,7 @@ pub mod artifact_write;
 pub mod error;
 pub mod index;
 pub mod index_create;
+pub mod leetcode;
 pub mod location;
 pub mod migrate;
 pub mod naming;
