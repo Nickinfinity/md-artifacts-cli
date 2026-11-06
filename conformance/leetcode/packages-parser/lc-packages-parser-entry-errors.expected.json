@@ -69,7 +69,6 @@
     {
       "code": "leetcode.packages.argv_substitution",
       "params": {
-        "PORT": "{PORT}",
         "element": "${HOME}",
         "field": "start",
         "name": "subst"

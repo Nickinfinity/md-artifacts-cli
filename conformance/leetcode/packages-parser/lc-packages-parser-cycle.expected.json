@@ -36,7 +36,7 @@
     {
       "code": "leetcode.packages.cycle",
       "params": {
-        "path": "a → b → a"
+        "path": "a, b, a"
       }
     }
   ],
