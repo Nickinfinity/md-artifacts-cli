@@ -1,0 +1,7 @@
+vault = "vault_leetcode"
+workspace = "vault_leetcode"
+machine_config = "[types.LeetCode]\nvault=\"$WORKSPACE\"\nroot=true"
+params = { type = "LeetCode" }
+[expect]
+dirs = ["LeetCode"]
+files = []

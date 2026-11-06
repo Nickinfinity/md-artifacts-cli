@@ -1,0 +1,13 @@
+vault = "vault_lc_bad"
+params = {}
+
+# Legacy `type:` is a rule error, not not_exercise. Quoted discriminator: rule 3, no not_exercise. Generic-looking fences in a LeetCode body: no vars.* issue.
+[expect]
+files = 3
+errors = 2
+warnings = 0
+truncated = false
+issues = [
+  { path = "LeetCode/legacy_type.md", code = "leetcode.rule.legacy_type", severity = "error", params = {} },
+  { path = "LeetCode/quoted.md", code = "leetcode.rule.discriminator", severity = "error", params = {found = "\"LeetCode\""} },
+]

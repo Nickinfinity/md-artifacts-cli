@@ -1,12 +1,12 @@
 vault = "vault_leetcode"
 params = { type = "LeetCode" }
 expect = { dirs = [], files = [
-  { path = "LeetCode/ex.md", name = "ex", title = "Two Sum", tags = ["leetcode", "arrays"] },
-  { path = "LeetCode/fn.md", name = "fn", title = "Two Sum", tags = ["leetcode", "arrays"] },
-  { path = "LeetCode/legacy.md", name = "legacy", title = "Legacy", tags = ["leetcode"] },
-  { path = "LeetCode/note.md", name = "note" },
-  { path = "LeetCode/pkg.md", name = "pkg", title = "LRU Cache", tags = ["leetcode", "design"] },
-  { path = "LeetCode/rules.md", name = "rules", title = "Rules" },
-  { path = "LeetCode/stack.md", name = "stack", title = "Orders API" },
-  { path = "LeetCode/write.md", name = "write", title = "Valid Anagram", tags = ["leetcode", "strings"] },
+  { path = "LeetCode/ex.md", name = "ex", title = "Two Sum", tags = ["leetcode", "arrays"], leetcode = { leetcodeType = "function", difficulty = "easy", status = "unsolved", algorithm = "hash-map" } },
+  { path = "LeetCode/fn.md", name = "fn", title = "Two Sum", tags = ["leetcode", "arrays"], leetcode = { leetcodeType = "function", difficulty = "easy", status = "unsolved", algorithm = "hash-map" } },
+  { path = "LeetCode/legacy.md", name = "legacy", error = { code = "leetcode.not_exercise" } },
+  { path = "LeetCode/note.md", name = "note", error = { code = "leetcode.not_exercise" } },
+  { path = "LeetCode/pkg.md", name = "pkg", title = "LRU Cache", tags = ["leetcode", "design"], leetcode = { leetcodeType = "package", difficulty = "medium", status = "attempted" } },
+  { path = "LeetCode/rules.md", name = "rules", title = "Rules", leetcode = { leetcodeType = "function", difficulty = "easy", status = "unsolved" } },
+  { path = "LeetCode/stack.md", name = "stack", title = "Orders API", leetcode = { leetcodeType = "stack", difficulty = "hard", status = "solved", algorithm = "graph" } },
+  { path = "LeetCode/write.md", name = "write", title = "Valid Anagram", tags = ["leetcode", "strings"], leetcode = { leetcodeType = "function", difficulty = "easy", status = "attempted" } },
 ] }

@@ -1,16 +1,19 @@
-//! `vault.validate` (W6, spec §11.3): every artifact file in the six type dirs, read and checked;
+//! `vault.validate` (W6, spec §11.3): every artifact file in the seven type dirs, read and checked;
 //! errors and warnings per file. Writes nothing.
 
 use std::collections::BTreeMap;
 
+use mda_core::leetcode::{self, Discriminator, discriminator, frontmatter_rules};
 use mda_core::migrate::{fenceless_sections, frontmatter};
 use mda_core::parse::{
     decode, file_fence_block, is_flagged, parse_from_content, untagged_defaults,
 };
-use mda_core::registry::ArtifactType;
+use mda_core::registry::{ArtifactType, Format};
 use mda_core::variables::{EditError, model_of};
 
+use crate::artifact::artifact_path;
 use crate::error::{
+    LEETCODE_FRONTMATTER_IGNORED_KEY, LEETCODE_NOT_EXERCISE, LEETCODE_RULE_LEGACY_TYPE,
     MIGRATE_PENDING, VARS_FENCELESS_SECTION, VARS_MIXED_FILE, VARS_UNTAGGED_DEFAULTS,
 };
 use crate::{Ctx, OpError};
@@ -145,10 +148,53 @@ fn push(out: &mut ValidateResponse, i: Issue) {
     }
 }
 
+/// A LeetCode file: no generic `vars.*` checks. `Lowercase` is only the pending migration (the
+/// migration's own answer), `Other` is rule 3 from `frontmatter_rules`, `Absent` is not an exercise.
+fn leetcode_issues(path: &str, content: &str) -> Vec<Issue> {
+    let (mut v, w) = (Vec::new(), |c: &'static str, p| {
+        issue(path, c, p, Severity::Warning)
+    });
+    match discriminator(content) {
+        Discriminator::Absent => {
+            let rules = frontmatter_rules(content);
+            if rules.iter().any(|r| r.code == LEETCODE_RULE_LEGACY_TYPE) {
+                // A legacy `type: leetcode` file is a rule failure, not a non-exercise.
+                v.extend(
+                    rules
+                        .into_iter()
+                        .map(|r| issue(path, r.code, r.params, Severity::Error)),
+                );
+            } else {
+                v.push(w(LEETCODE_NOT_EXERCISE, BTreeMap::new()));
+            }
+        }
+        Discriminator::Lowercase => {}
+        Discriminator::Other(_) | Discriminator::Exact => {
+            for r in frontmatter_rules(content) {
+                v.push(issue(path, r.code, r.params, Severity::Error));
+            }
+            // Q-17: the parser's warnings, minus the ignored-key noise (empty until T4.5).
+            for r in leetcode::parse(content).warnings {
+                if r.code != LEETCODE_FRONTMATTER_IGNORED_KEY {
+                    v.push(w(r.code, r.params));
+                }
+            }
+        }
+    }
+    // `frontmatter::rewrite` stays the only pending detector, for every arm.
+    if matches!(frontmatter::rewrite(content), Ok(Some(_))) {
+        v.push(warn(path, MIGRATE_PENDING, "kind", "frontmatter"));
+    }
+    v
+}
+
 /// The findings for one file, in the order of spec §11.3: variable errors, pending migrations,
 /// Variables-file warnings. Pending is the migrations' own answer, never a second detector.
 fn issues_of(path: &str, bytes: &[u8]) -> Vec<Issue> {
     let content = decode(bytes);
+    if artifact_path(path).is_ok_and(|t| t.info().format == Format::LeetCode) {
+        return leetcode_issues(path, &content);
+    }
     let p = parse_from_content(&content, path);
     let mut v = Vec::new();
     if let Some(e) = &p.vars_error {
