@@ -255,6 +255,7 @@ pub struct LeetCodeSolution {
 pub struct Attempt {
     /// Lower-cased `## <Language>` heading text.
     pub language: String,
+    pub code: String,
     /// ISO-8601 timestamp.
     pub at: String,
     /// Human-readable elapsed time, e.g. `8m22s`.
@@ -265,7 +266,6 @@ pub struct Attempt {
     /// `high`, `medium` or `low`, as written.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub confidence: Option<String>,
-    pub code: String,
 }
 
 /// An attempt to append: [`Attempt`] without its language.

@@ -294,9 +294,10 @@ fn hostile_one_mb_unterminated_frontmatter_is_no_frontmatter() {
 #[test]
 fn hostile_frontmatter_cap_is_inclusive_and_skips_the_block() {
     let build = |n: usize| format!("---\n{}\n---\nBody", "a".repeat(n));
-    let ok = build(MAX_FRONTMATTER_BYTES);
-    assert_eq!(split_frontmatter(&ok).0.len(), MAX_FRONTMATTER_BYTES);
-    let big = build(MAX_FRONTMATTER_BYTES + 1);
+    // The cap is the whole block: `---\n` + content + `\n---\n` is content + 9 bytes.
+    let ok = build(MAX_FRONTMATTER_BYTES - 9);
+    assert_eq!(split_frontmatter(&ok).0.len(), MAX_FRONTMATTER_BYTES - 9);
+    let big = build(MAX_FRONTMATTER_BYTES - 8);
     assert_eq!(split_frontmatter(&big), ("", "Body"));
 }
 

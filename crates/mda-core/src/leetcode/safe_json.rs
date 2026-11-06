@@ -5,7 +5,6 @@
 use serde_json::Value;
 
 /// Parse JSON or `None`.
-#[allow(dead_code)] // reason: seam, used by T4.2, T4.3, T4.4, T4.7
 pub(crate) fn safe_json(s: &str) -> Option<Value> {
     serde_json::from_str::<Value>(s).ok()
 }

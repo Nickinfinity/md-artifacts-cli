@@ -51,7 +51,6 @@ pub(super) fn unsafe_path_reason(p: &str) -> Option<&'static str> {
 }
 
 /// Parse the `program:` block out of merged config lines; `None` when there is none.
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn parse_program(lines: &[&str], warnings: &mut Vec<Warning>) -> Option<ProgramConfig> {
     let start = lines.iter().position(|l| js_trim(l) == "program:")?;
     let mut channel = ProgramChannel::Argv;

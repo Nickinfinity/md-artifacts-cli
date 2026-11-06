@@ -355,7 +355,6 @@ impl Parser {
 /// let v = parse_yaml_cases("- input:\n    x: 1\n  expected: 2");
 /// assert_eq!(serde_json::to_string(&v).unwrap(), r#"[{"input":{"x":1},"expected":2}]"#);
 /// ```
-#[allow(dead_code)] // reason: seam, used by T4.7
 pub(crate) fn parse_yaml_cases(raw: &str) -> CaseValue {
     let lines = to_lines(raw);
     let Some(first) = lines.first() else {

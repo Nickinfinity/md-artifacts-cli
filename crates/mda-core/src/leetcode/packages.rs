@@ -18,7 +18,6 @@ use crate::render::Warning;
 mod tests;
 
 /// Hard cap on `packages:` entries (S7): bounds concurrent processes and installs.
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) const MAX_PACKAGES: usize = 8;
 
 /// Loader/interpreter variables an `exposeAs` name must never be; `DYLD_*` is checked separately.
@@ -50,7 +49,7 @@ fn is_reserved_expose_name(n: &str) -> bool {
 }
 
 /// Whether `name` may be set as a booted child's environment variable (TS `isSafeExposeName`).
-#[allow(dead_code)] // reason: seam, used by T4.5 / the W5 runner
+#[cfg(test)] // TS runtime-only (install/boot); the parse path never calls it
 pub(crate) fn is_safe_expose_name(name: &str) -> bool {
     expose_name_ok(name) && !is_reserved_expose_name(name)
 }
@@ -78,7 +77,6 @@ fn only_port_placeholder(v: &str) -> bool {
 }
 
 /// Parse the `packages:` block of merged config lines; empty when absent or dropped.
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn parse_packages(lines: &[&str], warnings: &mut Vec<Warning>) -> Vec<PackageSpec> {
     let Some((start, header)) = lines
         .iter()

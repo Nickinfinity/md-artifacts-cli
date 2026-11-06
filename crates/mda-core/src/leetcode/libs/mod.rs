@@ -7,20 +7,17 @@ use super::resolve_lang_id;
 mod tests;
 
 /// Longest raw spec, in chars (Rust-only cap, Q-37/Q-39); longer is `leetcode.libs.rejected` upstream.
-#[allow(dead_code)] // reason: seam, used by T4.3
 pub(crate) const MAX_SPEC_CHARS: usize = 10_000;
 
 /// Registries a `libs:` key can resolve to (TS `LIB_ECOSYSTEMS`).
-#[allow(dead_code)] // reason: seam, used by T4.3
+#[cfg(test)] // TS runtime-only (install/boot); the parse path never calls it
 pub(crate) const LIB_ECOSYSTEMS: [&str; 4] = ["pnpm", "pip", "cargo", "maven"];
 
 /// Env vars the library seam exports (TS `packages-parser.ts:114`); pinned so a TS change cannot drift silently.
-#[allow(dead_code)] // reason: seam, used by T4.3
 pub(crate) const LIB_SEAM_VARS: [&str; 4] =
     ["NODE_PATH", "VIRTUAL_ENV", "CLASSPATH", "CARGO_TARGET_DIR"];
 
 /// Which toolchain resolves a `libs:` key.
-#[allow(dead_code)] // reason: seam, used by T4.3 / T4.4
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum LibEcosystem {
     Pnpm,
@@ -30,7 +27,6 @@ pub(crate) enum LibEcosystem {
 }
 
 /// One validated spec, split into the fields its manifest is rendered from.
-#[allow(dead_code)] // reason: seam, used by T4.3 / T4.4
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum ParsedLibSpec {
     Pnpm {
@@ -57,7 +53,6 @@ pub(crate) enum ParsedLibSpec {
 }
 
 /// Why a spec was refused. Codes only: the W13 warning carries `specs` + `ecosystem`, not this.
-#[allow(dead_code)] // reason: seam, used by T4.3 / T4.4
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum SpecRefusal {
     /// Over [`MAX_SPEC_CHARS`] chars.
@@ -89,7 +84,6 @@ pub(crate) enum SpecRefusal {
 type Parsed = Result<ParsedLibSpec, SpecRefusal>;
 
 /// The registry serving a `libs:` language key: alias-resolved, display ids folded onto their runnable pair.
-#[allow(dead_code)] // reason: seam, used by T4.3
 pub(crate) fn ecosystem_for(language_key: &str) -> Option<LibEcosystem> {
     match resolve_lang_id(language_key).as_str() {
         "java" => Some(LibEcosystem::Maven),
@@ -102,13 +96,11 @@ pub(crate) fn ecosystem_for(language_key: &str) -> Option<LibEcosystem> {
     }
 }
 
-#[allow(dead_code)] // reason: seam, used by T4.3
 fn all(s: &str, ok: impl Fn(char) -> bool) -> bool {
     s.chars().all(ok)
 }
 
 /// `^[A-Za-z0-9][A-Za-z0-9<rest>]*$` — ASCII only, so a leading `-`, `.` or `/` never matches.
-#[allow(dead_code)] // reason: seam, used by T4.3
 fn ident(s: &str, rest: &str) -> bool {
     let mut it = s.chars();
     it.next().is_some_and(|c| c.is_ascii_alphanumeric())
@@ -117,7 +109,6 @@ fn ident(s: &str, rest: &str) -> bool {
         })
 }
 
-#[allow(dead_code)] // reason: seam, used by T4.3
 fn pnpm(raw: &str) -> Parsed {
     let (name, range) = match raw.rsplit_once('@') {
         Some((n, r)) if !n.is_empty() => (n, Some(r)),
@@ -137,7 +128,6 @@ fn pnpm(raw: &str) -> Parsed {
     })
 }
 
-#[allow(dead_code)] // reason: seam, used by T4.3
 fn pip_pred(p: &str) -> bool {
     let Some(v) = ["==", ">=", "<=", "~=", "!=", "<", ">"]
         .iter()
@@ -149,7 +139,6 @@ fn pip_pred(p: &str) -> bool {
         && all(v, |c| c.is_ascii_alphanumeric() || ".*!-".contains(c))
 }
 
-#[allow(dead_code)] // reason: seam, used by T4.3
 fn pip(raw: &str) -> Parsed {
     let (head, extras, rest) = match raw.split_once('[') {
         None => (raw, "", ""),
@@ -186,7 +175,6 @@ fn pip(raw: &str) -> Parsed {
     })
 }
 
-#[allow(dead_code)] // reason: seam, used by T4.3
 fn cargo_req(r: &str) -> bool {
     let lead = r
         .chars()
@@ -198,7 +186,6 @@ fn cargo_req(r: &str) -> bool {
         && all(v, |c| c.is_ascii_alphanumeric() || ".*-".contains(c))
 }
 
-#[allow(dead_code)] // reason: seam, used by T4.3
 fn cargo_feature(f: &str) -> bool {
     let mut it = f.chars();
     it.next()
@@ -209,7 +196,6 @@ fn cargo_feature(f: &str) -> bool {
         )
 }
 
-#[allow(dead_code)] // reason: seam, used by T4.3
 fn cargo(raw: &str) -> Parsed {
     let (name, tail) = match raw.split_once('@') {
         Some((n, t)) => (n, Some(t)),
@@ -241,7 +227,6 @@ fn cargo(raw: &str) -> Parsed {
     })
 }
 
-#[allow(dead_code)] // reason: seam, used by T4.3
 fn maven(raw: &str) -> Parsed {
     let parts: Vec<&str> = raw.split(':').collect();
     let [group, artifact, version, rest @ ..] = parts.as_slice() else {
@@ -267,7 +252,6 @@ fn maven(raw: &str) -> Parsed {
 
 /// Validate and parse one raw spec against its ecosystem's grammar: the single door. Over
 /// [`MAX_SPEC_CHARS`] chars or containing `..` is refused before any grammar runs.
-#[allow(dead_code)] // reason: seam, used by T4.3 / T4.4
 pub(crate) fn parse_spec(eco: LibEcosystem, raw: &str) -> Parsed {
     if raw.chars().nth(MAX_SPEC_CHARS).is_some() {
         return Err(SpecRefusal::TooLong);
@@ -284,7 +268,7 @@ pub(crate) fn parse_spec(eco: LibEcosystem, raw: &str) -> Parsed {
 }
 
 /// Every npm name that fails the grammar, in order; empty means all valid.
-#[allow(dead_code)] // reason: seam, used by T4.4
+#[cfg(test)] // TS runtime-only (install/boot); the parse path never calls it
 pub(crate) fn validate_lib_names<'a>(names: &[&'a str]) -> Vec<&'a str> {
     names
         .iter()
@@ -294,7 +278,7 @@ pub(crate) fn validate_lib_names<'a>(names: &[&'a str]) -> Vec<&'a str> {
 }
 
 /// An npm spec without its `@range`.
-#[allow(dead_code)] // reason: seam, used by T4.4
+#[cfg(test)] // TS runtime-only (install/boot); the parse path never calls it
 pub(crate) fn package_name_of(spec: &str) -> &str {
     match spec.rsplit_once('@') {
         Some((n, _)) if !n.is_empty() => n,

@@ -13,7 +13,6 @@ pub(crate) struct SectionBounds {
 /// the first `boundary` line outside a ``` fence, or end of text (TS `sectionBounds`; the boundary
 /// `RegExp` is a line predicate, tested per `\n`-split line with any `\r` kept). The shared reader
 /// and writer primitive. `None` when the heading is absent.
-#[allow(dead_code)] // reason: seam, used by T4.7
 pub(crate) fn section_bounds(
     text: &str,
     heading: &Regex,
@@ -29,7 +28,6 @@ pub(crate) fn section_bounds(
 /// Offset of the first `boundary` line at or after `from` that is not inside a ``` fence (a plain
 /// toggle on lines opening with three backticks; `~~~` is not a fence here); `text.len()` when
 /// none, so an unterminated fence runs to the end. A `from` off a char boundary also yields the end.
-#[allow(dead_code)] // reason: seam, used by T4.7
 pub(crate) fn boundary_outside_fence(
     text: &str,
     from: usize,

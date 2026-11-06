@@ -34,7 +34,6 @@ static FENCE_RE: LazyLock<Regex> = LazyLock::new(|| compile(r"(?s)```([^\n]*)\r?
 
 /// What [`parse_project_artifact`] reads out of an artifact (TS `ProjectSections`).
 #[derive(Debug, Clone, Default, PartialEq)]
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) struct ProjectSections {
     /// `## Files` entries, in document order.
     pub files: Vec<FileSpec>,
@@ -54,7 +53,6 @@ pub(crate) struct ProjectSections {
 /// Parse the `project` grammar of `config_raw` (the merged config text: retained frontmatter plus
 /// every config fence) and `body`. Every step degrades with a warning. Warning order is the TS
 /// call order: near-miss keys, checks, case binding, packages, `## Files`, `libs:`, `# Solutions`.
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn parse_project_artifact(config_raw: &str, body: &str) -> ProjectSections {
     let lines: Vec<&str> = config_raw
         .split('\n')

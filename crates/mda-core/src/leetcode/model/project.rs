@@ -170,19 +170,56 @@ pub struct HttpCheck {
 /// let c = ProjectCheck::Http(HttpCheck { base: CheckBase { name: "n".into(), cases: vec![], public_count: 0 }, package: "api".into() });
 /// assert_eq!(serde_json::to_value(c).unwrap()["kind"], "http");
 /// ```
-#[derive(Debug, Clone, PartialEq, Serialize)]
-#[serde(tag = "kind")]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ProjectCheck {
-    #[serde(rename = "call")]
     Call(FunctionCheck),
-    #[serde(rename = "build")]
     Build(BuildCheck),
-    #[serde(rename = "dom-assert")]
     DomAssert(DomAssertCheck),
-    #[serde(rename = "css-assert")]
     CssAssert(CssAssertCheck),
-    #[serde(rename = "http")]
     Http(HttpCheck),
+}
+
+/// Key order is TS's object literal: `name, kind, <kind fields>, cases, publicCount`, then the
+/// optional `dir` / `package` last (serde's tagged enum would emit `kind` first).
+impl Serialize for ProjectCheck {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let mut m = s.serialize_map(None)?;
+        let (kind, base) = match self {
+            Self::Call(c) => ("call", &c.base),
+            Self::Build(c) => ("build", &c.base),
+            Self::DomAssert(c) => ("dom-assert", &c.base),
+            Self::CssAssert(c) => ("css-assert", &c.base),
+            Self::Http(c) => ("http", &c.base),
+        };
+        m.serialize_entry("name", &base.name)?;
+        m.serialize_entry("kind", kind)?;
+        match self {
+            Self::Call(c) => {
+                m.serialize_entry("file", &c.file)?;
+                m.serialize_entry("function", &c.function)?;
+            }
+            Self::Build(c) => m.serialize_entry("argv", &c.argv)?,
+            Self::DomAssert(c) => m.serialize_entry("file", &c.file)?,
+            Self::CssAssert(c) => m.serialize_entry("file", &c.file)?,
+            Self::Http(c) => m.serialize_entry("package", &c.package)?,
+        }
+        m.serialize_entry("cases", &base.cases)?;
+        m.serialize_entry("publicCount", &base.public_count)?;
+        let (dir, package) = match self {
+            Self::Build(c) => (c.dir.as_ref(), None),
+            Self::DomAssert(c) => (None, c.package.as_ref()),
+            Self::CssAssert(c) => (None, c.package.as_ref()),
+            _ => (None, None),
+        };
+        if let Some(d) = dir {
+            m.serialize_entry("dir", d)?;
+        }
+        if let Some(p) = package {
+            m.serialize_entry("package", p)?;
+        }
+        m.end()
+    }
 }
 
 /// One `packages:` entry: a process the stack boots.
@@ -208,11 +245,11 @@ pub struct PackageSpec {
     /// Extra stdout readiness substring.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ready: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub depends_on: Option<Vec<String>>,
     /// Variable name to loopback URL template.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expose_as: Option<OrderedMap<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub depends_on: Option<Vec<String>>,
 }
 
 /// One declarative instruction against a mounted component, tagged by `op`.

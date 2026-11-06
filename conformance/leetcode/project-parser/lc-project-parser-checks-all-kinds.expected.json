@@ -1,0 +1,95 @@
+{
+  "title": "Case",
+  "leetcodeType": "package",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [
+    {
+      "input": {},
+      "expected": 1
+    },
+    {
+      "input": {},
+      "expected": 2
+    }
+  ],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {},
+  "solutionFiles": [],
+  "checks": [
+    {
+      "name": "page",
+      "kind": "dom-assert",
+      "file": "index.html",
+      "cases": [
+        {
+          "input": {},
+          "expected": 1
+        }
+      ],
+      "publicCount": 1
+    },
+    {
+      "name": "page2",
+      "kind": "dom-assert",
+      "file": "index.html",
+      "cases": [],
+      "publicCount": 0,
+      "package": "web"
+    },
+    {
+      "name": "style",
+      "kind": "css-assert",
+      "file": "src/app.css",
+      "cases": [],
+      "publicCount": 0
+    },
+    {
+      "name": "api",
+      "kind": "http",
+      "package": "api",
+      "cases": [
+        {
+          "input": {},
+          "expected": 2
+        }
+      ],
+      "publicCount": 1
+    },
+    {
+      "name": "b",
+      "kind": "build",
+      "argv": [
+        "make"
+      ],
+      "cases": [],
+      "publicCount": 0
+    }
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

@@ -14,14 +14,11 @@ pub(crate) enum Shape {
     Trees,
 }
 
-/// One row of the TS `TEST_TYPES` table: the wire name, its id and whether anything executes it.
+/// One row of the TS `TEST_TYPES` table: the wire name, its id.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct TestType {
     pub name: &'static str,
     pub id: TestTypeId,
-    /// `false` = reserved (parses and validates, nothing runs it).
-    #[allow(dead_code)] // reason: seam, used by T4.3
-    pub implemented: bool,
 }
 
 /// The one test-type vocabulary, read by `test.type` and a check's `kind:` (TS `TEST_TYPES`).
@@ -29,51 +26,35 @@ pub(crate) const TEST_TYPES: &[TestType] = &[
     TestType {
         name: "call",
         id: TestTypeId::Call,
-        implemented: true,
     },
     TestType {
         name: "program",
         id: TestTypeId::Program,
-        implemented: true,
     },
     TestType {
         name: "http",
         id: TestTypeId::Http,
-        implemented: true,
     },
     TestType {
         name: "build",
         id: TestTypeId::Build,
-        implemented: true,
     },
     TestType {
         name: "dom-assert",
         id: TestTypeId::DomAssert,
-        implemented: true,
     },
     TestType {
         name: "css-assert",
         id: TestTypeId::CssAssert,
-        implemented: true,
     },
     TestType {
         name: "class",
         id: TestTypeId::Class,
-        implemented: false,
     },
     TestType {
         name: "in-place",
         id: TestTypeId::InPlace,
-        implemented: false,
     },
-];
-
-/// TS `DIFFICULTIES`.
-#[allow(dead_code)] // reason: seam, used by T4.3
-pub(crate) const DIFFICULTIES: [LeetCodeDifficulty; 3] = [
-    LeetCodeDifficulty::Easy,
-    LeetCodeDifficulty::Medium,
-    LeetCodeDifficulty::Hard,
 ];
 
 /// The wire id of a type (`leetcodeType:` value).
@@ -96,7 +77,6 @@ pub(crate) fn parse_leetcode_type(s: &str) -> Option<LeetcodeType> {
 }
 
 /// TS `shapeOf`.
-#[allow(dead_code)] // reason: seam, used by T4.3
 pub(crate) fn shape_of(t: LeetcodeType) -> Shape {
     match t {
         LeetcodeType::Function => Shape::Buffer,
@@ -106,7 +86,6 @@ pub(crate) fn shape_of(t: LeetcodeType) -> Shape {
 }
 
 /// TS `isMultiFile`: anything that is not a single buffer.
-#[allow(dead_code)] // reason: seam, used by T4.3, T4.5
 pub(crate) fn is_multi_file(t: Option<LeetcodeType>) -> bool {
     t.is_some_and(|t| shape_of(t) != Shape::Buffer)
 }
@@ -244,9 +223,7 @@ mod tests {
     }
 
     #[test]
-    fn test_types_table_has_the_eight_ids_two_reserved() {
+    fn test_types_table_has_the_eight_ids() {
         assert_eq!(TEST_TYPES.len(), 8);
-        assert_eq!(TEST_TYPES.iter().filter(|t| !t.implemented).count(), 2);
-        assert_eq!(DIFFICULTIES.len(), 3);
     }
 }

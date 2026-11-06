@@ -9,14 +9,14 @@ mod tests;
 use crate::parse::text::{js_lines, js_trim};
 use crate::parse::{body_range, frontmatter_end};
 
-#[allow(unused_imports)] // reason: seam, used by T4.5
-pub(crate) use extract::{ConfigBlocksResult, ConfigSpan, extract_config_blocks};
+#[cfg(test)]
+pub(crate) use extract::ConfigBlocksResult;
+pub(crate) use extract::{ConfigSpan, extract_config_blocks};
 
 /// Frontmatter text longer than this is "no frontmatter" (Rust-only cap, Q-37/Q-39).
 const MAX_FRONTMATTER_BYTES: usize = 64 * 1024;
 
 /// The D2 body-set keys: execution config that lives in a body fence, never in frontmatter.
-#[allow(dead_code)] // reason: seam, used by T4.1, T4.3, T4.4
 pub(crate) const BODY_SET_KEYS: &[&str] = &[
     "function",
     "functions",
@@ -31,7 +31,6 @@ pub(crate) const BODY_SET_KEYS: &[&str] = &[
 ];
 
 /// The keys that stay in frontmatter, in the canonical order a clean artifact writes them.
-#[allow(dead_code)] // reason: seam, used by T4.1
 pub(crate) const CANONICAL_ORDER: &[&str] = &[
     "artifactType",
     "leetcodeType",
@@ -63,7 +62,6 @@ pub(super) fn top_level_key(line: &str) -> Option<&str> {
 
 /// TS `KV_RE` `/^(\w+):\s*(.*)$/`: `(key, value)`, the value untrimmed on the right. `.` and `$`
 /// refuse a line terminator in the value (`\n`, `\r`, U+2028, U+2029).
-#[allow(dead_code)] // reason: seam, used by T4.1, T4.4
 pub(crate) fn kv_line(line: &str) -> Option<(&str, &str)> {
     let key = top_level_key(line)?;
     let rest = line.get(key.len() + 1..)?;
@@ -92,7 +90,6 @@ pub fn legacy_frontmatter_keys(fm_raw: &str) -> Vec<String> {
 
 /// Raw frontmatter with every body-set key's line and indented continuation lines removed (TS
 /// `withoutBodySetKeys`). Splits on a bare `\n` so CRLF survives; a blank line ends a block.
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn without_body_set_keys(fm_raw: &str) -> String {
     let mut kept: Vec<&str> = vec![];
     let mut dropping = false;
@@ -111,25 +108,24 @@ pub(crate) fn without_body_set_keys(fm_raw: &str) -> String {
 }
 
 /// `(fm_raw, body)` of a decoded `.md` (TS `splitFrontmatter`): `fm_raw` has no dashes; with no
-/// block, or one over 64 KiB, `fm_raw` is `""` (the block is skipped, the body follows it).
-#[allow(dead_code)] // reason: seam, used by T4.1, T4.5
+/// block, or one over 64 KiB (the whole block, both `---` lines included), `fm_raw` is `""` (the
+/// block is skipped, the body follows it).
 pub(crate) fn split_frontmatter(content: &str) -> (&str, &str) {
-    let body = content.get(frontmatter_end(content)..).unwrap_or(content);
+    let end = frontmatter_end(content);
+    let body = content.get(end..).unwrap_or(content);
     match body_range(content).and_then(|r| content.get(r)) {
-        Some(fm) if fm.len() <= MAX_FRONTMATTER_BYTES => (fm, body),
+        Some(fm) if end <= MAX_FRONTMATTER_BYTES => (fm, body),
         _ => ("", body),
     }
 }
 
 /// Count of leading whitespace chars (TS `indentOf`).
-#[allow(dead_code)] // reason: seam, used by T4.3, T4.4
 pub(crate) fn indent_of(line: &str) -> usize {
     line.chars().take_while(|&c| is_ws(c)).count()
 }
 
 /// Lines indented deeper than the header at `start`, up to the first that is not; blank lines
 /// are skipped without ending the block (TS `blockLines`).
-#[allow(dead_code)] // reason: seam, used by T4.3, T4.4
 pub(crate) fn block_lines<'a>(lines: &[&'a str], start: usize) -> Vec<&'a str> {
     let Some(header) = lines.get(start) else {
         return vec![];
@@ -150,7 +146,6 @@ pub(crate) fn block_lines<'a>(lines: &[&'a str], start: usize) -> Vec<&'a str> {
 
 /// Trim, then strip one matching pair of quotes (TS config-blocks `unquote`). Not migrate's
 /// `unquote`, which strips each end alone. `.` refuses a line terminator inside the pair.
-#[allow(dead_code)] // reason: seam, used by T4.3, T4.4
 pub(crate) fn unquote_pair(value: &str) -> &str {
     let t = js_trim(value);
     ['"', '\'']

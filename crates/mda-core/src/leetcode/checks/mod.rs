@@ -85,7 +85,6 @@ impl<'a> Fields<'a> {
 }
 
 /// Parse the `checks:` list of merged config lines into checks with no cases yet.
-#[allow(dead_code)] // reason: seam, used by T4.5 through `parse_project_artifact`
 pub(crate) fn parse_checks(
     lines: &[&str],
     warnings: &mut Vec<Warning>,
@@ -277,7 +276,6 @@ fn base_mut(c: &mut ProjectCheck) -> &mut CheckBase {
 /// to the sole check, and warns when there are several (guessing would grade the wrong thing).
 /// Public fences bind first, so `cases` keep public-then-final order and `public_count` (counted
 /// on `cases`, never `raw`) is the boundary. Names resolve through a first-index map: linear.
-#[allow(dead_code)] // reason: seam, used by T4.5 through `parse_project_artifact`
 pub(crate) fn bind_cases(checks: &mut [ProjectCheck], body: &str, warnings: &mut Vec<Warning>) {
     if checks.is_empty() {
         return;

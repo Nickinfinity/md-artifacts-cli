@@ -80,7 +80,6 @@ fn language_chunks(section: &str) -> Vec<(String, &str)> {
 }
 
 /// `# Setup`: the first fence under each `## <Language>`.
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn extract_setups(body: &str) -> Vec<ExerciseSetup> {
     let Some(section) = top_section(body, &SETUP_RE) else {
         return Vec::new();
@@ -96,7 +95,6 @@ pub(crate) fn extract_setups(body: &str) -> Vec<ExerciseSetup> {
 
 /// `# Solutions`: per language, direct fences (auto-numbered `Solution #N` when 2+) then `###`
 /// labelled ones.
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn extract_solutions(body: &str) -> Vec<LeetCodeSolution> {
     let Some(section) = top_section(body, &SOLUTIONS_RE) else {
         return Vec::new();
@@ -164,7 +162,6 @@ fn comment_json(raw: &str) -> Option<serde_json::Map<String, Value>> {
 
 /// `# Attempts`: each fence needs an `<!-- attempt: {…} -->` with string `at` and `duration` and
 /// boolean `passed`; any other fence is skipped.
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn extract_attempts(body: &str) -> Vec<Attempt> {
     let Some(section) = top_section(body, &ATTEMPTS_RE) else {
         return Vec::new();

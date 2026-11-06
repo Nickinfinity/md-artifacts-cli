@@ -140,7 +140,6 @@ fn warn_duplicates(block_keys: &[Vec<&str>], warnings: &mut Vec<Warning>) {
 /// Walk `body` for every ```` ```yaml leetcode ```` fence in one linear pass (TS
 /// `extractConfigBlocks`). Any other fence is one opaque region, so fence-shaped lines inside it
 /// are never config; an unterminated config fence reads nothing and stops the walk.
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn extract_config_blocks(body: &str) -> ConfigBlocksResult {
     let mut warnings = vec![];
     let (mut blocks, mut spans, mut block_keys): (Vec<String>, Vec<ConfigSpan>, Vec<Vec<&str>>) =

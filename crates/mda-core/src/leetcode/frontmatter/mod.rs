@@ -6,8 +6,7 @@ mod fm;
 #[cfg(test)]
 mod tests;
 
-#[allow(unused_imports)] // reason: seam, used by T4.5
-pub(crate) use fm::{Fm, parse_frontmatter};
+pub(crate) use fm::parse_frontmatter;
 
 use super::config::{CANONICAL_ORDER, split_frontmatter, top_level_key};
 use super::{LeetCodeSummary, truncate_param};

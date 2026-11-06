@@ -15,7 +15,6 @@ use super::model::{CaseValue, Example, OrderedMap, TestCase};
 use super::safe_json::safe_json;
 use crate::parse::text::{JS_S, compile, js_trim};
 
-#[allow(unused_imports)] // reason: seam, used by T4.5
 pub(crate) use tree::{extract_attempts, extract_setups, extract_solutions};
 
 static TESTS_RE: LazyLock<Regex> = LazyLock::new(|| compile(&format!("(?m)^## Tests{JS_S}*$")));
@@ -43,13 +42,11 @@ static CHECK_ATTR: LazyLock<Regex> =
     LazyLock::new(|| compile(&format!(r#"check=(?:"([^"]*)"|([^{JS_S}]+))"#)));
 
 /// The two case-section headings, for the `project` parser's `check=` binding (TS `CASE_SECTIONS`).
-#[allow(dead_code)] // reason: seam, used by T4.3
 pub(crate) struct CaseSections {
     pub tests: &'static LazyLock<Regex>,
     pub final_tests: &'static LazyLock<Regex>,
 }
 
-#[allow(dead_code)] // reason: seam, used by T4.3
 pub(crate) static CASE_SECTIONS: CaseSections = CaseSections {
     tests: &TESTS_RE,
     final_tests: &FINAL_TESTS_RE,
@@ -79,7 +76,6 @@ fn is_heading(line: &str) -> bool {
 /// ```text
 /// extract_description("Prose.\n\n```yaml leetcode\nreturns: int\n```\n\n## Examples") == "Prose."
 /// ```
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn extract_description(body: &str) -> String {
     let end = boundary_outside_fence(body, 0, &is_heading);
     let text = body.get(..end).unwrap_or(body);
@@ -108,7 +104,6 @@ fn without_spans(text: &str, spans: &[ConfigSpan]) -> String {
 /// ```text
 /// extract_examples("## Examples\n```example\ninput: x = 1\noutput: 1\n```")
 /// ```
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn extract_examples(body: &str) -> Vec<Example> {
     let Some(section) = extract_section(body, &EXAMPLES_RE) else {
         return Vec::new();
@@ -132,7 +127,6 @@ pub(crate) fn extract_examples(body: &str) -> Vec<Example> {
 
 /// One json/yaml fence of a case section, with the `check=<name>` it names (TS `CaseFence`).
 #[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)] // reason: seam, used by T4.3, T4.5
 pub(crate) struct CaseFence {
     /// `check=<name>` (quoted or bare); `None` on a bare fence.
     pub check: Option<String>,
@@ -145,7 +139,6 @@ pub(crate) struct CaseFence {
 /// Every ` ```json ` / ` ```yaml ` fence under a case section, in document order (TS
 /// `extractCaseFences`). A ` ```yaml leetcode ` config fence is skipped; a malformed fence is a
 /// fence with no cases.
-#[allow(dead_code)] // reason: seam, used by T4.3, T4.5
 pub(crate) fn extract_case_fences(body: &str, heading: &Regex) -> Vec<CaseFence> {
     let Some(section) = extract_section(body, heading) else {
         return Vec::new();
@@ -193,13 +186,11 @@ fn as_test_case(v: &CaseValue) -> Option<TestCase> {
 }
 
 /// Cases of the `## Tests` section (all fences).
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn extract_tests(body: &str) -> Vec<TestCase> {
     cases_of(body, &TESTS_RE)
 }
 
 /// Cases of the `## Final Tests` section (the hidden grading suite; no legacy fallback here).
-#[allow(dead_code)] // reason: seam, used by T4.5
 pub(crate) fn extract_final_tests(body: &str) -> Vec<TestCase> {
     cases_of(body, &FINAL_TESTS_RE)
 }
