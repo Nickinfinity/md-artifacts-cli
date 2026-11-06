@@ -1,0 +1,5 @@
+vault = "vault_loc_b"
+workspace = "vault_loc_b"
+machine_config = "[types.LeetCode]\nvault=\"$WORKSPACE\"\nroot=true"
+params = { path = "LeetCode/.obsidian/plugins/p/README.md" }
+expect_error = "artifact.bad_path"

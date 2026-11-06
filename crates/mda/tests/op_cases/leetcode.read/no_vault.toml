@@ -1,0 +1,5 @@
+# No vault selected: a well-formed path reaches the first I/O refusal.
+vault = "vault_leetcode"
+vault_flag = false
+params = { path = "LeetCode/ex.md" }
+expect_error = "vault.not_selected"

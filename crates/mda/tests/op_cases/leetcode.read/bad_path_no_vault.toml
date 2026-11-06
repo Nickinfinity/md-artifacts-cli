@@ -1,0 +1,6 @@
+# The type check precedes I/O: no vault selected, wrong type still artifact.bad_path.
+vault = "vault_leetcode"
+vault_flag = false
+params = { path = "Snippets/a.md" }
+expect_error = "artifact.bad_path"
+expect_error_params = { path = "Snippets/a.md" }

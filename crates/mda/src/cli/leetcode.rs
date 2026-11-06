@@ -5,6 +5,7 @@ use mda_ops::OpError;
 use serde_json::{Map, Value, json};
 
 use super::input::read_object;
+use super::print::clean;
 
 /// `mda leetcode …`
 #[derive(clap::Subcommand)]
@@ -122,7 +123,23 @@ pub(super) fn leetcode_request(cmd: LeetcodeCmd) -> (String, Result<Value, OpErr
     }
 }
 
-/// Human text for `leetcode.*` (stub until T5.1: `None` falls back to the default printer).
-pub(super) fn success(_op: &str, _v: &Value) -> Option<String> {
-    None
+/// Human text for `leetcode.*`: `leetcode.read` prints a summary; the writes fall back to JSON.
+pub(super) fn success(op: &str, v: &Value) -> Option<String> {
+    if op != "leetcode.read" {
+        return None;
+    }
+    let ex = v.get("exercise")?;
+    let s = |k: &str| clean(ex.get(k).and_then(Value::as_str).unwrap_or(""), false);
+    let warnings = ex
+        .get("warnings")
+        .and_then(Value::as_array)
+        .map_or(0, Vec::len);
+    let hash = clean(v.get("hash").and_then(Value::as_str).unwrap_or(""), false);
+    Some(format!(
+        "{} ({}, {}, {})\nwarnings: {warnings}\nhash: {hash}",
+        s("title"),
+        s("leetcodeType"),
+        s("difficulty"),
+        s("status"),
+    ))
 }

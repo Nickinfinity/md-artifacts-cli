@@ -1,0 +1,5 @@
+# Q-21: a quoted discriminator agrees with vault.validate (rule.discriminator): not an exercise.
+vault = "vault_lc_bad"
+params = { path = "LeetCode/quoted.md" }
+expect_error = "leetcode.not_exercise"
+expect_error_params = { path = "LeetCode/quoted.md" }

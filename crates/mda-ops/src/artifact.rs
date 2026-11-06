@@ -231,7 +231,6 @@ pub(crate) fn generic_path(p: &str) -> Result<ArtifactType, OpError> {
 
 /// The `leetcode.*` path rule (before any I/O): `artifact_path`, then the type's format must be
 /// LeetCode, else `artifact.bad_path` (the inverse of `generic_path`).
-#[allow(dead_code)] // reason: seam, used by T5.1/T5.2
 pub(crate) fn leetcode_path(p: &str) -> Result<ArtifactType, OpError> {
     match artifact_path(p)? {
         t if t.info().format == Format::LeetCode => Ok(t),

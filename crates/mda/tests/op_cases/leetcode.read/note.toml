@@ -1,0 +1,5 @@
+# A note without the discriminator is not an exercise (D-25).
+vault = "vault_leetcode"
+params = { path = "LeetCode/note.md" }
+expect_error = "leetcode.not_exercise"
+expect_error_params = { path = "LeetCode/note.md" }
