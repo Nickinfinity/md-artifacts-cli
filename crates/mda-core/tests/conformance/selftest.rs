@@ -326,9 +326,10 @@ fn migrate_wrong_expected_fails_by_id() {
     assert!(e.contains("mw:"), "{e}");
 }
 
-/// The undeclared exercise, as `leetcode::parse` of a non-trivial file returns it until T4.5.
+/// Whatever `leetcode::parse` gives `MD`, so these tests hold for the stub and the real parser (W4 Q-41).
 fn default_exercise() -> serde_json::Value {
-    serde_json::to_value(mda_core::leetcode::LeetCodeExercise::default()).unwrap()
+    let src = mda_core::parse::decode(MD);
+    serde_json::to_value(mda_core::leetcode::parse(&src)).unwrap()
 }
 
 fn leetcode_dir(name: &str, expected: &serde_json::Value) -> PathBuf {
@@ -375,4 +376,25 @@ fn leetcode_diff_names_id_group_and_pointer() {
 fn leetcode_unlisted_file_named() {
     let d = tmp("lcunl", "", &["leetcode/stray.md"]);
     assert!(err_of(&d).contains("unlisted file"));
+}
+
+#[test]
+fn leetcode_group_is_guarded() {
+    let m = format!(
+        "{}group = \"golden-typo\"\nexpected = \"leetcode/a.json\"\n",
+        case("lc2", "leetcode", "leetcode/a.md")
+    );
+    let exp = default_exercise().to_string();
+    let d = tmp_with(
+        "lcgroup",
+        &m,
+        &[("leetcode/a.md", MD), ("leetcode/a.json", exp.as_bytes())],
+    );
+    assert!(err_of(&d).contains("lc2 [golden-typo]: group must be one of"));
+}
+
+#[test]
+fn leetcode_panic_is_reported_by_id() {
+    let e = guarded("lc3 [hostile]", || -> u8 { panic!("boom") }).unwrap_err();
+    assert_eq!(e, "lc3 [hostile]: panicked: boom");
 }

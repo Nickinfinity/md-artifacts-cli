@@ -1,0 +1,98 @@
+{
+  "title": "Case",
+  "leetcodeType": "package",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {},
+  "solutionFiles": [],
+  "checks": [
+    {
+      "name": "ok",
+      "kind": "build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cases": [],
+      "publicCount": 0,
+      "dir": "web"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "leetcode.checks.unknown_kind",
+      "params": {
+        "kind": "render",
+        "name": "r"
+      }
+    },
+    {
+      "code": "leetcode.checks.reserved_kind",
+      "params": {
+        "kind": "class",
+        "name": "cl"
+      }
+    },
+    {
+      "code": "leetcode.checks.unknown_kind",
+      "params": {
+        "kind": "teleport",
+        "name": "u"
+      }
+    },
+    {
+      "code": "leetcode.checks.http_needs_package",
+      "params": {
+        "name": "h"
+      }
+    },
+    {
+      "code": "leetcode.checks.build_needs_argv",
+      "params": {
+        "name": "b"
+      }
+    },
+    {
+      "code": "leetcode.checks.needs_file",
+      "params": {
+        "name": "d"
+      }
+    },
+    {
+      "code": "leetcode.checks.call_needs_function",
+      "params": {
+        "name": "c"
+      }
+    }
+  ],
+  "unimplementedKinds": [
+    "class"
+  ]
+}

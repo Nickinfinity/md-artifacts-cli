@@ -1,0 +1,47 @@
+{
+  "title": "Case",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "Prose.\n\n```text\n## Tests\nnot a heading\n```",
+  "examples": [],
+  "tests": [
+    {
+      "input": {
+        "nums": [
+          2,
+          7
+        ],
+        "target": 9
+      },
+      "expected": [
+        0,
+        1
+      ]
+    }
+  ],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

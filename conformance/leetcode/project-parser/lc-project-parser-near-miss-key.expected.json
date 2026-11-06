@@ -1,0 +1,52 @@
+{
+  "title": "Case",
+  "leetcodeType": "package",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {},
+  "solutionFiles": [],
+  "checks": [],
+  "warnings": [
+    {
+      "code": "leetcode.config.unknown_key",
+      "params": {
+        "key": "titel",
+        "suggestion": "title"
+      }
+    },
+    {
+      "code": "leetcode.config.unknown_key",
+      "params": {
+        "key": "packagse",
+        "suggestion": "packages"
+      }
+    }
+  ],
+  "unimplementedKinds": []
+}

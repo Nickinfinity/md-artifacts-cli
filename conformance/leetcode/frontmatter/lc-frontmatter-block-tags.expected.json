@@ -1,0 +1,34 @@
+{
+  "title": "Block Tags",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "Prose.",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "a",
+    "b"
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

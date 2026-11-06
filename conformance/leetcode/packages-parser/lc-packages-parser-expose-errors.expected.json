@@ -1,0 +1,72 @@
+{
+  "title": "Case",
+  "leetcodeType": "stack",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {},
+  "solutionFiles": [],
+  "checks": [],
+  "packages": [
+    {
+      "name": "api",
+      "dir": "a",
+      "install": [
+        "a"
+      ],
+      "start": [
+        "b"
+      ],
+      "exposeAs": {
+        "OK_URL": "http://127.0.0.1:${PORT}"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "code": "leetcode.packages.expose_name_invalid",
+      "params": {
+        "name": "lower"
+      }
+    },
+    {
+      "code": "leetcode.packages.expose_name_reserved",
+      "params": {
+        "name": "LD_PRELOAD"
+      }
+    },
+    {
+      "code": "leetcode.packages.expose_value_not_loopback",
+      "params": {
+        "name": "API_PORT",
+        "value": "${PORT}"
+      }
+    }
+  ],
+  "unimplementedKinds": []
+}

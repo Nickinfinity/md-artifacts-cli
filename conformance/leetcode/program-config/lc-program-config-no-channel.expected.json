@@ -1,0 +1,46 @@
+{
+  "title": "Case",
+  "leetcodeType": "package",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {},
+  "solutionFiles": [],
+  "checks": [],
+  "program": {
+    "channel": "argv",
+    "entry": "main.py"
+  },
+  "warnings": [
+    {
+      "code": "leetcode.program.no_channel",
+      "params": {}
+    }
+  ],
+  "unimplementedKinds": []
+}

@@ -1,0 +1,42 @@
+{
+  "title": "Hostile",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "f499",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "warnings": [
+    {
+      "code": "leetcode.config.duplicate_key",
+      "params": {
+        "count": "500",
+        "key": "function",
+        "winner": "last"
+      }
+    }
+  ],
+  "unimplementedKinds": []
+}

@@ -1,0 +1,42 @@
+{
+  "title": "Case",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "",
+  "functions": {
+    "python": "two_sum",
+    "java": "twoSum"
+  },
+  "status": "unsolved",
+  "params": [
+    {
+      "name": "n",
+      "type": "int"
+    }
+  ],
+  "returns": "int",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

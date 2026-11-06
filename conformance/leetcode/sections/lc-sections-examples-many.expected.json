@@ -1,0 +1,42 @@
+{
+  "title": "Case",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [
+    {
+      "input": "a = 1",
+      "output": "2"
+    },
+    {
+      "input": "a = 2",
+      "output": "3"
+    }
+  ],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

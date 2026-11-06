@@ -1,0 +1,109 @@
+{
+  "title": "Two Sum",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "twoSum",
+  "algorithm": "hash-map",
+  "status": "unsolved",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int[]"
+    },
+    {
+      "name": "target",
+      "type": "int"
+    }
+  ],
+  "returns": "int[]",
+  "description": "Given an array, return indices.",
+  "examples": [
+    {
+      "input": "nums = [2,7], target = 9",
+      "output": "[0,1]"
+    }
+  ],
+  "tests": [
+    {
+      "input": {
+        "nums": [
+          2,
+          7
+        ],
+        "target": 9
+      },
+      "expected": [
+        0,
+        1
+      ]
+    }
+  ],
+  "finalTests": [
+    {
+      "input": {
+        "nums": [
+          1,
+          5,
+          3
+        ],
+        "target": 8
+      },
+      "expected": [
+        1,
+        2
+      ]
+    }
+  ],
+  "test": {
+    "type": "call",
+    "timeoutMs": 3000
+  },
+  "setups": [
+    {
+      "language": "python",
+      "code": "def twoSum(nums, target):\n    pass"
+    },
+    {
+      "language": "javascript",
+      "code": "function twoSum(nums, target) {}"
+    }
+  ],
+  "practice": {
+    "options": [
+      "noSnippets"
+    ],
+    "timeLimitMinutes": 20,
+    "locked": true
+  },
+  "solutions": [
+    {
+      "language": "python",
+      "label": "Hash Map",
+      "code": "def twoSum(nums, target):\n    seen = {}",
+      "solvedAt": "2026-07-15T14:32:00Z",
+      "duration": "8m22s"
+    },
+    {
+      "language": "python",
+      "label": "Brute",
+      "code": "def twoSum(nums, target):\n    return []"
+    }
+  ],
+  "attempts": [
+    {
+      "language": "python",
+      "code": "def twoSum(n, t):\n    return [0, 1]",
+      "at": "2026-07-16T10:00:00Z",
+      "duration": "3m",
+      "passed": true,
+      "bigO": "O(n)",
+      "confidence": "high"
+    }
+  ],
+  "tags": [
+    "leetcode",
+    "arrays"
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

@@ -1,0 +1,46 @@
+{
+  "title": "Case",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "Prose.",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "warnings": [
+    {
+      "code": "leetcode.frontmatter.ignored_key",
+      "params": {
+        "key": "function"
+      }
+    },
+    {
+      "code": "leetcode.frontmatter.ignored_key",
+      "params": {
+        "key": "params"
+      }
+    }
+  ],
+  "unimplementedKinds": []
+}

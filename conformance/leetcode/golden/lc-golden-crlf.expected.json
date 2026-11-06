@@ -1,0 +1,56 @@
+{
+  "title": "CRLF Case",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "twoSum",
+  "status": "unsolved",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int[]"
+    },
+    {
+      "name": "target",
+      "type": "int"
+    }
+  ],
+  "returns": "int[]",
+  "description": "Prose.",
+  "examples": [],
+  "tests": [
+    {
+      "input": {
+        "nums": [
+          2,
+          7
+        ],
+        "target": 9
+      },
+      "expected": [
+        0,
+        1
+      ]
+    }
+  ],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

@@ -181,18 +181,59 @@ fn run_render(dir: &Path, c: &Case) -> Result<(), String> {
 /// A LeetCode exercise case: `leetcode::parse` of the decoded input against the expected JSON —
 /// semantically (`first_diff`), then as serialised strings, so `OrderedMap` declared key order is
 /// asserted too (D-24, W4 Q-27). `want` is the file parsed with `preserve_order`, never raw bytes.
+/// The `group` vocabulary of a `leetcode` case (W4 Q-23): one per TS helper test file, plus `hostile`.
+const LEETCODE_GROUPS: &[&str] = &[
+    "config-blocks",
+    "section-bounds",
+    "frontmatter",
+    "frontmatter-order",
+    "type-derivation",
+    "yaml-cases",
+    "project-parser",
+    "packages-parser",
+    "program-config",
+    "lib-spec",
+    "sections",
+    "golden",
+    "parser",
+    "rules",
+    "shape",
+    "hostile",
+];
+
+/// Run `f`, turning a panic into `"{id}: panicked: {payload}"` (the sink of a pure parser, W4 A2 #15).
+fn guarded<T>(id: &str, f: impl FnOnce() -> T) -> Result<T, String> {
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).map_err(|p| {
+        let msg = p
+            .downcast_ref::<&str>()
+            .map(|s| (*s).to_owned())
+            .or_else(|| p.downcast_ref::<String>().cloned())
+            .unwrap_or_default();
+        format!("{id}: panicked: {msg}")
+    })
+}
+
 fn run_leetcode(dir: &Path, c: &Case) -> Result<(), String> {
-    let id = match &c.group {
-        Some(g) => format!("{} [{g}]", c.id),
-        None => c.id.clone(),
-    };
+    let group = c.group.as_deref().unwrap_or("");
+    let id = format!("{} [{group}]", c.id);
+    if !LEETCODE_GROUPS.contains(&group) {
+        return Err(format!("{id}: group must be one of {LEETCODE_GROUPS:?}"));
+    }
     let Some(exp) = &c.expected else {
         return Err(format!("{id}: leetcode needs expected"));
     };
     let io = |e: std::io::Error| format!("{id}: {e}");
     let bytes = std::fs::read(dir.join(&c.input)).map_err(io)?;
-    let exercise = mda_core::leetcode::parse(&mda_core::parse::decode(&bytes));
+    let src = mda_core::parse::decode(&bytes);
+    let exercise = guarded(&id, || mda_core::leetcode::parse(&src))?;
     let got = serde_json::to_value(exercise).map_err(|e| format!("{id}: {e}"))?;
+    // Hostile inputs: output bounded by a constant times the input (W4 Q-40).
+    let out_len = serde_json::to_string(&got).map_or(0, |s| s.len());
+    if group == "hostile" && out_len > 64 * bytes.len() + 4096 {
+        return Err(format!(
+            "{id}: output {out_len} bytes exceeds 64 x input + 4096"
+        ));
+    }
     let want = std::fs::read_to_string(dir.join(exp)).map_err(io)?;
     let want: serde_json::Value =
         serde_json::from_str(&want).map_err(|e| format!("{id}: expected: {e}"))?;

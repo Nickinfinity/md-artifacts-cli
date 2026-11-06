@@ -1597,8 +1597,8 @@ PROTOCOL §6 lists them. TS files: PP = `services/project-parser.helpers.ts`, PK
 | W30 | PK:257 | `leetcode.packages.argv_substitution` | `name`, `field`, `element` | packages: '{name}' {field} element '{element}' uses a substitution other than ${PORT} - dropped |
 | W31 | PK:303 | `leetcode.packages.expose_name_invalid` | `name` | packages: exposeAs name '{name}' must match ^[A-Z][A-Z0-9_]*$ - dropped |
 | W32 | PK:307 | `leetcode.packages.expose_name_reserved` | `name` | packages: exposeAs '{name}' is a reserved loader/interpreter variable name - dropped |
-| W33 | PK:311 | `leetcode.packages.expose_value_not_loopback` | `name`, `value` | packages: exposeAs '{name}' value '{value}' must be a loopback URL template - dropped |
-| W34 | PK:187 (via PP:206) | `leetcode.packages.too_many` | `count`, `max` (8, `MAX_PACKAGES`) | packages: {count} entries declared, more than the {max}-entry cap - whole block refused |
+| W33 | PK:311 | `leetcode.packages.expose_value_not_loopback` | `name`, `value` | packages: exposeAs '{name}' value '{value}' must be a loopback URL template (SEC2) - dropped |
+| W34 | PK:187 (via PP:206) | `leetcode.packages.too_many` | `count`, `max` (8, `MAX_PACKAGES`) | packages: {count} entries declared, more than the {max}-entry cap (S7) |
 | W35 | PK:199 (via PP:206) | `leetcode.packages.duplicate_name` | `name` | packages: duplicate name '{name}' - every package name must be unique |
 | W36 | PK:204 (via PP:206) | `leetcode.packages.cycle` | `path` (`", "`-joined package names; TS joins with ' -> ') | packages: dependsOn cycle detected: {path} |
 

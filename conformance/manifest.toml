@@ -1837,3 +1837,635 @@ migration = "frontmatter"
 input = "migrate/fm-leetcode-legacy-type.md"
 origin = "rust"
 deviates_from_ts = "Rust-only: the LeetCode discriminator migration (D-37); the extension never had it"
+
+# --- LeetCode exercises (W4 H4.0b): synthetic inputs; expected = the extension's TS parser at 84c437d,
+# normalised to the engine wire shape by docs/conformance-gen/leetcode/export.cjs (local, gitignored).
+
+[[cases]]
+id = "lc-config-blocks-duplicate-first"
+kind = "leetcode"
+group = "config-blocks"
+input = "leetcode/config-blocks/lc-config-blocks-duplicate-first.md"
+expected = "leetcode/config-blocks/lc-config-blocks-duplicate-first.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-config-blocks-duplicate-last"
+kind = "leetcode"
+group = "config-blocks"
+input = "leetcode/config-blocks/lc-config-blocks-duplicate-last.md"
+expected = "leetcode/config-blocks/lc-config-blocks-duplicate-last.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-config-blocks-functions-map"
+kind = "leetcode"
+group = "config-blocks"
+input = "leetcode/config-blocks/lc-config-blocks-functions-map.md"
+expected = "leetcode/config-blocks/lc-config-blocks-functions-map.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-config-blocks-hidden-by-open-fence"
+kind = "leetcode"
+group = "config-blocks"
+input = "leetcode/config-blocks/lc-config-blocks-hidden-by-open-fence.md"
+expected = "leetcode/config-blocks/lc-config-blocks-hidden-by-open-fence.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-config-blocks-indented"
+kind = "leetcode"
+group = "config-blocks"
+input = "leetcode/config-blocks/lc-config-blocks-indented.md"
+expected = "leetcode/config-blocks/lc-config-blocks-indented.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-config-blocks-key-in-frontmatter-set"
+kind = "leetcode"
+group = "config-blocks"
+input = "leetcode/config-blocks/lc-config-blocks-key-in-frontmatter-set.md"
+expected = "leetcode/config-blocks/lc-config-blocks-key-in-frontmatter-set.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-config-blocks-unknown-key"
+kind = "leetcode"
+group = "config-blocks"
+input = "leetcode/config-blocks/lc-config-blocks-unknown-key.md"
+expected = "leetcode/config-blocks/lc-config-blocks-unknown-key.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-config-blocks-unterminated"
+kind = "leetcode"
+group = "config-blocks"
+input = "leetcode/config-blocks/lc-config-blocks-unterminated.md"
+expected = "leetcode/config-blocks/lc-config-blocks-unterminated.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-frontmatter-block-tags"
+kind = "leetcode"
+group = "frontmatter"
+input = "leetcode/frontmatter/lc-frontmatter-block-tags.md"
+expected = "leetcode/frontmatter/lc-frontmatter-block-tags.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-frontmatter-custom-keys"
+kind = "leetcode"
+group = "frontmatter"
+input = "leetcode/frontmatter/lc-frontmatter-custom-keys.md"
+expected = "leetcode/frontmatter/lc-frontmatter-custom-keys.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-frontmatter-ignored-key"
+kind = "leetcode"
+group = "frontmatter"
+input = "leetcode/frontmatter/lc-frontmatter-ignored-key.md"
+expected = "leetcode/frontmatter/lc-frontmatter-ignored-key.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-frontmatter-near-miss-key"
+kind = "leetcode"
+group = "frontmatter"
+input = "leetcode/frontmatter/lc-frontmatter-near-miss-key.md"
+expected = "leetcode/frontmatter/lc-frontmatter-near-miss-key.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-frontmatter-quoted-title"
+kind = "leetcode"
+group = "frontmatter"
+input = "leetcode/frontmatter/lc-frontmatter-quoted-title.md"
+expected = "leetcode/frontmatter/lc-frontmatter-quoted-title.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-frontmatter-status-solved"
+kind = "leetcode"
+group = "frontmatter"
+input = "leetcode/frontmatter/lc-frontmatter-status-solved.md"
+expected = "leetcode/frontmatter/lc-frontmatter-status-solved.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-frontmatter-unknown-values"
+kind = "leetcode"
+group = "frontmatter"
+input = "leetcode/frontmatter/lc-frontmatter-unknown-values.md"
+expected = "leetcode/frontmatter/lc-frontmatter-unknown-values.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-frontmatter-order-misordered"
+kind = "leetcode"
+group = "frontmatter-order"
+input = "leetcode/frontmatter-order/lc-frontmatter-order-misordered.md"
+expected = "leetcode/frontmatter-order/lc-frontmatter-order-misordered.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-golden-bom"
+kind = "leetcode"
+group = "golden"
+input = "leetcode/golden/lc-golden-bom.md"
+expected = "leetcode/golden/lc-golden-bom.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-golden-crlf"
+kind = "leetcode"
+group = "golden"
+input = "leetcode/golden/lc-golden-crlf.md"
+expected = "leetcode/golden/lc-golden-crlf.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-golden-empty-file"
+kind = "leetcode"
+group = "golden"
+input = "leetcode/golden/lc-golden-empty-file.md"
+expected = "leetcode/golden/lc-golden-empty-file.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-golden-frontmatter-only"
+kind = "leetcode"
+group = "golden"
+input = "leetcode/golden/lc-golden-frontmatter-only.md"
+expected = "leetcode/golden/lc-golden-frontmatter-only.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-golden-function-full"
+kind = "leetcode"
+group = "golden"
+input = "leetcode/golden/lc-golden-function-full.md"
+expected = "leetcode/golden/lc-golden-function-full.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-golden-no-frontmatter"
+kind = "leetcode"
+group = "golden"
+input = "leetcode/golden/lc-golden-no-frontmatter.md"
+expected = "leetcode/golden/lc-golden-no-frontmatter.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-lib-spec-libs-bad-maven"
+kind = "leetcode"
+group = "lib-spec"
+input = "leetcode/lib-spec/lc-lib-spec-libs-bad-maven.md"
+expected = "leetcode/lib-spec/lc-lib-spec-libs-bad-maven.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-lib-spec-libs-ecosystems"
+kind = "leetcode"
+group = "lib-spec"
+input = "leetcode/lib-spec/lc-lib-spec-libs-ecosystems.md"
+expected = "leetcode/lib-spec/lc-lib-spec-libs-ecosystems.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-packages-parser-cycle"
+kind = "leetcode"
+group = "packages-parser"
+input = "leetcode/packages-parser/lc-packages-parser-cycle.md"
+expected = "leetcode/packages-parser/lc-packages-parser-cycle.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-packages-parser-dir-node-modules"
+kind = "leetcode"
+group = "packages-parser"
+input = "leetcode/packages-parser/lc-packages-parser-dir-node-modules.md"
+expected = "leetcode/packages-parser/lc-packages-parser-dir-node-modules.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-packages-parser-duplicate-name"
+kind = "leetcode"
+group = "packages-parser"
+input = "leetcode/packages-parser/lc-packages-parser-duplicate-name.md"
+expected = "leetcode/packages-parser/lc-packages-parser-duplicate-name.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-packages-parser-entry-errors"
+kind = "leetcode"
+group = "packages-parser"
+input = "leetcode/packages-parser/lc-packages-parser-entry-errors.md"
+expected = "leetcode/packages-parser/lc-packages-parser-entry-errors.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-packages-parser-expose-errors"
+kind = "leetcode"
+group = "packages-parser"
+input = "leetcode/packages-parser/lc-packages-parser-expose-errors.md"
+expected = "leetcode/packages-parser/lc-packages-parser-expose-errors.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-packages-parser-not-a-list"
+kind = "leetcode"
+group = "packages-parser"
+input = "leetcode/packages-parser/lc-packages-parser-not-a-list.md"
+expected = "leetcode/packages-parser/lc-packages-parser-not-a-list.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-packages-parser-too-many"
+kind = "leetcode"
+group = "packages-parser"
+input = "leetcode/packages-parser/lc-packages-parser-too-many.md"
+expected = "leetcode/packages-parser/lc-packages-parser-too-many.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-packages-parser-two-packages"
+kind = "leetcode"
+group = "packages-parser"
+input = "leetcode/packages-parser/lc-packages-parser-two-packages.md"
+expected = "leetcode/packages-parser/lc-packages-parser-two-packages.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-parser-proto-keys"
+kind = "leetcode"
+group = "parser"
+input = "leetcode/parser/lc-parser-proto-keys.md"
+expected = "leetcode/parser/lc-parser-proto-keys.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-parser-u2028-title"
+kind = "leetcode"
+group = "parser"
+input = "leetcode/parser/lc-parser-u2028-title.md"
+expected = "leetcode/parser/lc-parser-u2028-title.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-program-config-entry-absolute"
+kind = "leetcode"
+group = "program-config"
+input = "leetcode/program-config/lc-program-config-entry-absolute.md"
+expected = "leetcode/program-config/lc-program-config-entry-absolute.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-program-config-entry-node-modules"
+kind = "leetcode"
+group = "program-config"
+input = "leetcode/program-config/lc-program-config-entry-node-modules.md"
+expected = "leetcode/program-config/lc-program-config-entry-node-modules.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-program-config-entry-parent"
+kind = "leetcode"
+group = "program-config"
+input = "leetcode/program-config/lc-program-config-entry-parent.md"
+expected = "leetcode/program-config/lc-program-config-entry-parent.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-program-config-no-channel"
+kind = "leetcode"
+group = "program-config"
+input = "leetcode/program-config/lc-program-config-no-channel.md"
+expected = "leetcode/program-config/lc-program-config-no-channel.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-program-config-program-flags"
+kind = "leetcode"
+group = "program-config"
+input = "leetcode/program-config/lc-program-config-program-flags.md"
+expected = "leetcode/program-config/lc-program-config-program-flags.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-program-config-unknown-channel"
+kind = "leetcode"
+group = "program-config"
+input = "leetcode/program-config/lc-program-config-unknown-channel.md"
+expected = "leetcode/program-config/lc-program-config-unknown-channel.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-project-parser-checks-kinds"
+kind = "leetcode"
+group = "project-parser"
+input = "leetcode/project-parser/lc-project-parser-checks-kinds.md"
+expected = "leetcode/project-parser/lc-project-parser-checks-kinds.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-project-parser-checks-not-a-list"
+kind = "leetcode"
+group = "project-parser"
+input = "leetcode/project-parser/lc-project-parser-checks-not-a-list.md"
+expected = "leetcode/project-parser/lc-project-parser-checks-not-a-list.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-project-parser-fence-binding"
+kind = "leetcode"
+group = "project-parser"
+input = "leetcode/project-parser/lc-project-parser-fence-binding.md"
+expected = "leetcode/project-parser/lc-project-parser-fence-binding.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-project-parser-files-and-call-check"
+kind = "leetcode"
+group = "project-parser"
+input = "leetcode/project-parser/lc-project-parser-files-and-call-check.md"
+expected = "leetcode/project-parser/lc-project-parser-files-and-call-check.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-project-parser-libs-rejected"
+kind = "leetcode"
+group = "project-parser"
+input = "leetcode/project-parser/lc-project-parser-libs-rejected.md"
+expected = "leetcode/project-parser/lc-project-parser-libs-rejected.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-project-parser-near-miss-key"
+kind = "leetcode"
+group = "project-parser"
+input = "leetcode/project-parser/lc-project-parser-near-miss-key.md"
+expected = "leetcode/project-parser/lc-project-parser-near-miss-key.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-project-parser-unknown-role"
+kind = "leetcode"
+group = "project-parser"
+input = "leetcode/project-parser/lc-project-parser-unknown-role.md"
+expected = "leetcode/project-parser/lc-project-parser-unknown-role.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-rules-legacy-type"
+kind = "leetcode"
+group = "rules"
+input = "leetcode/rules/lc-rules-legacy-type.md"
+expected = "leetcode/rules/lc-rules-legacy-type.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-rules-lowercase-discriminator"
+kind = "leetcode"
+group = "rules"
+input = "leetcode/rules/lc-rules-lowercase-discriminator.md"
+expected = "leetcode/rules/lc-rules-lowercase-discriminator.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-section-bounds-heading-in-fence"
+kind = "leetcode"
+group = "section-bounds"
+input = "leetcode/section-bounds/lc-section-bounds-heading-in-fence.md"
+expected = "leetcode/section-bounds/lc-section-bounds-heading-in-fence.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-section-bounds-trailing-space-heading"
+kind = "leetcode"
+group = "section-bounds"
+input = "leetcode/section-bounds/lc-section-bounds-trailing-space-heading.md"
+expected = "leetcode/section-bounds/lc-section-bounds-trailing-space-heading.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-sections-attempt-missing-field"
+kind = "leetcode"
+group = "sections"
+input = "leetcode/sections/lc-sections-attempt-missing-field.md"
+expected = "leetcode/sections/lc-sections-attempt-missing-field.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-sections-bare-fence-skipped"
+kind = "leetcode"
+group = "sections"
+input = "leetcode/sections/lc-sections-bare-fence-skipped.md"
+expected = "leetcode/sections/lc-sections-bare-fence-skipped.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-sections-description-multi"
+kind = "leetcode"
+group = "sections"
+input = "leetcode/sections/lc-sections-description-multi.md"
+expected = "leetcode/sections/lc-sections-description-multi.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-sections-examples-many"
+kind = "leetcode"
+group = "sections"
+input = "leetcode/sections/lc-sections-examples-many.md"
+expected = "leetcode/sections/lc-sections-examples-many.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-sections-final-tests-no-tests"
+kind = "leetcode"
+group = "sections"
+input = "leetcode/sections/lc-sections-final-tests-no-tests.md"
+expected = "leetcode/sections/lc-sections-final-tests-no-tests.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-sections-setup-first-fence-only"
+kind = "leetcode"
+group = "sections"
+input = "leetcode/sections/lc-sections-setup-first-fence-only.md"
+expected = "leetcode/sections/lc-sections-setup-first-fence-only.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-sections-solutions-auto-number"
+kind = "leetcode"
+group = "sections"
+input = "leetcode/sections/lc-sections-solutions-auto-number.md"
+expected = "leetcode/sections/lc-sections-solutions-auto-number.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-shape-package-files-only"
+kind = "leetcode"
+group = "shape"
+input = "leetcode/shape/lc-shape-package-files-only.md"
+expected = "leetcode/shape/lc-shape-package-files-only.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-type-derivation-absent-no-test"
+kind = "leetcode"
+group = "type-derivation"
+input = "leetcode/type-derivation/lc-type-derivation-absent-no-test.md"
+expected = "leetcode/type-derivation/lc-type-derivation-absent-no-test.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-type-derivation-derived-from-test-type"
+kind = "leetcode"
+group = "type-derivation"
+input = "leetcode/type-derivation/lc-type-derivation-derived-from-test-type.md"
+expected = "leetcode/type-derivation/lc-type-derivation-derived-from-test-type.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-type-derivation-stack-declared"
+kind = "leetcode"
+group = "type-derivation"
+input = "leetcode/type-derivation/lc-type-derivation-stack-declared.md"
+expected = "leetcode/type-derivation/lc-type-derivation-stack-declared.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-type-derivation-unknown-type"
+kind = "leetcode"
+group = "type-derivation"
+input = "leetcode/type-derivation/lc-type-derivation-unknown-type.md"
+expected = "leetcode/type-derivation/lc-type-derivation-unknown-type.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-yaml-cases-duplicate-input-key"
+kind = "leetcode"
+group = "yaml-cases"
+input = "leetcode/yaml-cases/lc-yaml-cases-duplicate-input-key.md"
+expected = "leetcode/yaml-cases/lc-yaml-cases-duplicate-input-key.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-yaml-cases-json-malformed"
+kind = "leetcode"
+group = "yaml-cases"
+input = "leetcode/yaml-cases/lc-yaml-cases-json-malformed.md"
+expected = "leetcode/yaml-cases/lc-yaml-cases-json-malformed.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-yaml-cases-json-numbers"
+kind = "leetcode"
+group = "yaml-cases"
+input = "leetcode/yaml-cases/lc-yaml-cases-json-numbers.md"
+expected = "leetcode/yaml-cases/lc-yaml-cases-json-numbers.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-yaml-cases-yaml-suite"
+kind = "leetcode"
+group = "yaml-cases"
+input = "leetcode/yaml-cases/lc-yaml-cases-yaml-suite.md"
+expected = "leetcode/yaml-cases/lc-yaml-cases-yaml-suite.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-yaml-cases-yaml-types"
+kind = "leetcode"
+group = "yaml-cases"
+input = "leetcode/yaml-cases/lc-yaml-cases-yaml-types.md"
+expected = "leetcode/yaml-cases/lc-yaml-cases-yaml-types.expected.json"
+origin = "ts@84c437d"
+
+# --- LeetCode hostile (Rust-only group; the three cap cases are hand-derived, deviates_from_ts).
+
+[[cases]]
+id = "lc-hostile-yaml-depth-64"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-yaml-depth-64.md"
+expected = "leetcode/hostile/lc-hostile-yaml-depth-64.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-hostile-yaml-depth-65"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-yaml-depth-65.md"
+expected = "leetcode/hostile/lc-hostile-yaml-depth-65.expected.json"
+origin = "rust"
+deviates_from_ts = "Rust-only cap: a YAML-cases fence nested deeper than 64 is malformed, its cases dropped as for a malformed json fence (W4 Q-37, Q-39); TS recurses unbounded"
+
+[[cases]]
+id = "lc-hostile-lib-spec-10000"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-lib-spec-10000.md"
+expected = "leetcode/hostile/lc-hostile-lib-spec-10000.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-hostile-lib-spec-10001"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-lib-spec-10001.md"
+expected = "leetcode/hostile/lc-hostile-lib-spec-10001.expected.json"
+origin = "rust"
+deviates_from_ts = "Rust-only cap: a lib spec over 10 000 chars is leetcode.libs.rejected (W4 Q-37, Q-39); TS has no cap"
+
+[[cases]]
+id = "lc-hostile-frontmatter-64k"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-frontmatter-64k.md"
+expected = "leetcode/hostile/lc-hostile-frontmatter-64k.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-hostile-frontmatter-64k-plus-1"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-frontmatter-64k-plus-1.md"
+expected = "leetcode/hostile/lc-hostile-frontmatter-64k-plus-1.expected.json"
+origin = "rust"
+deviates_from_ts = "Rust-only cap: a frontmatter block over 64 KiB is skipped (empty fm_raw), the body after it parses (W4 Q-37, Q-39); TS has no cap"
+
+[[cases]]
+id = "lc-hostile-proto-everywhere"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-proto-everywhere.md"
+expected = "leetcode/hostile/lc-hostile-proto-everywhere.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-hostile-many-fences"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-many-fences.md"
+expected = "leetcode/hostile/lc-hostile-many-fences.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-hostile-unterminated-everything"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-unterminated-everything.md"
+expected = "leetcode/hostile/lc-hostile-unterminated-everything.expected.json"
+origin = "ts@84c437d"
+
+[[cases]]
+id = "lc-hostile-control-chars"
+kind = "leetcode"
+group = "hostile"
+input = "leetcode/hostile/lc-hostile-control-chars.md"
+expected = "leetcode/hostile/lc-hostile-control-chars.expected.json"
+origin = "ts@84c437d"

@@ -1,0 +1,90 @@
+{
+  "title": "Case",
+  "leetcodeType": "package",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [
+    {
+      "input": {
+        "n": 1
+      },
+      "expected": [
+        1
+      ]
+    }
+  ],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 10000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [
+    {
+      "path": "src/lib/cat.ts",
+      "language": "typescript",
+      "role": "editable",
+      "content": "export function f() {}\n"
+    },
+    {
+      "path": "src/app.css",
+      "language": "css",
+      "role": "readonly",
+      "content": "body {}\n"
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "role": "hidden",
+      "content": "{}\n"
+    }
+  ],
+  "libs": {},
+  "solutionFiles": [
+    {
+      "path": "src/lib/cat.ts",
+      "language": "typescript",
+      "role": "editable",
+      "content": "export function f() { return [1]; }\n"
+    }
+  ],
+  "checks": [
+    {
+      "name": "cat filter",
+      "kind": "call",
+      "file": "src/lib/cat.ts",
+      "function": "f",
+      "cases": [
+        {
+          "input": {
+            "n": 1
+          },
+          "expected": [
+            1
+          ]
+        }
+      ],
+      "publicCount": 1
+    }
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

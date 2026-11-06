@@ -1,0 +1,80 @@
+{
+  "title": "Case",
+  "leetcodeType": "stack",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {},
+  "solutionFiles": [],
+  "checks": [],
+  "warnings": [
+    {
+      "code": "leetcode.packages.missing_name",
+      "params": {}
+    },
+    {
+      "code": "leetcode.packages.dir_rejected",
+      "params": {
+        "dir": "/srv",
+        "name": "abs",
+        "reason": "absolute"
+      }
+    },
+    {
+      "code": "leetcode.packages.missing_field",
+      "params": {
+        "field": "install",
+        "name": "noinstall"
+      }
+    },
+    {
+      "code": "leetcode.packages.argv_not_array",
+      "params": {
+        "field": "install",
+        "name": "str"
+      }
+    },
+    {
+      "code": "leetcode.packages.argv_empty",
+      "params": {
+        "field": "install",
+        "name": "empty"
+      }
+    },
+    {
+      "code": "leetcode.packages.argv_substitution",
+      "params": {
+        "PORT": "{PORT}",
+        "element": "${HOME}",
+        "field": "start",
+        "name": "subst"
+      }
+    }
+  ],
+  "unimplementedKinds": []
+}
