@@ -168,6 +168,17 @@ const MUTATIONS: [(&str, &str, &str); 17] = [
     ("attempts", "/attempts/0/code", "\"changed\""),
 ];
 
+/// No top-level key of the frontmatter appears twice.
+fn assert_unique_fm_keys(out: &str) {
+    let fm: Vec<&str> = out.lines().skip(1).take_while(|l| *l != "---").collect();
+    let mut seen = std::collections::HashSet::new();
+    for l in fm {
+        if let Some(k) = crate::leetcode::config::top_level_key(l) {
+            assert!(seen.insert(k), "{k} twice:\n{out}");
+        }
+    }
+}
+
 /// `out` holds every unmapped block's raw text, in order.
 fn assert_unmapped_survive(key: &str, blocks: &[Block], out: &str) {
     let fm = ["title", "difficulty", "status", "algorithm", "tags"].contains(&key);
@@ -197,6 +208,7 @@ fn mutate_one_field_and_only_its_blocks_change() {
         assert_ne!(out, RICH, "{key}: nothing changed");
         assert_eq!(write_guard(&y, &out), Ok(()), "{key}\n{out}");
         assert_unmapped_survive(key, &blocks, &out);
+        assert_unique_fm_keys(&out);
     }
 }
 
@@ -427,4 +439,32 @@ fn custom_frontmatter_keys_survive_a_frontmatter_change() {
         assert!(out.contains(k), "lost {k:?}:\n{out}");
     }
     assert!(out.contains("---\n\nBody.\n"), "{out}");
+}
+
+#[test]
+fn a_status_change_keeps_one_line_per_canonical_key() {
+    let src = "---\nartifactType: LeetCode\nleetcodeType: function\ntitle: T\ndifficulty: easy\nstatus: attempted\ntags:\n  - a\n  - b\naliases: [x]\n---\n\nBody.\n";
+    let x = parse(src);
+    let mut y = x.clone();
+    y.status = crate::leetcode::LeetCodeStatus::Solved;
+    let out = assemble(&y, Some(&layout(src).unwrap())).unwrap();
+    assert_eq!(write_guard(&y, &out), Ok(()));
+    assert_unique_fm_keys(&out);
+    for k in [
+        "artifactType",
+        "leetcodeType",
+        "title",
+        "difficulty",
+        "status",
+        "tags",
+    ] {
+        assert_eq!(
+            out.lines()
+                .filter(|l| l.starts_with(&format!("{k}:")))
+                .count(),
+            1,
+            "{k}\n{out}"
+        );
+    }
+    assert!(out.contains("aliases: [x]\n"));
 }

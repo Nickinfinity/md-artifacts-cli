@@ -1,0 +1,5 @@
+# deny_unknown_fields on the model.
+vault = "vault_leetcode"
+params = { "path" = "LeetCode/x.md", "exercise" = { "title" = "T", "bogus" = 1 } }
+expect_error = "op.bad_request"
+expect_files = { "LeetCode/x.md" = false }

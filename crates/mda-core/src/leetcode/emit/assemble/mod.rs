@@ -95,11 +95,13 @@ impl Asm<'_> {
         // Keys the model does not carry (`aliases`, `created`, Dataview fields) are the author's:
         // they stay, raw, after the canonical keys.
         let mut text = canon.strip_suffix("---\n").unwrap_or(&canon).to_owned();
-        for b in self
-            .blocks
-            .iter()
-            .filter(|b| b.kind == K::FmKey && b.fields.is_empty())
-        {
+        let custom = |b: &&Block| {
+            let key = crate::leetcode::config::top_level_key(b.raw.lines().next().unwrap_or(""));
+            b.kind == K::FmKey
+                && b.fields.is_empty()
+                && !key.is_some_and(|k| crate::leetcode::config::CANONICAL_ORDER.contains(&k))
+        };
+        for b in self.blocks.iter().filter(custom) {
             if b.raw.lines().any(|l| l == "---") {
                 continue; // would close the block early
             }

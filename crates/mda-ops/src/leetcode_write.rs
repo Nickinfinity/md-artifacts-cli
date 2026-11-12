@@ -100,7 +100,7 @@ fn bad(reason: &str) -> OpError {
     OpError::new(error::OP_BAD_REQUEST).with("reason", reason)
 }
 
-fn refuse(r: NotSerializableReason) -> OpError {
+pub(crate) fn refuse(r: NotSerializableReason) -> OpError {
     OpError::new(error::LEETCODE_NOT_SERIALIZABLE).with("reason", r.as_str())
 }
 

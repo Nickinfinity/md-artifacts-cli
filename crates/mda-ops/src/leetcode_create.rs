@@ -12,6 +12,7 @@ use mda_vault::create_new;
 
 use crate::artifact::{bad_path, check_dirs_at, leetcode_path, locate, mid_dirs, segments};
 use crate::artifact_write::{WriteResponse, too_large, written};
+use crate::location::Resolved;
 use crate::write_file::exists_actual;
 use crate::{Ctx, OpError, error};
 
@@ -51,6 +52,15 @@ impl From<CreateRequest> for SkeletonInput {
     }
 }
 
+/// The create-side path rule shared with `leetcode.write`: segments, mid directories, file stem.
+pub(crate) fn check_new_path(r: &Resolved, path: &str) -> Result<(), OpError> {
+    let segs = segments(path).map_err(|()| bad_path(path))?;
+    check_dirs_at(&r.place, mid_dirs(&segs))?;
+    let file = path.rsplit('/').next().unwrap_or_default();
+    validate_stem(file.strip_suffix(".md").unwrap_or(file))?;
+    Ok(())
+}
+
 /// `leetcode.create` (D-28): write the canonical skeleton at a new path; never overwrites
 /// (`file.exists` carries `actual`). Field checks run before any I/O, then the path rule as
 /// `artifact.create`'s, through `locate` (the generic locator refuses LeetCode).
@@ -74,10 +84,7 @@ pub fn create(ctx: &Ctx, req: CreateRequest) -> Result<WriteResponse, OpError> {
     }
     leetcode_path(&req.path)?;
     let r = locate(ctx, &req.path)?;
-    let segs = segments(&req.path).map_err(|()| bad_path(&req.path))?;
-    check_dirs_at(&r.place, mid_dirs(&segs))?;
-    let file = req.path.rsplit('/').next().unwrap_or_default();
-    validate_stem(file.strip_suffix(".md").unwrap_or(file))?;
+    check_new_path(&r, &req.path)?;
     let path = req.path.clone();
     let text = skeleton(&req.into());
     too_large(&path, text.len())?;
