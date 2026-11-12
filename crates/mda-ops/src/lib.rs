@@ -38,6 +38,6 @@ pub use registry::{Ctx, OpSpec, Source, check_names, dispatch, dispatch_in, ops,
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_ops::PROTOCOL, "2.5");
+/// assert_eq!(mda_ops::PROTOCOL, "2.6");
 /// ```
-pub const PROTOCOL: &str = "2.5";
+pub const PROTOCOL: &str = "2.6";

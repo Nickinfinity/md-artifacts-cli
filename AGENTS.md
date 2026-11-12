@@ -3,12 +3,18 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
+> **Status (2026-11-11): W4–W6 of plan `type-locations-leetcode` landed (MAC-27, MAC-28, MAC-29)** — the LeetCode parser
+> `leetcode::parse` (`mda-core/src/leetcode/`: config blocks, frontmatter, cases, project/checks, packages, program, libs, sections;
+> every `conformance/leetcode/` case green), `leetcode.read`, `artifact.tree` summaries (`TreeFile.leetcode`), `vault.validate`
+> rules (`leetcode.rule.*`), pure patchers (`leetcode/patch/`), the skeleton (`skeleton.rs`, spec §3.8), `leetcode.record_outcome`
+> (re-parse guard `guard.rs`, `leetcode.not_serializable{reason}`) and `leetcode.create`; CLI `mda leetcode read|outcome|new`;
+> protocol **2.6**, engine `0.16.0` (no tag until W7 — real-vault round trip).
 > **Status (2026-11-04): W3 of plan `type-locations-leetcode` Phase 2 landed (MAC-26)** — registry row 7 `LeetCode` (`Format`,
 > `format: "leetcode"`, disabled by default; `types.list` rows carry `format`); spec `spec/LEETCODE_FILE_FORMAT.md` (imported from the
 > extension at `84c437d`, §10 wire shape + the 36 `leetcode.*` warning codes `LEETCODE_WARNING_CODES`); wire model
 > `mda-core/src/leetcode/model/` (`Serialize` only, `OrderedMap` keeps declared key order, `Default` = undeclared values; parser stub
 > until W4); generic content ops refuse LeetCode paths/types `artifact.unsupported_type` before any I/O; `migrate.frontmatter`
-> rewrites exactly `artifactType: leetcode` → `LeetCode`; protocol 2.6 unreleased (header stays 2.5 until W6).
+> rewrites exactly `artifactType: leetcode` → `LeetCode`; protocol 2.6 unreleased (header 2.6 since W6).
 > **Status (2026-11-04): type locations landed (MAC-24, MAC-25; plan `type-locations-leetcode` Phase 1)** — every wire path is
 > virtual `<TypeDir>/<rel>`, mapped through the type's machine-file location (`[types.<T>] vault/dir/root`; resolver
 > `mda-ops/src/location.rs`, write side `location/set.rs`, spec §15); `types.list` rows gain `location`; `types.set_location`,
@@ -192,7 +198,7 @@ md-artifacts-cli/
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
-├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.5) — orchestrator-owned
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.6) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
 ├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
@@ -238,7 +244,7 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
-- **Authority: `spec/PROTOCOL.md`** (protocol `2.5`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`–`2.5` additive (ER-3; ER-4 + ER-6; ER-7 + ER-5; W4; type locations)). Its method, error-code and warning-code
+- **Authority: `spec/PROTOCOL.md`** (protocol `2.6`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`–`2.6` additive (ER-3; ER-4 + ER-6; ER-7 + ER-5; W4; type locations; the LeetCode type)). Its method, error-code and warning-code
   tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
   `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
@@ -405,7 +411,7 @@ analysis:
   (`render.contains_escape`); `--json` returns the response unchanged.
 - **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete|rename`,
   `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled|set_location`, `types.move.apply`, `vars.file.new`, `vars.meta.tags`,
-  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`.
+  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`, `leetcode.record_outcome`, `leetcode.create`.
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the
 **sink** (the file outside the vault is unchanged; stdout carried only protocol lines; nothing was

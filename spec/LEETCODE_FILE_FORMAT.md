@@ -184,7 +184,7 @@ leetcode type, never a hardcoded set of test-type ids.
 | `leetcodeType` | `function`\|`package`\|`stack` | no¹ | *derived* | The shape axis. ¹Absent ⇒ **derived** from a legacy `test.type` (§2.3), so an unmigrated or hand-written file still parses. An unrecognised value falls back to the derived one **and warns**. |
 | `title` | string | yes | `''` | Single line. |
 | `difficulty` | `easy`\|`medium`\|`hard` | no | `easy` | Any other value → `easy`. |
-| `status` | `unsolved`\|`attempted`\|`solved` | no | `unsolved` | **Extension-owned** — auto-written by Submit. Any other value → `unsolved`. |
+| `status` | `unsolved`\|`attempted`\|`solved` | no | `unsolved` | **Extension-owned** — auto-written by Submit (since protocol 2.6 the engine writes it on the extension's behalf: `leetcode.record_outcome`, §8). Any other value → `unsolved`. |
 | `algorithm` | string | no | — | Category tag (e.g. `hash-map`). |
 | `tags` | string[] | no | `[]` | Inline `[a, b]` or a YAML `- a` list. |
 
@@ -988,6 +988,12 @@ canonical name when in doubt: `JavaScript`, `Python`, `Java`.
 `status` + the solved `meta` + the attempt entry are applied in **one**
 read-patch-write per Submit, so a manual edit made between a run's start and its
 Submit is preserved everywhere except those three writer-owned spots.
+
+**Since protocol 2.6 the engine performs that write** (`leetcode.record_outcome`, `mda-ops/src/leetcode_write.rs`): the
+extension decides *what* to record and sends it; the engine patches the three spots under the content hash the client last
+read, re-parses the result and refuses (`leetcode.not_serializable{reason}`, nothing written) any write that would not read
+back as asked. Engine deviations from the TS writer (`deviates_from_ts`): the file's EOL kept, the meta replaced not
+stacked, the meta target only inside `# Solutions`, language ids compared resolved, fenced `## x` lines skipped).
 
 **The extension cannot author an order violation.** `patchFrontmatterField` —
 its only frontmatter write — replaces `status:` **in place** when the key is
