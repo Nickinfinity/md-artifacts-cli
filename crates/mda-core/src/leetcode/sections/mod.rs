@@ -210,7 +210,7 @@ fn from_json(v: &serde_json::Value) -> CaseValue {
         J::Null => CaseValue::Null,
         J::Bool(b) => CaseValue::Bool(*b),
         J::Number(n) => match n.as_f64() {
-            Some(f) if f.fract() == 0.0 && f.abs() <= 9_007_199_254_740_992.0 => {
+            Some(f) if f.fract() == 0.0 && f.abs() <= crate::leetcode::cases::MAX_EXACT_INT => {
                 CaseValue::Int(f as i64)
             }
             Some(f) => CaseValue::Float(f),

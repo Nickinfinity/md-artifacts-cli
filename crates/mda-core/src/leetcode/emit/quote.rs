@@ -1,6 +1,7 @@
 //! The one scalar-quoting authority for the canonical emitters (W7 Q-76): no emitter quotes by hand.
 //! Each function is the inverse of the reader it writes for, proven by round-trip tests.
 
+use crate::leetcode::config::is_ws;
 use crate::parse::text::js_trim;
 
 /// A value for a `key: value` line read back through `unquote_pair` (config fences: `libs`,
@@ -29,6 +30,28 @@ pub fn pair_quoted(s: &str) -> Option<String> {
     } else {
         s.to_owned()
     })
+}
+
+/// An info-string attribute value (`path=…` on a ```` ``` ```` line), read back by the project
+/// parser's `attr` (`key=(?:"([^"]*)"|(\S+))`, JS `\s`): bare when non-empty, free of JS whitespace and
+/// not opening with `"`; else `"…"` when it holds no `"` and no line break; else `None` (refuse).
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::leetcode::emit::attr_quoted;
+/// assert_eq!(attr_quoted("src/a.ts").as_deref(), Some("src/a.ts"));
+/// assert_eq!(attr_quoted("my file.ts").as_deref(), Some("\"my file.ts\""));
+/// assert_eq!(attr_quoted("a \"b"), None);
+/// ```
+pub fn attr_quoted(s: &str) -> Option<String> {
+    if s.contains(['\n', '\r', '\u{2028}', '\u{2029}']) {
+        return None;
+    }
+    if !s.is_empty() && !s.starts_with('"') && !s.chars().any(is_ws) {
+        return Some(s.to_owned());
+    }
+    (!s.contains('"')).then(|| format!("\"{s}\""))
 }
 
 /// A YAML double-quoted string for a test-case value, read back by the cases reader's `read_quoted`

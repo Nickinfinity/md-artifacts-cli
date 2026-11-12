@@ -119,7 +119,7 @@ fn parse_files(
 
 /// `key=value` (quoted or bare) from an info-string: TS `new RegExp(`${key}=(?:"([^"]*)"|(\S+))`)`
 /// as a scanner (the key is a constant, never vault text; unanchored, so `xpath=` matches `path=`).
-fn attr<'a>(info: &'a str, key: &str) -> Option<&'a str> {
+pub(crate) fn attr<'a>(info: &'a str, key: &str) -> Option<&'a str> {
     let needle = format!("{key}=");
     info.match_indices(&needle).find_map(|(i, _)| {
         let rest = info.get(i + needle.len()..)?;

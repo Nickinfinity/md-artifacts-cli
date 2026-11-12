@@ -16,7 +16,7 @@ pub use cases::case_fence;
 pub use doc::{description, example, frontmatter, setup, solution};
 pub use fence::config_fence;
 pub use project::{file_fence, libs_group, packages_group, program_group, test_group};
-pub use quote::{case_quoted, pair_quoted};
+pub use quote::{attr_quoted, case_quoted, pair_quoted};
 pub use yaml::{practice_group, signature_groups};
 
 use super::{Block, LeetCodeExercise};

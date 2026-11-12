@@ -785,6 +785,8 @@ layout at all). Unchanged layout blocks are re-emitted byte for byte instead (§
   `packages` / `program`. A key is written only when its value differs from the default (the model has
   no "declared" bit). A key newly non-default whose group fence exists goes at the end of that fence;
   a key back to its default loses its lines; a fence left with no keys is dropped.
+- **Test cases:** a YAML case fence (`input` as a block map, values in flow style); a ```` ```json ```` fence
+  instead when a key is `__proto__`, `constructor` or `prototype` (the YAML reader drops those keys).
 - **Values:** bare when they read back unchanged, else double-quoted (config: read by `unquote_pair`;
   test cases: YAML double-quoted with `\\ \" \n \t \r` escapes). A value no form can carry is refused.
 - **Sections:** in §3 order; filled in by the W7 emitter tasks (this list is the contract they meet).
@@ -1651,7 +1653,8 @@ decoded file exactly (a BOM or CR the decoder dropped is not kept). At most 20 0
   `configKey` (a top-level key group inside a config fence), `configComment`, `configClose`,
   `caseFence`, `codeFence`, `fileFence`, `comment`, `prose` (prose and blank runs).
 - `fields`: the §10.1 top-level keys a block feeds — a string (`"title"`) or, for list fields, an
-  object with the item index (`{"solutions": 1}`); empty for headings, prose and blank runs. A config
+  object with the item index (`{"solutions": 1}`); empty for headings and for prose and blank runs after the first heading (prose and fences before
+  it feed `description`). A config
   key group feeds its key's fields (`test` feeds `test` and `checks`); a case fence feeds every case
   index it holds.
 

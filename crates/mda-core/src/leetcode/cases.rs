@@ -17,6 +17,9 @@ use crate::parse::text::{compile, js_lines, js_trim, js_trim_end};
 /// Deepest flow nesting, and separately deepest block nesting, before the fence is malformed.
 pub(crate) const MAX_NESTING: usize = 64;
 
+/// 2^53: above it JS integers stop being exact, so they stay floats (W4 B #10).
+pub(crate) const MAX_EXACT_INT: f64 = 9_007_199_254_740_992.0;
+
 /// Strict JSON number syntax, the only numeric form an unquoted scalar may take.
 static JSON_NUMBER: LazyLock<Regex> =
     LazyLock::new(|| compile(r"^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"));
@@ -36,7 +39,7 @@ fn slice_str(t: &[char], a: usize, b: usize) -> String {
 }
 
 /// Keys that would reach through a JS prototype are never data.
-fn is_safe_key(k: &str) -> bool {
+pub(crate) fn is_safe_key(k: &str) -> bool {
     !matches!(k, "__proto__" | "constructor" | "prototype")
 }
 
@@ -53,7 +56,7 @@ fn type_plain(raw: &str) -> CaseValue {
     }
     match raw.parse::<f64>() {
         // 2^53: above it JS integers stop being exact, so they stay floats (W4 B #10).
-        Ok(f) if f.is_finite() && f.fract() == 0.0 && f.abs() <= 9_007_199_254_740_992.0 => {
+        Ok(f) if f.is_finite() && f.fract() == 0.0 && f.abs() <= MAX_EXACT_INT => {
             CaseValue::Int(f as i64)
         }
         Ok(f) => CaseValue::Float(f),
