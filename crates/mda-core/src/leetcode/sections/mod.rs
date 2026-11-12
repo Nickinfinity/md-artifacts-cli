@@ -175,8 +175,12 @@ fn check_attr(info: &str) -> Option<String> {
 
 fn as_test_case(v: &CaseValue) -> Option<TestCase> {
     let CaseValue::Object(m) = v else { return None };
+    // TS keeps an http case object as written: a `request` key is the marker.
+    if TestCase::is_http(m) {
+        return Some(TestCase::Http(m.clone()));
+    }
     let get = |k: &str| m.0.iter().find(|(key, _)| key == k).map(|(_, v)| v);
-    Some(TestCase {
+    Some(TestCase::Call {
         input: match get("input") {
             Some(CaseValue::Object(i)) => i.clone(),
             _ => OrderedMap(Vec::new()),

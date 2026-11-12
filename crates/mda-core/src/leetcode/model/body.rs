@@ -171,20 +171,45 @@ impl Serialize for CaseValue {
     }
 }
 
-/// One `input`/`expected` case. `input` maps parameter name to argument.
+/// One test case: a call case (`input` maps parameter name to argument) or an HTTP case, an object
+/// holding a `request` key that travels verbatim (every key, original order; spec §10.2).
 ///
 /// # Examples
 ///
 /// ```
 /// use mda_core::leetcode::{CaseValue, OrderedMap, TestCase};
-/// let c = TestCase { input: OrderedMap(vec![("n".to_owned(), CaseValue::Int(2))]), expected: CaseValue::Int(4) };
+/// let c = TestCase::Call { input: OrderedMap(vec![("n".to_owned(), CaseValue::Int(2))]), expected: CaseValue::Int(4) };
 /// assert_eq!(serde_json::to_value(c).unwrap(), serde_json::json!({"input": {"n": 2}, "expected": 4}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct TestCase {
-    pub input: OrderedMap<CaseValue>,
-    pub expected: CaseValue,
+#[derive(Debug, Clone, PartialEq)]
+pub enum TestCase {
+    Call {
+        input: OrderedMap<CaseValue>,
+        expected: CaseValue,
+    },
+    /// The whole case object as written.
+    Http(OrderedMap<CaseValue>),
+}
+
+impl TestCase {
+    /// The one HTTP-case marker: an object holding a `request` key.
+    pub(crate) fn is_http(m: &OrderedMap<CaseValue>) -> bool {
+        m.0.iter().any(|(k, _)| k == "request")
+    }
+}
+
+impl Serialize for TestCase {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        match self {
+            TestCase::Call { input, expected } => {
+                let mut m = s.serialize_map(Some(2))?;
+                m.serialize_entry("input", input)?;
+                m.serialize_entry("expected", expected)?;
+                m.end()
+            }
+            TestCase::Http(o) => o.serialize(s),
+        }
+    }
 }
 
 /// One `## Examples` line pair.

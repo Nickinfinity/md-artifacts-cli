@@ -94,7 +94,7 @@ fn check_attr(name: &str) -> Result<String, Refuse> {
 ///
 /// ```
 /// use mda_core::leetcode::{CaseValue, OrderedMap, TestCase, emit::case_fence};
-/// let c = TestCase { input: OrderedMap(vec![("n".into(), CaseValue::Int(2))]), expected: CaseValue::Int(4) };
+/// let c = TestCase::Call { input: OrderedMap(vec![("n".into(), CaseValue::Int(2))]), expected: CaseValue::Int(4) };
 /// assert_eq!(
 ///     case_fence(&[c], None).unwrap(),
 ///     "```yaml\n- input:\n    \"n\": 2\n  expected: 4\n```\n"
@@ -104,12 +104,23 @@ pub fn case_fence(cases: &[TestCase], check: Option<&str>) -> Result<String, Ref
     let attr = check.map(check_attr).transpose()?.unwrap_or_default();
     let mut json = false;
     for c in cases {
-        let input = CaseValue::Object(c.input.clone());
+        let (input, expected) = match c {
+            // an http case is a verbatim object: JSON is the exact form, depth counts as one value
+            TestCase::Http(o) => {
+                let v = CaseValue::Object(o.clone());
+                if depth(&v)? > MAX_NESTING {
+                    return Err(Refuse::Other);
+                }
+                json = true;
+                continue;
+            }
+            TestCase::Call { input, expected } => (CaseValue::Object(input.clone()), expected),
+        };
         // block and flow nesting count separately (reader): `input` is block-level, its values flow
-        if depth(&input)?.saturating_sub(1).max(depth(&c.expected)?) > MAX_NESTING {
+        if depth(&input)?.saturating_sub(1).max(depth(expected)?) > MAX_NESTING {
             return Err(Refuse::Other);
         }
-        json |= has_unsafe_key(&input) || has_unsafe_key(&c.expected);
+        json |= has_unsafe_key(&input) || has_unsafe_key(expected);
     }
     let mut out = format!("```{}{attr}\n", if json { "json" } else { "yaml" });
     if json {
@@ -123,16 +134,19 @@ pub fn case_fence(cases: &[TestCase], check: Option<&str>) -> Result<String, Ref
         }
     } else {
         for c in cases {
+            let TestCase::Call { input, expected } = c else {
+                return Err(Refuse::Other); // unreachable: an http case set `json`
+            };
             out.push_str("- input:");
-            if c.input.0.is_empty() {
+            if input.0.is_empty() {
                 out.push_str(" {}");
             }
-            for (k, v) in &c.input.0 {
+            for (k, v) in &input.0 {
                 out.push_str(&format!("\n    {}: ", case_quoted(k)));
                 flow(v, &mut out)?;
             }
             out.push_str("\n  expected: ");
-            flow(&c.expected, &mut out)?;
+            flow(expected, &mut out)?;
             out.push('\n');
         }
     }
@@ -150,7 +164,7 @@ mod tests {
 
     fn tc(input: Vec<(&str, CaseValue)>, expected: CaseValue) -> TestCase {
         let input = input.into_iter().map(|(k, v)| (k.to_owned(), v)).collect();
-        TestCase {
+        TestCase::Call {
             input: OrderedMap(input),
             expected,
         }
@@ -211,6 +225,35 @@ mod tests {
         for bad in ["a\"b", "a\nb", "a\rb", "a```b"] {
             assert!(case_fence(&[], Some(bad)).is_err(), "{bad:?}");
         }
+    }
+
+    #[test]
+    fn http_cases_round_trip_verbatim_beside_call_cases() {
+        let obj = |kv: Vec<(&str, CaseValue)>| {
+            OrderedMap(kv.into_iter().map(|(k, v)| (k.to_owned(), v)).collect())
+        };
+        let http = TestCase::Http(obj(vec![
+            (
+                "expect",
+                CaseValue::Object(obj(vec![("status", CaseValue::Int(200))])),
+            ),
+            (
+                "request",
+                CaseValue::Object(obj(vec![("__proto__", s("x")), ("p", s("/"))])),
+            ),
+            ("note", s("n")),
+        ]));
+        assert_round_trip(&[
+            http.clone(),
+            tc(vec![("a", CaseValue::Int(1))], CaseValue::Null),
+        ]);
+        // `request` not an object, and nesting past the cap: no panic, refused or kept as written
+        assert_round_trip(&[TestCase::Http(obj(vec![("request", CaseValue::Int(5))]))]);
+        let mut deep = CaseValue::Null;
+        for _ in 0..100 {
+            deep = CaseValue::List(vec![deep]);
+        }
+        assert!(case_fence(&[TestCase::Http(obj(vec![("request", deep)]))], None).is_err());
     }
 
     const HOSTILE: &[&str] = &[

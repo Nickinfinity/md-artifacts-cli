@@ -79,19 +79,25 @@ fn raw_keeps_non_input_elements_and_json_proto_key_is_data() {
     let f = &extract_case_fences(b, &TESTS_RE)[0];
     assert_eq!(f.raw.len(), 3);
     assert_eq!(f.cases.len(), 2);
-    assert_eq!(f.cases[1].input.0[0].0, "__proto__");
+    assert!(matches!(&f.cases[0], TestCase::Http(m) if m.0[0].0 == "request"));
+    let TestCase::Call { input, .. } = &f.cases[1] else {
+        panic!()
+    };
+    assert_eq!(input.0[0].0, "__proto__");
 }
 
 #[test]
 fn big_numbers_follow_js() {
     let b =
         "## Tests\n```json\n[{\"input\":{\"a\":9007199254740993,\"b\":-0},\"expected\":1e2}]\n```";
-    let t = &extract_tests(b)[0];
+    let TestCase::Call { input, expected } = &extract_tests(b)[0] else {
+        panic!()
+    };
     assert_eq!(
-        serde_json::to_string(&t.input).unwrap(),
+        serde_json::to_string(input).unwrap(),
         r#"{"a":9007199254740992,"b":0}"#
     );
-    assert_eq!(t.expected, CaseValue::Int(100));
+    assert_eq!(*expected, CaseValue::Int(100));
 }
 
 const TREE: &str = "# Setup\n\n## JavaScript\n```javascript\nfunction f() {}\n```\n```javascript\nsecond\n```\n## Python\nno fence\n\n# Solutions\n\n## Java\n```java\nA\n```\n<!-- meta: {\"solved_at\": \"t\", \"duration\": \"1s\"} -->\n```java\nB\n```\n## Python\n```python\nP\n```\n### Fast\n<!-- meta: {\"duration\": \"3m\"} -->\n```python\nQ  \n```\n### Empty\nnothing\n\n# Attempts\n\n## Java\n<!-- attempt: {\"at\": \"a\", \"duration\": \"1m\", \"passed\": true, \"bigO\": \"O(n)\"} -->\n```java\nx\n```\n<!-- attempt: {\"at\": \"a\", \"passed\": true} -->\n```java\nbad\n```\n```java\nbare\n```\n";
@@ -196,4 +202,14 @@ fn conformance_cases_agree_on_section_fields() {
         }
     }
     assert!(checked >= 10, "only {checked} cases");
+}
+
+#[test]
+fn http_case_travels_verbatim_with_key_order_and_extras() {
+    let b = "## Tests\n```json\n[{\"expect\": {\"status\": 200}, \"request\": {\"__proto__\": 1, \"path\": \"/\"}, \"note\": \"n\"}, {\"request\": 5}]\n```";
+    let t = extract_tests(b);
+    assert_eq!(
+        serde_json::to_string(&t).unwrap(),
+        r#"[{"expect":{"status":200},"request":{"__proto__":1,"path":"/"},"note":"n"},{"request":5}]"#
+    );
 }

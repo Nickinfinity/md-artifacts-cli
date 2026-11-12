@@ -132,7 +132,7 @@ fn test_config_has_no_raw_type() {
 
 #[test]
 fn case_keeps_ints_floats_and_nesting() {
-    let c = TestCase {
+    let c = TestCase::Call {
         input: OrderedMap(vec![(
             "xs".to_owned(),
             CaseValue::List(vec![

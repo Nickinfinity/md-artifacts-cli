@@ -20,7 +20,7 @@ fn base(name: &str) -> CheckBase {
 
 #[test]
 fn project_check_tagged_by_kind() {
-    let case = TestCase {
+    let case = TestCase::Call {
         input: OrderedMap(vec![]),
         expected: CaseValue::Int(1),
     };
@@ -162,7 +162,7 @@ fn program_config_minimal() {
 #[test]
 fn maps_keep_declared_order() {
     // Non-alphabetical on purpose: clients print these as written (`{target, nums}`, not sorted).
-    let c = TestCase {
+    let c = TestCase::Call {
         input: OrderedMap(vec![
             ("target".to_owned(), CaseValue::Int(9)),
             ("nums".to_owned(), CaseValue::Null),

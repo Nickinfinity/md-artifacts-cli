@@ -89,3 +89,24 @@ fn a_check_takes_exactly_its_kind_fields() {
         );
     }
 }
+
+#[test]
+fn test_case_deserialize_http_verbatim_and_call_strict() {
+    use crate::leetcode::TestCase;
+    let raw = r#"{"expect":1,"request":{"b":1,"a":2},"note":"x"}"#;
+    let c: TestCase = serde_json::from_str(raw).unwrap();
+    assert!(matches!(c, TestCase::Http(_)));
+    assert_eq!(serde_json::to_string(&c).unwrap(), raw);
+    assert!(matches!(
+        serde_json::from_str::<TestCase>(r#"{"input":{},"expected":null}"#),
+        Ok(TestCase::Call { .. })
+    ));
+    for bad in [
+        r#"{"input":{}}"#,
+        r#"{"input":1,"expected":1}"#,
+        r#"{"input":{},"expected":1,"x":1}"#,
+        "[]",
+    ] {
+        assert!(serde_json::from_str::<TestCase>(bad).is_err(), "{bad}");
+    }
+}

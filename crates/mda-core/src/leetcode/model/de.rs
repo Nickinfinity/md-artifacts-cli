@@ -92,6 +92,30 @@ impl<'de> Visitor<'de> for CaseVisitor {
     }
 }
 
+impl<'de> Deserialize<'de> for TestCase {
+    /// A `request` key makes it an HTTP case (verbatim); else exactly `input` (object) + `expected`.
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let m = OrderedMap::<CaseValue>::deserialize(d)?;
+        if TestCase::is_http(&m) {
+            return Ok(TestCase::Http(m));
+        }
+        let (mut input, mut expected) = (None, None);
+        for (k, v) in m.0 {
+            match (k.as_str(), v) {
+                ("input", CaseValue::Object(o)) => input = Some(o),
+                ("expected", v) => expected = Some(v),
+                ("input", _) => return Err(de::Error::custom("case input must be an object")),
+                _ => return Err(de::Error::unknown_field(&k, &["input", "expected"])),
+            }
+        }
+        match (input, expected) {
+            (Some(input), Some(expected)) => Ok(TestCase::Call { input, expected }),
+            (None, _) => Err(de::Error::missing_field("input")),
+            _ => Err(de::Error::missing_field("expected")),
+        }
+    }
+}
+
 /// The flat wire form of a check (as `ProjectCheck`'s `Serialize` writes it).
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]

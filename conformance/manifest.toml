@@ -2169,6 +2169,13 @@ input = "leetcode/project-parser/lc-project-parser-checks-all-kinds.md"
 expected = "leetcode/project-parser/lc-project-parser-checks-all-kinds.expected.json"
 
 [[cases]]
+id = "lc-project-parser-http-cases"
+kind = "leetcode"
+group = "project-parser"
+input = "leetcode/project-parser/lc-project-parser-http-cases.md"
+expected = "leetcode/project-parser/lc-project-parser-http-cases.expected.json"
+
+[[cases]]
 id = "lc-project-parser-checks-kinds"
 kind = "leetcode"
 group = "project-parser"

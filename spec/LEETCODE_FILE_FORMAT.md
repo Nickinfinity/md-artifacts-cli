@@ -786,7 +786,8 @@ layout at all). Unchanged layout blocks are re-emitted byte for byte instead (§
   no "declared" bit). A key newly non-default whose group fence exists goes at the end of that fence;
   a key back to its default loses its lines; a fence left with no keys is dropped.
 - **Test cases:** a YAML case fence (`input` as a block map, values in flow style); a ```` ```json ```` fence
-  instead when a key is `__proto__`, `constructor` or `prototype` (the YAML reader drops those keys).
+  instead when a key is `__proto__`, `constructor` or `prototype` (the YAML reader drops those keys), and
+  always for a fence holding an HTTP case (§10.2: kept verbatim).
 - **Values:** bare when they read back unchanged, else double-quoted (config: read by `unquote_pair`;
   test cases: YAML double-quoted with `\\ \" \n \t \r` escapes). A value no form can carry is refused.
 - **Sections:** in §3 order; filled in by the W7 emitter tasks (this list is the contract they meet).
@@ -1554,6 +1555,10 @@ Required = always on the wire. Undeclared value = `LeetCodeExercise::default()` 
 
 ### 10.2 Nested types
 
+> **Test cases (2.6):** a case object holding a `request` key is an **HTTP case** (an `http` check's
+> `{request, expect}` shape) and travels verbatim — every key, in the order written. Every other object is a
+> call case `{input, expected}` (a missing `expected` is `null`, a non-object `input` is `{}`).
+
 | Type | JSON fields (optional marked ?) | Enum value sets |
 |---|---|---|
 | `ParamDef` | `name`, `type` | - |
@@ -1660,3 +1665,7 @@ decoded file exactly (a BOM or CR the decoder dropped is not kept). At most 20 0
 
 `leetcode.write` re-emits a block's `raw` unchanged when none of its fields differ from the request
 (list fields compare per index); everything else is written in the canonical form (§3.9).
+
+A check's `cases` repeat the `## Tests` fences bound to it, and the write guard compares both: a client
+editing `tests[i]` (or `finalTests[i]`) of a project exercise mirrors the change into the bound
+`checks[].cases` (and `publicCount`), or the write is refused `leetcode.not_serializable{reason: fence}`.

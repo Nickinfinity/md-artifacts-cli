@@ -287,7 +287,7 @@ mod tests {
         want.unimplemented_kinds.push("x".into());
         assert_eq!(write_guard(&want, src), Ok(()));
         // Float(200.0) and Int(200) are the same wire value
-        want.tests.push(TestCase {
+        want.tests.push(TestCase::Call {
             input: OrderedMap(vec![]),
             expected: CaseValue::Float(200.0),
         });
