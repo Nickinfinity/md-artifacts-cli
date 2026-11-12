@@ -1,6 +1,6 @@
 //! Execution config blocks: `test:`, `practice:`, `program:`.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// The test-type axis: how a case is delivered and compared (spec §2.5.1). Wire names are TS's
 /// kebab-case ids. `class` and `in-place` are reserved.
@@ -11,7 +11,7 @@ use serde::Serialize;
 /// use mda_core::leetcode::TestTypeId;
 /// assert_eq!(serde_json::to_value(TestTypeId::DomAssert).unwrap(), "dom-assert");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum TestTypeId {
     Call,
@@ -34,7 +34,8 @@ pub enum TestTypeId {
 /// let t = TestConfig { r#type: TestTypeId::Call, timeout_ms: 5000 };
 /// assert_eq!(serde_json::to_value(t).unwrap(), serde_json::json!({"type": "call", "timeoutMs": 5000}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct TestConfig {
     pub r#type: TestTypeId,
@@ -59,7 +60,7 @@ impl Default for TestConfig {
 /// use mda_core::leetcode::PracticeOptionId;
 /// assert_eq!(serde_json::to_value(PracticeOptionId::NoAiAgents).unwrap(), "noAiAgents");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum PracticeOptionId {
     NoCompletion,
@@ -78,7 +79,8 @@ pub enum PracticeOptionId {
 /// let v = serde_json::to_value(PracticeConfig::default()).unwrap();
 /// assert_eq!(v["timeLimitMinutes"], 0);
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct PracticeConfig {
     pub options: Vec<PracticeOptionId>,
@@ -105,7 +107,7 @@ impl Default for PracticeConfig {
 /// use mda_core::leetcode::ProgramChannel;
 /// assert_eq!(serde_json::to_value(ProgramChannel::Stdin).unwrap(), "stdin");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ProgramChannel {
     Argv,
@@ -122,7 +124,8 @@ pub enum ProgramChannel {
 /// let p = ProgramConfig { channel: ProgramChannel::Argv, entry: None, flags: None };
 /// assert_eq!(serde_json::to_value(p).unwrap(), serde_json::json!({"channel": "argv"}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct ProgramConfig {
     pub channel: ProgramChannel,

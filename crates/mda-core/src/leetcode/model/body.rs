@@ -1,7 +1,7 @@
 //! Body-section types: cases, setups, solutions, attempts, and the picker summary.
 
 use serde::ser::SerializeMap;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 
 use super::{LeetCodeDifficulty, LeetCodeStatus, LeetcodeType};
 
@@ -180,7 +180,8 @@ impl Serialize for CaseValue {
 /// let c = TestCase { input: OrderedMap(vec![("n".to_owned(), CaseValue::Int(2))]), expected: CaseValue::Int(4) };
 /// assert_eq!(serde_json::to_value(c).unwrap(), serde_json::json!({"input": {"n": 2}, "expected": 4}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct TestCase {
     pub input: OrderedMap<CaseValue>,
     pub expected: CaseValue,
@@ -195,7 +196,8 @@ pub struct TestCase {
 /// let e = Example { input: "n = 2".into(), output: "4".into() };
 /// assert_eq!(serde_json::to_value(e).unwrap(), serde_json::json!({"input": "n = 2", "output": "4"}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Example {
     pub input: String,
     pub output: String,
@@ -210,7 +212,8 @@ pub struct Example {
 /// let s = ExerciseSetup { language: "javascript".into(), code: "f()".into() };
 /// assert_eq!(serde_json::to_value(s).unwrap(), serde_json::json!({"language": "javascript", "code": "f()"}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ExerciseSetup {
     /// Lower-cased fence language as written.
     pub language: String,
@@ -226,7 +229,8 @@ pub struct ExerciseSetup {
 /// let s = LeetCodeSolution { language: "java".into(), label: None, code: "x".into(), solved_at: None, duration: None };
 /// assert_eq!(serde_json::to_value(s).unwrap(), serde_json::json!({"language": "java", "code": "x"}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct LeetCodeSolution {
     pub language: String,
@@ -250,7 +254,8 @@ pub struct LeetCodeSolution {
 ///     big_o: Some("O(n)".into()), confidence: None, code: "x".into() };
 /// assert_eq!(serde_json::to_value(a).unwrap()["bigO"], "O(n)");
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct Attempt {
     /// Lower-cased `## <Language>` heading text.
@@ -277,7 +282,8 @@ pub struct Attempt {
 /// let a = AttemptEntry { at: "t".into(), duration: "1s".into(), passed: false, big_o: None, confidence: None, code: "x".into() };
 /// assert_eq!(serde_json::to_value(a).unwrap()["passed"], false);
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct AttemptEntry {
     pub at: String,

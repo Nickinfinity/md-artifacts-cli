@@ -8,10 +8,12 @@ mod bounds;
 mod cases;
 mod checks;
 mod config;
+pub mod emit;
 mod fm_blocks;
 mod frontmatter;
 mod guard;
 mod kind;
+mod layout;
 mod libs;
 mod model;
 mod packages;
@@ -28,7 +30,8 @@ pub use config::legacy_frontmatter_keys;
 pub use frontmatter::{
     Discriminator, OrderViolation, discriminator, is_exercise, order_violation, summary,
 };
-pub use guard::{OutcomeExpect, outcome_guard};
+pub use guard::{OutcomeExpect, outcome_guard, write_guard};
+pub use layout::{LayoutRefusal, layout};
 pub use model::*;
 pub use patch::{insert_solved_meta, patch_status, prepend_attempt, validate_language};
 pub use rules::frontmatter_rules;

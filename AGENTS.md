@@ -160,7 +160,7 @@ md-artifacts-cli/
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
 │   │       ├── varset/        # shapes, sub-sets, search text; score.rs: scoring, order, apply (W5b)
 │   │       ├── variables.rs   # Variables-file edits: sub-sets, vars, name rule, shapes (W5)
-│   │       ├── leetcode/      # LeetCode exercises: model/ (the §10 wire types), the parser (W4)
+│   │       ├── leetcode/      # LeetCode exercises: model/ (the §10 wire types + layout carrier), the parser (W4), layout/ (block producer, W7), emit/ (canonical emitters + assembler, W7)
 │   │       ├── migrate/       # {mod, frontmatter}.rs — the pure frontmatter migration rewrite (W6, spec §11; vks removed W7e)
 │   │       └── error.rs       # vks.* code constants + VarsError
 │   ├── mda-vault/             # ALL filesystem access
@@ -310,6 +310,8 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Migrations (frontmatter) | `mda-core/src/migrate/` |
 | The migration / validate scope walk | `mda-ops/src/migrate.rs` (`scope`) over `walk_md` |
 | Var-set scoring, apply, search text | `mda-core/src/varset/` |
+| LeetCode layout blocks (raw ranges, field mapping) | `mda-core/src/leetcode/layout/` (types: `leetcode/model/layout.rs`) |
+| LeetCode canonical emission, scalar quoting | `mda-core/src/leetcode/emit/` (`quote.rs` the only quoting) |
 | The render variable rule | `mda-core/src/render/` (`variable_names`) |
 | Path containment | `mda-vault/src/contain.rs` |
 | The path form that leaves the engine (no `\\?\`) | `mda-vault/src/contain.rs` (`plain_path`) |
@@ -411,7 +413,7 @@ analysis:
   (`render.contains_escape`); `--json` returns the response unchanged.
 - **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete|rename`,
   `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled|set_location`, `types.move.apply`, `vars.file.new`, `vars.meta.tags`,
-  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`, `leetcode.record_outcome`, `leetcode.create`.
+  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`, `leetcode.record_outcome`, `leetcode.create`, `leetcode.write`.
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the
 **sink** (the file outside the vault is unchanged; stdout carried only protocol lines; nothing was

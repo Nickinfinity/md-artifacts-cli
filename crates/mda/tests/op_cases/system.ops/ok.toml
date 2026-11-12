@@ -67,6 +67,10 @@ name = "leetcode.record_outcome"
 summary = "Record a run outcome: status, solved meta, attempt"
 
 [[expect.ops]]
+name = "leetcode.write"
+summary = "Write a LeetCode exercise from the model, re-emitting unchanged layout blocks"
+
+[[expect.ops]]
 name = "migrate.frontmatter.apply"
 summary = "Rewrite planned files: type: → artifactType:"
 

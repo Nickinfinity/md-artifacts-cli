@@ -1,6 +1,6 @@
 //! `package` / `stack` exercise types: files, libs, checks, packages (spec §9).
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{OrderedMap, TestCase};
 
@@ -12,7 +12,7 @@ use super::{OrderedMap, TestCase};
 /// use mda_core::leetcode::FileRole;
 /// assert_eq!(serde_json::to_value(FileRole::Readonly).unwrap(), "readonly");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum FileRole {
     Editable,
@@ -29,7 +29,8 @@ pub enum FileRole {
 /// let f = FileSpec { path: "a.py".into(), language: "python".into(), role: FileRole::Editable, content: "".into() };
 /// assert_eq!(serde_json::to_value(f).unwrap()["role"], "editable");
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct FileSpec {
     pub path: String,
     /// Canonical language id from the fence info-string.
@@ -232,7 +233,8 @@ impl Serialize for ProjectCheck {
 ///     ready: None, expose_as: None, depends_on: None };
 /// assert_eq!(serde_json::to_value(p).unwrap()["start"], serde_json::json!(["run"]));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct PackageSpec {
     pub name: String,
@@ -261,7 +263,7 @@ pub struct PackageSpec {
 /// let s = RenderStep::Click { selector: "#b".into() };
 /// assert_eq!(serde_json::to_value(s).unwrap(), serde_json::json!({"op": "click", "selector": "#b"}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "lowercase")]
 pub enum RenderStep {
     Click {

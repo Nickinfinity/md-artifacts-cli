@@ -118,6 +118,21 @@ pub fn outcome_guard(
     Ok(())
 }
 
+/// The re-parse guard of `leetcode.write` (W7 Q-71): `to_value(parse(out))` equals `want` with
+/// `warnings` and `unimplementedKinds` removed on both sides (`to_value`, never `==`: `Float(200.0)`
+/// and `Int(200)` print alike). H7.pre stub with the pinned signature; T7.5a owns it.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::leetcode::{LeetCodeExercise, write_guard};
+/// let _ = write_guard(&LeetCodeExercise::default(), "");
+/// ```
+pub fn write_guard(want: &LeetCodeExercise, out: &str) -> Result<(), NotSerializableReason> {
+    let _ = (want, out);
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

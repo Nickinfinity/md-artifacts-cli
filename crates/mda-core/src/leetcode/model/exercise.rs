@@ -16,7 +16,7 @@ use crate::render::Warning;
 /// use mda_core::leetcode::LeetcodeType;
 /// assert_eq!(serde_json::to_value(LeetcodeType::Stack).unwrap(), "stack");
 /// ```
-// D-41 amended (W6 Q-50): `Deserialize` for the W6 write requests; the other wire types stay Serialize-only.
+// D-41 amended (W6 Q-50, W7 D-43): every wire type deserializes (`leetcode.write` takes the model).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LeetcodeType {
@@ -68,7 +68,8 @@ pub enum LeetCodeStatus {
 /// let p = ParamDef { name: "nums".into(), r#type: "number[]".into() };
 /// assert_eq!(serde_json::to_value(p).unwrap(), serde_json::json!({"name": "nums", "type": "number[]"}));
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ParamDef {
     pub name: String,
     /// Generic type annotation, not validated.
@@ -87,7 +88,8 @@ pub struct ParamDef {
 /// assert_eq!(v["difficulty"], "easy");
 /// assert!(v.get("files").is_none());
 /// ```
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct LeetCodeExercise {
     pub title: String,
@@ -125,8 +127,12 @@ pub struct LeetCodeExercise {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub program: Option<ProgramConfig>,
     /// Author-facing parse problems that degraded to a default (`leetcode.*` codes).
+    // W7 Q-71: derived by the parser; accepted on input and ignored, so `deny_unknown_fields` still
+    // takes a `leetcode.read` response verbatim and `Warning` needs no `Deserialize`.
+    #[serde(default, deserialize_with = "super::de::ignore_any")]
     pub warnings: Vec<Warning>,
     /// Check kinds dropped as reserved, deduplicated, in first-seen order.
+    #[serde(default, deserialize_with = "super::de::ignore_any")]
     pub unimplemented_kinds: Vec<String>,
 }
 

@@ -3,8 +3,8 @@
 use crate::registry::{OpSpec, typed};
 use crate::{
     artifact, artifact_rename, artifact_write, index, index_create, leetcode, leetcode_create,
-    leetcode_write, migrate, naming, prefill, render, system, types, types_move, validate, vars,
-    varsets, vault, write_file,
+    leetcode_put, leetcode_write, migrate, naming, prefill, render, system, types, types_move,
+    validate, vars, varsets, vault, write_file,
 };
 
 pub(crate) static OPS: &[OpSpec] = &[
@@ -92,6 +92,11 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "leetcode.record_outcome",
         summary: "Record a run outcome: status, solved meta, attempt",
         handler: |c, v| typed(c, v, leetcode_write::record_outcome),
+    },
+    OpSpec {
+        name: "leetcode.write",
+        summary: "Write a LeetCode exercise from the model, re-emitting unchanged layout blocks",
+        handler: |c, v| typed(c, v, leetcode_put::write),
     },
     OpSpec {
         name: "migrate.frontmatter.apply",

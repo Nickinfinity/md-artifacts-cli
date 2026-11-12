@@ -773,6 +773,22 @@ Describe the problem here.
 # Solutions
 ~~~
 
+### 3.9 Canonical form *(engine-written: `leetcode.write`, W7)*
+
+What `leetcode.write` emits for content it has no raw text for (new content, a changed block, or no
+layout at all). Unchanged layout blocks are re-emitted byte for byte instead (§10.5).
+
+- **Frontmatter:** the §3.8 skeleton form — spec §2 key order, `title`/`algorithm` raw on one line,
+  `tags` inline `[a, b]`; `status` written as the model holds it.
+- **Config:** one ```` ```yaml leetcode ```` fence per group, in this order — signature (`function` /
+  `functions`, `params`, `returns`), `test` (scalars and `checks`) with `practice`, then `libs` /
+  `packages` / `program`. A key is written only when its value differs from the default (the model has
+  no "declared" bit). A key newly non-default whose group fence exists goes at the end of that fence;
+  a key back to its default loses its lines; a fence left with no keys is dropped.
+- **Values:** bare when they read back unchanged, else double-quoted (config: read by `unquote_pair`;
+  test cases: YAML double-quoted with `\\ \" \n \t \r` escapes). A value no form can carry is refused.
+- **Sections:** in §3 order; filled in by the W7 emitter tasks (this list is the contract they meet).
+
 ---
 
 ## 4. HTML-comment payloads
@@ -1002,6 +1018,12 @@ reading that index from the same constant the verify rule checks against. This
 is not a detail: a vault artifact that has never been submitted carries no
 `status:`, and appending one before the closing `---` would land it after
 `tags:` — the extension writing a file its own verifier then rejects.
+
+**Since protocol 2.6 the engine may also write author sections** (`leetcode.write`, D-45): a client
+sends the whole exercise and the engine writes the file — unchanged parts byte for byte from the
+layout (§10.5), changed or new parts in the canonical form (§3.9) — refusing any write that would not
+read back as sent. The client stays the author of intent; the rule below holds for the extension's
+own writes.
 
 **The extension never writes a config fence.** Config fences are author-owned
 in full: nothing in the extension creates, rewrites, reorders or deletes one.
@@ -1617,3 +1639,21 @@ PROTOCOL §6 lists them. TS files: PP = `services/project-parser.helpers.ts`, PK
 - W01: the key set comes from `legacyFrontmatterKeys(fmRaw)` (body-set keys found in frontmatter, D4 hard cut): `function functions params returns test practice libs checks packages program`.
 - W05 fires only for keys in `DUPLICATE_KEY_WINNER` (CB:60): `last` for function, functions, params, returns, test, practice, tags; `first` for libs, checks, packages. `count` >= 2 fences.
 - TS gives no warning for: unknown `difficulty`/`status` values (silent default), unknown `test.type`, out-of-range `timeoutMs`, unknown practice option ids (all silent in TS; D-24 forbids adding any).
+
+### 10.5 Layout *(engine; W7, protocol 2.6)*
+
+`leetcode.read {path, layout: true}` adds `layout`: the file as ordered blocks
+`{"raw": string, "kind": BlockKind, "fields": LayoutField[]}`. Concatenating every `raw` gives the
+decoded file exactly (a BOM or CR the decoder dropped is not kept). At most 20 000 blocks
+(`op.bad_request{reason: layout_too_large}`).
+
+- `kind`: `fmOpen`, `fmKey` (a key plus its indented lines), `fmClose`, `heading`, `configOpen`,
+  `configKey` (a top-level key group inside a config fence), `configComment`, `configClose`,
+  `caseFence`, `codeFence`, `fileFence`, `comment`, `prose` (prose and blank runs).
+- `fields`: the §10.1 top-level keys a block feeds — a string (`"title"`) or, for list fields, an
+  object with the item index (`{"solutions": 1}`); empty for headings, prose and blank runs. A config
+  key group feeds its key's fields (`test` feeds `test` and `checks`); a case fence feeds every case
+  index it holds.
+
+`leetcode.write` re-emits a block's `raw` unchanged when none of its fields differ from the request
+(list fields compare per index); everything else is written in the canonical form (§3.9).
