@@ -1,0 +1,4 @@
+vault = "vault_leetcode"
+params = { path = "Snippets/x.md", title = "T", leetcodeType = "function", difficulty = "easy" }
+expect_error = "artifact.bad_path"
+expect_files = { "Snippets/x.md" = false }

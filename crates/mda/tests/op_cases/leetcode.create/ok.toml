@@ -1,5 +1,4 @@
-# H6.0 seed (red until T6.4): placeholder body. T6.4 pins `{path, hash}` and the skeleton bytes
-# (`expect_files`, the spec §3.8 golden).
 vault = "vault_leetcode"
-params = { path = "LeetCode/two-sum.md", title = "Two Sum", leetcodeType = "function", difficulty = "easy" }
-expect = {}
+params = { path = "LeetCode/two-sum.md", title = "Two Sum", leetcodeType = "function", difficulty = "easy", algorithm = "hash-map", tags = ["leetcode", "arrays"] }
+expect = { path = "LeetCode/two-sum.md", hash = "993f9c3a422607f43b607441c0282a766081bb3b6dd069c54b1d2668246e1284" }
+expect_files = { "LeetCode/two-sum.md" = "---\nartifactType: LeetCode\nleetcodeType: function\ntitle: Two Sum\ndifficulty: easy\nstatus: unsolved\nalgorithm: hash-map\ntags: [leetcode, arrays]\n---\n\nDescribe the problem here.\n\n```yaml leetcode\n```\n\n## Examples\n\n## Tests\n\n# Setup\n\n# Solutions\n" }

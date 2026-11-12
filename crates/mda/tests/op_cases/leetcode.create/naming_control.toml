@@ -1,0 +1,4 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/a\u0085b.md", title = "T", leetcodeType = "function", difficulty = "easy" }
+expect_error = "naming.control_char"
+expect_files = { "LeetCode/a\u0085b.md" = false }

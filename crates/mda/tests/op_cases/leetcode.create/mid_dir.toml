@@ -1,0 +1,4 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/dp/new.md", title = "New", leetcodeType = "function", difficulty = "easy" }
+expect = { path = "LeetCode/dp/new.md", hash = "1cb5e82f57ca80712124d1ef11a99396d88aee11ed9bdae91b3a28965efc4255" }
+expect_files = { "LeetCode/dp/new.md" = "---\nartifactType: LeetCode\nleetcodeType: function\ntitle: New\ndifficulty: easy\nstatus: unsolved\n---\n\nDescribe the problem here.\n\n```yaml leetcode\n```\n\n## Examples\n\n## Tests\n\n# Setup\n\n# Solutions\n" }

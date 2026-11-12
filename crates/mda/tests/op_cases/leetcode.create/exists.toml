@@ -1,5 +1,5 @@
-# H6.0 seed (red until T6.4): never clobbers; T6.4 adds `expect_error_params` (incl. `actual`) and the
-# unchanged-bytes sink.
 vault = "vault_leetcode"
 params = { path = "LeetCode/ex.md", title = "Two Sum", leetcodeType = "function", difficulty = "easy" }
 expect_error = "file.exists"
+expect_error_params = { path = "LeetCode/ex.md", actual = "bcf0f7f8fd6d231d52a1309b62889f5265b6dc814991ac88a25e6cd39bdc8b25" }
+expect_files = { "LeetCode/ex.md" = "---\nartifactType: LeetCode\nleetcodeType: function\ntitle: Two Sum\ndifficulty: easy\nstatus: unsolved\nalgorithm: hash-map\ntags: [leetcode, arrays]\n---\n\nReturn the indices of the two numbers that add up to target.\n\n```yaml leetcode\nfunction: twoSum\nparams:\n  - name: nums\n    type: int[]\n  - name: target\n    type: int\nreturns: int[]\n```\n\n## Examples\n```example\ninput: nums = [2,7,11,15], target = 9\noutput: [0,1]\n```\n\n## Tests\n```json\n[\n  { \"input\": { \"nums\": [2,7,11,15], \"target\": 9 }, \"expected\": [0,1] }\n]\n```\n\n# Setup\n\n## JavaScript\n```javascript\nfunction twoSum(nums, target) {\n  // solution here\n}\n```\n\n# Solutions\n" }
