@@ -3,6 +3,12 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
+> **Status (2026-11-12): W7 of plan `type-locations-leetcode` landed (MAC-30) — real-vault round trip** — `leetcode.write`
+> (`mda-ops/src/leetcode_put.rs`: create or hash-checked replace, re-parse guard `write_guard`), the opt-in layout carrier
+> (`leetcode.read {layout}`, `leetcode/layout/`, spec §10.5), canonical emitters + assembler (`leetcode/emit/`, spec §3.9;
+> `emit/quote.rs` the only quoting), the model deserializes (`model/de.rs`), HTTP test cases verbatim (§10.2); on the local
+> harness `docs/conformance-gen/leetcode/roundtrip.py` all 87 real exercises recreate byte for byte, rewrite canonically and match
+> the extension's parse (CLI and serve); protocol 2.6, engine 0.16.0, tag pending.
 > **Status (2026-11-11): W4–W6 of plan `type-locations-leetcode` landed (MAC-27, MAC-28, MAC-29)** — the LeetCode parser
 > `leetcode::parse` (`mda-core/src/leetcode/`: config blocks, frontmatter, cases, project/checks, packages, program, libs, sections;
 > every `conformance/leetcode/` case green), `leetcode.read`, `artifact.tree` summaries (`TreeFile.leetcode`), `vault.validate`
