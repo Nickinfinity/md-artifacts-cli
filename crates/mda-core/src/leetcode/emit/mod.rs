@@ -22,20 +22,24 @@ pub use yaml::{practice_group, signature_groups};
 use super::{Block, LeetCodeExercise};
 use crate::error::NotSerializableReason;
 
+mod assemble;
+
 /// The file for `x`: with `layout`, every block whose mapped fields are unchanged is its raw text
 /// (Q-69/Q-70), changed or new content canonical (Q-73, Q-81, Q-82); without, the whole file canonical.
-/// The caller runs the write guard on the result.
+/// The caller runs the write guard on the result. Pure; refuses (never panics) on a hostile layout.
 ///
 /// # Examples
 ///
 /// ```
 /// use mda_core::leetcode::{LeetCodeExercise, emit::assemble};
-/// let _ = assemble(&LeetCodeExercise::default(), None);
+/// let x = LeetCodeExercise { title: "Two Sum".into(), ..Default::default() };
+/// let out = assemble(&x, None).unwrap();
+/// assert!(out.starts_with("---\nartifactType: LeetCode\n"));
+/// assert!(assemble(&LeetCodeExercise::default(), None).is_err()); // no title
 /// ```
 pub fn assemble(
     x: &LeetCodeExercise,
     layout: Option<&[Block]>,
 ) -> Result<String, NotSerializableReason> {
-    let _ = (x, layout);
-    Ok(String::new())
+    assemble::run(x, layout)
 }

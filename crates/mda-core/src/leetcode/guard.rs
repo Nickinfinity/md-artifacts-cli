@@ -120,17 +120,55 @@ pub fn outcome_guard(
 
 /// The re-parse guard of `leetcode.write` (W7 Q-71): `to_value(parse(out))` equals `want` with
 /// `warnings` and `unimplementedKinds` removed on both sides (`to_value`, never `==`: `Float(200.0)`
-/// and `Int(200)` print alike). H7.pre stub with the pinned signature; T7.5a owns it.
+/// and `Int(200)` print alike). The refusal reason is the first rule that fits: `status` differs → `Status`; `attempts` → `Attempts`; another frontmatter key
+/// differs → `Frontmatter`; any other field but `description` differs (config and fenced content)
+/// → `Fence`; else `Other`.
 ///
 /// # Examples
 ///
 /// ```
 /// use mda_core::leetcode::{LeetCodeExercise, write_guard};
-/// let _ = write_guard(&LeetCodeExercise::default(), "");
+/// let x = LeetCodeExercise { title: "T".into(), ..Default::default() };
+/// assert!(write_guard(&x, "---\ntitle: T\n---\n").is_ok());
+/// assert!(write_guard(&x, "---\ntitle: U\n---\n").is_err());
 /// ```
 pub fn write_guard(want: &LeetCodeExercise, out: &str) -> Result<(), NotSerializableReason> {
-    let _ = (want, out);
-    Ok(())
+    use serde_json::Value;
+    const FM: [&str; 6] = [
+        "title",
+        "leetcodeType",
+        "difficulty",
+        "status",
+        "algorithm",
+        "tags",
+    ];
+    let strip = |e: &LeetCodeExercise| match serde_json::to_value(e) {
+        Ok(Value::Object(mut m)) => {
+            m.remove("warnings");
+            m.remove("unimplementedKinds");
+            Some(m)
+        }
+        _ => None,
+    };
+    let (Some(got), Some(want)) = (strip(&crate::leetcode::parse(out)), strip(want)) else {
+        return Err(NotSerializableReason::Other);
+    };
+    if got == want {
+        return Ok(());
+    }
+    let mut keys: Vec<&String> = want.keys().chain(got.keys()).collect();
+    keys.retain(|k| want.get(*k) != got.get(*k));
+    if keys.iter().any(|k| k.as_str() == "status") {
+        Err(NotSerializableReason::Status)
+    } else if keys.iter().any(|k| k.as_str() == "attempts") {
+        Err(NotSerializableReason::Attempts)
+    } else if keys.iter().any(|k| FM.contains(&k.as_str())) {
+        Err(NotSerializableReason::Frontmatter)
+    } else if keys.iter().any(|k| k.as_str() != "description") {
+        Err(NotSerializableReason::Fence)
+    } else {
+        Err(NotSerializableReason::Other)
+    }
 }
 
 #[cfg(test)]
@@ -237,5 +275,45 @@ mod tests {
             run(&warned, &want(LeetCodeStatus::Attempted)),
             Err(NotSerializableReason::Other)
         );
+    }
+
+    #[test]
+    fn write_guard_compares_parses_not_models() {
+        use crate::leetcode::{CaseValue, OrderedMap, TestCase};
+        let src = "---\ntitle: T\n---\n\nDesc.\n\n```yaml leetcode\nfunction: f\n```\n";
+        let mut want = parse(src);
+        assert_eq!(write_guard(&want, src), Ok(()));
+        // warnings and unimplementedKinds on the request are ignored
+        want.unimplemented_kinds.push("x".into());
+        assert_eq!(write_guard(&want, src), Ok(()));
+        // Float(200.0) and Int(200) are the same wire value
+        want.tests.push(TestCase {
+            input: OrderedMap(vec![]),
+            expected: CaseValue::Float(200.0),
+        });
+        let got =
+            format!("{src}\n## Tests\n\n```json\n[{{\"input\":{{}},\"expected\":200}}]\n```\n");
+        assert_eq!(write_guard(&want, &got), Ok(()));
+    }
+
+    #[test]
+    fn write_guard_names_the_first_differing_group() {
+        let src = "---\ntitle: T\n---\n\nDesc.\n\n```yaml leetcode\nfunction: f\n```\n";
+        let want = parse(src);
+        let t = src.replace("title: T", "title: U");
+        assert_eq!(
+            write_guard(&want, &t),
+            Err(NotSerializableReason::Frontmatter)
+        );
+        let f = src.replace("function: f", "function: g");
+        assert_eq!(write_guard(&want, &f), Err(NotSerializableReason::Fence));
+        let s = src.replace("---\n\nDesc", "status: solved\n---\n\nDesc");
+        assert_eq!(write_guard(&want, &s), Err(NotSerializableReason::Status));
+        let a = format!(
+            "{src}\n# Attempts\n\n## python\n<!-- attempt: {{\"at\":\"a\",\"duration\":\"1s\",\"passed\":true}} -->\n```python\ny\n```\n"
+        );
+        assert_eq!(write_guard(&want, &a), Err(NotSerializableReason::Attempts));
+        let d = src.replace("Desc.", "Other.");
+        assert_eq!(write_guard(&want, &d), Err(NotSerializableReason::Other));
     }
 }
