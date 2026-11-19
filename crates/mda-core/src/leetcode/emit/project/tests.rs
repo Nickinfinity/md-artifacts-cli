@@ -263,11 +263,17 @@ fn file_fences_round_trip() {
             "x = 1\n# not a heading? it is\n",
         ),
         file("a b/c.py", FileRole::Readonly, ""),
-        file("h.py", FileRole::Hidden, "y\r\nz\n"),
+        file("h.py", FileRole::Hidden, "y\rz\n"),
     ];
     let body: String = fs.iter().map(|f| file_fence(f).unwrap() + "\n").collect();
     let v = parsed_with(LeetcodeType::Package, &format!("\n## Files\n\n{body}"));
     assert_eq!(field(&v, "files"), serde_json::to_value(&fs).unwrap());
+    // F1: the parser normalises CRLF, so a `\r\n` in content reads back as `\n` (the write guard
+    // refuses such a model); a lone `\r` survives (above).
+    let crlf = file("h.py", FileRole::Hidden, "y\r\nz\n");
+    let body = file_fence(&crlf).unwrap() + "\n";
+    let v = parsed_with(LeetcodeType::Package, &format!("\n## Files\n\n{body}"));
+    assert_eq!(field(&v, "files")[0]["content"], "y\nz\n");
 }
 
 #[test]

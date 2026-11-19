@@ -176,7 +176,8 @@ fn conformance_cases_agree_on_section_fields() {
             if path.extension().and_then(|x| x.to_str()) != Some("md") {
                 continue;
             }
-            let src = crate::parse::decode(&std::fs::read(&path).unwrap());
+            // the extractors see what `parse` hands them: CRLF already normalised (F1)
+            let src = crate::parse::decode(&std::fs::read(&path).unwrap()).replace("\r\n", "\n");
             let want: serde_json::Value = serde_json::from_str(
                 &std::fs::read_to_string(path.with_extension("expected.json")).unwrap(),
             )

@@ -1986,6 +1986,15 @@ expected = "leetcode/golden/lc-golden-crlf.expected.json"
 origin = "ts@84c437d"
 
 [[cases]]
+id = "lc-golden-crlf-multiline"
+kind = "leetcode"
+group = "golden"
+input = "leetcode/golden/lc-golden-crlf-multiline.md"
+expected = "leetcode/golden/lc-golden-crlf-multiline.expected.json"
+origin = "rust"
+deviates_from_ts = "W8 F1 (MAC-31): CRLF is normalised to LF at the parse entry, so multi-line strings (code, description) carry no \\r; TS keeps the \\r. Input = lc-golden-function-full with CRLF endings, expected = its LF expected"
+
+[[cases]]
 id = "lc-golden-empty-file"
 kind = "leetcode"
 group = "golden"

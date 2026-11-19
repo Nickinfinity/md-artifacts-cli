@@ -39,8 +39,8 @@ pub use shared::{MAX_PARAM_CHARS, resolve_lang_id, truncate_param};
 pub use skeleton::{SkeletonInput, skeleton, validate_tag, validate_title};
 
 /// Parse an exercise file (TS `parseLeetCode`). Never fails: malformed input degrades to the spec
-/// default plus a warning (D-24). Takes decoded text. The project grammar runs only for the
-/// multi-file shapes, as in TS.
+/// default plus a warning (D-24). Takes decoded text; `\r\n` is normalised to `\n` here, once, so
+/// the model is EOL-independent. The project grammar runs only for the multi-file shapes, as in TS.
 ///
 /// # Examples
 ///
@@ -52,14 +52,19 @@ pub use skeleton::{SkeletonInput, skeleton, validate_tag, validate_title};
 /// assert!(e.files.is_some() && e.warnings.is_empty());
 /// ```
 pub fn parse(src: &str) -> LeetCodeExercise {
+    // One EOL rule for every caller: `\r\n` -> `\n` (a lone `\r` stays). Deliberate deviation from
+    // TS, which keeps `\r` inside multi-line strings.
+    let src = if src.contains("\r\n") {
+        std::borrow::Cow::Owned(src.replace("\r\n", "\n"))
+    } else {
+        std::borrow::Cow::Borrowed(src)
+    };
+    let src = &*src;
     let (fm_raw, body) = config::split_frontmatter(src);
     let blocks = config::extract_config_blocks(body);
     let config_text = format!("{}\n{}", config::without_body_set_keys(fm_raw), blocks.raw);
     let fm = frontmatter::parse_frontmatter(&config_text);
-    let lines: Vec<&str> = config_text
-        .split('\n')
-        .map(|l| l.strip_suffix('\r').unwrap_or(l))
-        .collect();
+    let lines: Vec<&str> = config_text.split('\n').collect();
     let project = kind::is_multi_file(Some(fm.leetcode_type))
         .then(|| project::parse_project_artifact(&config_text, body));
     let (warnings, libs, program) = collect_warnings(
@@ -160,5 +165,29 @@ fn split_project(project: Option<project::ProjectSections>) -> ProjectFields {
             p.unimplemented_kinds,
         ),
         None => (None, None, None, None, vec![]),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse;
+
+    const LF: &str = "---\nartifactType: LeetCode\nleetcodeType: function\ntitle: T\n---\n\nLine one.\nLine two.\n\n```yaml leetcode\nfunction: f\nparams:\n  - name: a\n    type: int\nreturns: int\n```\n\n## Tests\n```json\n[\n  { \"input\": { \"a\": 1 }, \"expected\": 2 }\n]\n```\n\n# Setup\n\n## Python\n```python\ndef f(a):\n    pass\n```\n\n# Solutions\n\n## Python\n### Mine\n```python\ndef f(a):\n    return a\n```\n";
+
+    #[test]
+    fn crlf_parses_like_lf() {
+        let crlf = LF.replace('\n', "\r\n");
+        let (a, b) = (parse(LF), parse(&crlf));
+        assert!(a.description.contains("one.\nLine") && a.tests.len() == 1);
+        assert_eq!(
+            serde_json::to_value(&a).unwrap(),
+            serde_json::to_value(&b).unwrap()
+        );
+    }
+
+    #[test]
+    fn lone_cr_is_kept() {
+        let src = LF.replace("Line one.", "Line\rone.");
+        assert!(parse(&src).description.contains("Line\rone."));
     }
 }

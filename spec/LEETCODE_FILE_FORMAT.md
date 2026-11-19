@@ -1514,6 +1514,11 @@ The JSON the engine sends for a parsed exercise. Rust owner: `mda-core/src/leetc
   `leetcode.checks.reserved_kind`, deduplicated, first-seen order).
 - **Optionals are absent** when undeclared, as TS; a required field is always present.
 
+**Line endings (W8 F1, a deliberate deviation from TS):** the parser normalises every CRLF to LF before it reads the file,
+so a CRLF exercise parses exactly like its LF twin and no string carries a `\r\n` (TS keeps the `\r` inside multi-line
+strings). A lone CR is kept. A model string holding `\r\n` therefore cannot read back, and `leetcode.write` refuses it
+(`leetcode.not_serializable`); the `record_outcome` patchers keep the file's own line endings.
+
 Maps (`TestCase.input`, object case values, `functions`, `libs`, `exposeAs`) are JSON objects **in declared order**
 (clients print them as written). Case values are JSON: `null`, booleans, integers (`5`, never `5.0`), floats, strings,
 lists, objects; NaN and infinities serialize as `null` (as `JSON.stringify`). A duplicate key in the source keeps its first
@@ -1651,7 +1656,7 @@ PROTOCOL §6 lists them. TS files: PP = `services/project-parser.helpers.ts`, PK
 
 `leetcode.read {path, layout: true}` adds `layout`: the file as ordered blocks
 `{"raw": string, "kind": BlockKind, "fields": LayoutField[]}`. Concatenating every `raw` gives the
-decoded file exactly (a BOM or CR the decoder dropped is not kept). At most 20 000 blocks
+decoded file exactly (a BOM the decoder dropped is not kept; CRs are kept in `raw`, so a replace of a CRLF file keeps CRLF in unchanged blocks while re-emitted blocks are LF). At most 20 000 blocks
 (`op.bad_request{reason: layout_too_large}`).
 
 - `kind`: `fmOpen`, `fmKey` (a key plus its indented lines), `fmClose`, `heading`, `configOpen`,

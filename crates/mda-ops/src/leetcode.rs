@@ -45,7 +45,8 @@ pub struct ReadResponse {
 }
 
 /// `leetcode.read`: parse one exercise. The path rule runs before any I/O; the file is read once
-/// (bounded), hashed as bytes, then decoded (BOM, CRLF) for the discriminator check and the parse.
+/// (bounded), hashed as bytes, then decoded (BOM) for the discriminator check and the parse, which
+/// normalises CRLF to LF (spec §10).
 ///
 /// # Examples
 ///
