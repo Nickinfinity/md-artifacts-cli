@@ -790,7 +790,11 @@ layout at all). Unchanged layout blocks are re-emitted byte for byte instead (§
   always for a fence holding an HTTP case (§10.2: kept verbatim).
 - **Values:** bare when they read back unchanged, else double-quoted (config: read by `unquote_pair`;
   test cases: YAML double-quoted with `\\ \" \n \t \r` escapes). A value no form can carry is refused.
-- **Sections:** in §3 order; filled in by the W7 emitter tasks (this list is the contract they meet).
+- **Sections:** the description prose, then the `yaml leetcode` fences, then, each only when it has content,
+  `## Examples`, `## Tests`, `## Final Tests`, `## Files`, `# Setup`, `# Solutions` (the language items, then
+  the `solutionFiles` fences), `# Attempts`. With several `checks`, a new `## Tests` / `## Final Tests` is written
+  one `check=<name>` fence per check (§10.3); with one check or none, bare fences. A section with no content is
+  not written.
 
 ---
 
@@ -1123,6 +1127,11 @@ The comparison is **case-folded** (NFKC, then lower-cased), because APFS and NTF
 and `NODE_MODULES/react/index.js` reached the same directory on disk. Linux consequently
 over-refuses a directory genuinely named `NODE_MODULES` — the deliberate trade, since a
 guard whose safety depends on which machine graded the artifact is worse than a uniform one.
+
+**Writing a file by hand (`leetcode.write`):** `FileSpec.content` (`files` and `solutionFiles`) must be empty
+or end in `\n`: the fence closer follows the content's own final line end, so content without one is refused
+(`leetcode.not_serializable{reason: other}`), as is content holding a run of three backticks (`reason: fence`).
+`language` must be the resolved id the reader reports (`typescript`, not `ts`), `path` a valid §9.1 path.
 
 A file **no check references is ungraded scaffolding, explicitly** (the CSS tab exists
 for the solver, not the grader).
@@ -1505,7 +1514,7 @@ npm installer it replaced, which ran them all. Two consequences worth knowing:
 
 ## 10. Wire shape *(engine; W3, 2026-11-04)*
 
-The JSON the engine sends for a parsed exercise. Rust owner: `mda-core/src/leetcode/model/` (`Serialize` only, D-41);
+The JSON the engine sends for a parsed exercise, and takes back in `leetcode.write`. Rust owner: `mda-core/src/leetcode/model/`;
 `LeetCodeExercise::default()` is the one authority for every undeclared value (D-40). Field names are camelCase as TS's
 `ParsedLeetCode` (`src/types/leetcode.types.ts`), with three deviations the extension's exporter normalises (D-24):
 
@@ -1577,14 +1586,34 @@ Required = always on the wire. Undeclared value = `LeetCodeExercise::default()` 
 | `Attempt` | `language`, `at`, `duration`, `passed`, `bigO`?, `confidence`?, `code` | `confidence` free string (TS: high/medium/low, not enforced) |
 | `AttemptEntry` | `at`, `duration`, `passed`, `bigO`?, `confidence`?, `code` | - |
 | `LeetCodeSummary` | `title`, `leetcodeType`?, `difficulty`, `status`, `algorithm`?, `tags` | - |
-| `FileSpec` | `path`, `language`, `role`, `content` | `role`: `editable` `readonly` `hidden` |
+| `FileSpec` | `path`, `language`, `role`, `content` (empty or ending in `\n`, §9.1) | `role`: `editable` `readonly` `hidden` |
 | `LibSpec` | map lang -> string[] | - |
 | `PackageSpec` | `name`, `dir`, `install`, `start`, `ready`?, `exposeAs`? (map), `dependsOn`? | - |
 | `RenderStep` | tag `op`: `click{selector}` `change{selector,value}` `text{selector}` `count{selector}` `attr{selector,name}` `style{selector,property}` | - |
 
+**`language`** (`ExerciseSetup`, `LeetCodeSolution`): the `## <Lang>` heading lower-cased as written
+(`## TS` reads `"ts"`), never resolved through the §7 alias table, never mapped to a canonical id. A write emits
+`## <language>` and a fence whose info-string is the same word, so send the spelling you want in the file, in
+lower case (`"ts"` writes `## ts`; `"TS"` is refused). `FileSpec.language` is different: the fence's resolved
+id (§9.1), so send `typescript`. `Attempt.language` is validated and resolved too: send the canonical id
+(`typescript`; `ts` is refused `{attempts, field: attempts}`).
+
+**`code`** of a setup, solution or attempt must **not** end in `\n` (`"x"` is written, `"x\n"` is refused `other`, for an attempt `attempts`); a read reports
+code without its final newline. This is the opposite of `FileSpec.content` (§9.1), which must end in `\n`.
+
 ### 10.3 `ProjectCheck`
 
 Internally tagged on **`kind`** (as TS); common fields `name`, `cases`, `publicCount` sit beside the tag.
+
+**Cases are stored twice, and a write must agree with itself.** In a project exercise a check's `cases` are the
+`## Tests` fences bound to it (its first `publicCount` cases) followed by its `## Final Tests` fences. The top-level
+`tests` is every check's public cases (`cases[..publicCount]`) concatenated in check order; `finalTests` is every
+check's remaining cases (`cases[publicCount..]`) concatenated in check order. Example: checks `a` (cases `a1 a2 a3`,
+`publicCount` 2) and `b` (`b1 b2`, `publicCount` 1) give `tests = [a1 a2 b1]`, `finalTests = [a3 b2]`.
+A file the engine wrote reads back in this form; a hand-authored file may not (`tests` then holds every `## Tests` fence in file order, including unbound ones), so rebuild both sides by this rule before writing, never echo them. `leetcode.write` takes both sides and refuses a request
+whose two sides disagree with `leetcode.not_serializable{reason: fence, field: "tests"}` (or `"finalTests"`):
+send `tests`, `finalTests` and every check's `cases` + `publicCount` together, built as above. Sending cases on
+one side only is refused.
 
 | `kind` | extra fields |
 |---|---|
@@ -1652,6 +1681,27 @@ PROTOCOL §6 lists them. TS files: PP = `services/project-parser.helpers.ts`, PK
 - W05 fires only for keys in `DUPLICATE_KEY_WINNER` (CB:60): `last` for function, functions, params, returns, test, practice, tags; `first` for libs, checks, packages. `count` >= 2 fences.
 - TS gives no warning for: unknown `difficulty`/`status` values (silent default), unknown `test.type`, out-of-range `timeoutMs`, unknown practice option ids (all silent in TS; D-24 forbids adding any).
 
+#### Writing an exercise by hand
+
+`leetcode.write` request: `{path, exercise, expectedHash?}`. `path` is a virtual `LeetCode/<name>.md` path;
+`exercise` is the §10.1 object: every Required field must be sent (a missing one is `op.bad_request{reason: "missing field `functionName`"}`), optionals may be omitted and take their §10.1 undeclared value; `warnings` and `unimplementedKinds` are accepted and ignored. Response: `{path, hash}`, the hash of the bytes written.
+
+- **New file:** omit `expectedHash`. A file already at `path` is refused `file.exists{path, actual}`.
+- **Replace:** `expectedHash` is the hash the last `leetcode.read`, `leetcode.create` or `leetcode.write` of that
+  file returned. A different hash is `file.conflict`; a missing file `path.not_found`; a file that is not an
+  exercise `leetcode.not_exercise`.
+- **Refusal:** the engine re-parses what it would write and refuses, writing nothing, unless it reads back equal
+  to `exercise`: `leetcode.not_serializable{reason, field?}`. `reason` is `status`, `attempts`, `frontmatter`
+  (title, difficulty, algorithm, tags), `fence` (config, tests, files, code), `meta` or `other`; `field` is the
+  first top-level exercise key (§10.1 name) that did not read back, when known. Typical causes: the §10.3 case
+  mirror, a `FileSpec.content` without a final `\n` (§9.1), a code string holding a run of three backticks, a
+  setup/solution `language` that is not a lower-case fence id (or an attempt `language` that is not canonical), setup/solution/attempt `code` ending in `\n` (an attempt: reason `attempts`), a string holding `\r\n`.
+- **`status` and `attempts`** are written exactly as the exercise holds them (`status` into frontmatter,
+  `attempts` as the `# Attempts` section); nothing is derived from the other. To record one outcome on an
+  existing file use `leetcode.record_outcome` instead.
+
+The emitted form is §3.9.
+
 ### 10.5 Layout *(engine; W7, protocol 2.6)*
 
 `leetcode.read {path, layout: true}` adds `layout`: the file as ordered blocks
@@ -1671,6 +1721,4 @@ decoded file exactly (a BOM the decoder dropped is not kept; CRs are kept in `ra
 `leetcode.write` re-emits a block's `raw` unchanged when none of its fields differ from the request
 (list fields compare per index); everything else is written in the canonical form (§3.9).
 
-A check's `cases` repeat the `## Tests` fences bound to it, and the write guard compares both: a client
-editing `tests[i]` (or `finalTests[i]`) of a project exercise mirrors the change into the bound
-`checks[].cases` (and `publicCount`), or the write is refused `leetcode.not_serializable{reason: fence}`.
+A client editing `tests[i]` (or `finalTests[i]`) of a project exercise mirrors the change as §10.3 states.

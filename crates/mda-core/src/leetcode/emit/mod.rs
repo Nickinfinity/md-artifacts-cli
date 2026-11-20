@@ -20,7 +20,7 @@ pub use quote::{attr_quoted, case_quoted, pair_quoted};
 pub use yaml::{practice_group, signature_groups};
 
 use super::{Block, LeetCodeExercise};
-use crate::error::NotSerializableReason;
+use crate::error::Refused;
 
 mod assemble;
 
@@ -37,9 +37,6 @@ mod assemble;
 /// assert!(out.starts_with("---\nartifactType: LeetCode\n"));
 /// assert!(assemble(&LeetCodeExercise::default(), None).is_err()); // no title
 /// ```
-pub fn assemble(
-    x: &LeetCodeExercise,
-    layout: Option<&[Block]>,
-) -> Result<String, NotSerializableReason> {
+pub fn assemble(x: &LeetCodeExercise, layout: Option<&[Block]>) -> Result<String, Refused> {
     assemble::run(x, layout)
 }

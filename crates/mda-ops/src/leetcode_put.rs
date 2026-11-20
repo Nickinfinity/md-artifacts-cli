@@ -18,7 +18,7 @@ use crate::artifact_rewrite::read_checked_at;
 use crate::artifact_write::{WriteResponse, too_large, written};
 use crate::error::vault_error_at;
 use crate::leetcode_create::check_new_path;
-use crate::leetcode_write::refuse;
+use crate::leetcode_write::refuse_at;
 use crate::write_file::exists_actual;
 use crate::{Ctx, OpError, error};
 
@@ -111,8 +111,8 @@ pub fn write(ctx: &Ctx, req: WriteRequest) -> Result<WriteResponse, OpError> {
             (assemble(&req.exercise, Some(&l)), Some(h.clone()))
         }
     };
-    let out = out.map_err(refuse)?;
-    write_guard(&req.exercise, &out).map_err(refuse)?;
+    let out = out.map_err(refuse_at)?;
+    write_guard(&req.exercise, &out).map_err(refuse_at)?;
     too_large(&r.virt, out.len())?;
     match disk {
         Some(h) => replace(&r.place.root, rel, out.as_bytes(), &h, MAX_ARTIFACT_BYTES)

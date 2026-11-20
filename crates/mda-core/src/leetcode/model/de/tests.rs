@@ -110,3 +110,15 @@ fn test_case_deserialize_http_verbatim_and_call_strict() {
         assert!(serde_json::from_str::<TestCase>(bad).is_err(), "{bad}");
     }
 }
+
+/// JSON clients send `15.0` for 15: a whole finite float within 2^53 is the integer on input (T8.4).
+#[test]
+fn whole_float_request_value_is_the_integer() {
+    let de = |s: &str| serde_json::from_str::<CaseValue>(s).unwrap();
+    for (s, i) in [("15.0", 15), ("-3.0", -3), ("0.0", 0), ("-0.0", 0)] {
+        assert!(matches!(de(s), CaseValue::Int(n) if n == i), "{s}");
+    }
+    assert!(matches!(de("2.5"), CaseValue::Float(_)));
+    assert!(matches!(de("9007199254740994.0"), CaseValue::Float(_)));
+    assert!(matches!(de("1e300"), CaseValue::Float(_)));
+}

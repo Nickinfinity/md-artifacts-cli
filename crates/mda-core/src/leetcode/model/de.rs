@@ -8,6 +8,8 @@ use std::fmt;
 use serde::de::{self, IgnoredAny, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 
+use crate::leetcode::cases::MAX_EXACT_INT;
+
 use super::{
     BuildCheck, CaseValue, CheckBase, CssAssertCheck, DomAssertCheck, FunctionCheck, HttpCheck,
     OrderedMap, ProjectCheck, TestCase,
@@ -67,7 +69,12 @@ impl<'de> Visitor<'de> for CaseVisitor {
     fn visit_u64<E: de::Error>(self, u: u64) -> Result<CaseValue, E> {
         Ok(i64::try_from(u).map_or(CaseValue::Float(u as f64), CaseValue::Int))
     }
+    // Spec §10: case values are integers (`5`, never `5.0`): JSON clients send `15.0`, so a whole
+    // float within 2^53 is the integer (`-0.0` is `0`). Request side only; the parser builds models directly.
     fn visit_f64<E: de::Error>(self, x: f64) -> Result<CaseValue, E> {
+        if x.is_finite() && x.fract() == 0.0 && x.abs() <= MAX_EXACT_INT {
+            return Ok(CaseValue::Int(x as i64));
+        }
         Ok(CaseValue::Float(x))
     }
     fn visit_str<E: de::Error>(self, s: &str) -> Result<CaseValue, E> {

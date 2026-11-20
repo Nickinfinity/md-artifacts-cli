@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use mda_core::error::NotSerializableReason;
+use mda_core::error::{NotSerializableReason, Refused};
 use mda_core::leetcode::{
     AttemptEntry, Discriminator, LeetCodeStatus, OutcomeExpect, discriminator, insert_solved_meta,
     outcome_guard, parse, patch_status, prepend_attempt, validate_language,
@@ -102,6 +102,15 @@ fn bad(reason: &str) -> OpError {
 
 pub(crate) fn refuse(r: NotSerializableReason) -> OpError {
     OpError::new(error::LEETCODE_NOT_SERIALIZABLE).with("reason", r.as_str())
+}
+
+/// As [`refuse`], plus the `field` param when the refusal names one (never an empty string).
+pub(crate) fn refuse_at(r: Refused) -> OpError {
+    let e = refuse(r.reason);
+    match r.field {
+        Some(f) if !f.is_empty() => e.with("field", f),
+        _ => e,
+    }
 }
 
 /// `leetcode.record_outcome`: set the status, optionally stamp the solved meta and prepend one

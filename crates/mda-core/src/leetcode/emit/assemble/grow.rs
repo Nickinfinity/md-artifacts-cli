@@ -1,8 +1,9 @@
 //! Growth, the attempts section, and the orphan-heading rule (Q-70, ruling 3).
 
-use super::{Act, Asm, Res};
+use super::{Act, Asm, Res, at};
+use crate::leetcode::checks::base_ref;
 use crate::leetcode::emit::{case_fence, example, file_fence, setup, solution};
-use crate::leetcode::{AttemptEntry, BlockKind as K, FileSpec, LeetCodeExercise, ProjectCheck};
+use crate::leetcode::{AttemptEntry, BlockKind as K, FileSpec, LeetCodeExercise};
 
 /// Section heading lines in canonical order (spec §3.9); growth that has no home opens its section
 /// before the first later one that exists.
@@ -30,25 +31,49 @@ fn joined(texts: Vec<String>) -> Option<String> {
     (!texts.is_empty()).then(|| texts.join("\n"))
 }
 
-/// Several checks: a bare fence binds to none of them, so a new `## Tests` section is written
-/// check by check (`check=<name>`), public cases then hidden ones, as `bind_cases` reads them.
-fn by_check(x: &LeetCodeExercise, public: bool) -> Res<Option<String>> {
+/// A check's public cases (`## Tests`) or its hidden ones (`## Final Tests`).
+pub(super) fn section(
+    c: &crate::leetcode::CheckBase,
+    public: bool,
+) -> &[crate::leetcode::TestCase] {
+    let at = c.public_count.min(c.cases.len());
+    let r = if public {
+        c.cases.get(..at)
+    } else {
+        c.cases.get(at..)
+    };
+    r.unwrap_or(&[])
+}
+
+/// The check of that name, if the exercise has one.
+pub(super) fn named<'a>(
+    x: &'a LeetCodeExercise,
+    name: &str,
+) -> Option<&'a crate::leetcode::CheckBase> {
+    x.checks
+        .iter()
+        .flatten()
+        .map(base_ref)
+        .find(|b| b.name == name)
+}
+
+/// Several checks: a bare fence binds to none of them, so a check's cases are written as
+/// `check=<name>` fences, public ones then hidden ones, as `bind_cases` reads them. A check whose
+/// old file already held cases in the section keeps its fence (`Asm::cases` re-emits it whole);
+/// only a check with none there needs a new one.
+fn by_check(x: &LeetCodeExercise, old: &LeetCodeExercise, public: bool) -> Res<Option<String>> {
     let mut out = vec![];
-    for c in x.checks.as_deref().unwrap_or(&[]) {
-        let b = match c {
-            ProjectCheck::Call(c) => &c.base,
-            ProjectCheck::Build(c) => &c.base,
-            ProjectCheck::DomAssert(c) => &c.base,
-            ProjectCheck::CssAssert(c) => &c.base,
-            ProjectCheck::Http(c) => &c.base,
-        };
-        let at = b.public_count.min(b.cases.len());
-        let cases = if public {
-            b.cases.get(..at)
-        } else {
-            b.cases.get(at..)
-        };
-        if let Some(cs) = cases.filter(|c| !c.is_empty()) {
+    let bases: Vec<_> = x.checks.iter().flatten().map(base_ref).collect();
+    let held = |b: &crate::leetcode::CheckBase| {
+        named(old, &b.name).is_some_and(|o| !section(o, public).is_empty())
+    };
+    for (i, b) in bases.iter().enumerate() {
+        // a later check's fence exists: `Asm::lead` puts this one in front of it, in order
+        if held(b) || bases.get(i + 1..).unwrap_or(&[]).iter().any(|l| held(l)) {
+            continue;
+        }
+        let cs = section(b, public);
+        if !cs.is_empty() {
             out.push(case_fence(cs, Some(&b.name))?);
         }
     }
@@ -63,28 +88,44 @@ impl Asm<'_> {
         let (x, o) = (self.x, self.old);
         let many = x.checks.as_ref().is_some_and(|c| c.len() > 1);
         let cases = |new: &[crate::leetcode::TestCase], old_len: usize, public: bool| {
-            if many && old_len == 0 {
-                return by_check(x, public);
+            if many {
+                return by_check(x, o, public);
             }
             let t = tail(new, old_len);
-            (!t.is_empty()).then(|| case_fence(t, None)).transpose()
+            (!t.is_empty())
+                .then(|| case_fence(t, None))
+                .transpose()
+                .map_err(Into::into)
         };
-        let each = |v: Vec<Result<String, _>>| v.into_iter().collect::<Result<Vec<_>, _>>();
+        let each = |k: &str, v: Vec<Result<String, _>>| {
+            v.into_iter()
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|r: crate::error::NotSerializableReason| r.at(k))
+        };
         let ex = each(
+            "examples",
             tail(&x.examples, o.examples.len())
                 .iter()
                 .map(example)
                 .collect(),
         )?;
-        let su = each(tail(&x.setups, o.setups.len()).iter().map(setup).collect())?;
+        let su = each(
+            "setups",
+            tail(&x.setups, o.setups.len()).iter().map(setup).collect(),
+        )?;
         let so = each(
+            "solutions",
             tail(&x.solutions, o.solutions.len())
                 .iter()
                 .map(solution)
                 .collect(),
         )?;
-        let fi = each(files(&x.files, &o.files).iter().map(file_fence).collect())?;
+        let fi = each(
+            "files",
+            files(&x.files, &o.files).iter().map(file_fence).collect(),
+        )?;
         let sf = each(
+            "solutionFiles",
             files(&x.solution_files, &o.solution_files)
                 .iter()
                 .map(file_fence)
@@ -95,10 +136,16 @@ impl Asm<'_> {
         };
         Ok([
             pick(vec![("examples", joined(ex))]),
-            pick(vec![("tests", cases(&x.tests, o.tests.len(), true)?)]),
+            pick(vec![(
+                "tests",
+                at(cases(&x.tests, o.tests.len(), true), "tests")?,
+            )]),
             pick(vec![(
                 "finalTests",
-                cases(&x.final_tests, o.final_tests.len(), false)?,
+                at(
+                    cases(&x.final_tests, o.final_tests.len(), false),
+                    "finalTests",
+                )?,
             )]),
             pick(vec![("files", joined(fi))]),
             pick(vec![("setups", joined(su))]),
@@ -148,7 +195,7 @@ impl Asm<'_> {
         if !self.diff.key_changed("attempts") {
             return Ok(());
         }
-        let section = self.attempts_text()?;
+        let section = at(self.attempts_text(), "attempts")?;
         let blocks = self.blocks;
         let Some(start) = self.head("# Attempts") else {
             if let Some(t) = section {
@@ -249,5 +296,126 @@ impl Asm<'_> {
         for j in doomed {
             self.set(j, Act::Drop);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::{Value, json};
+
+    use super::super::super::assemble;
+    use crate::leetcode::{LeetCodeExercise, layout, parse, write_guard};
+
+    const MULTI: &str = "---
+artifactType: LeetCode
+leetcodeType: package
+title: Case
+difficulty: easy
+status: unsolved
+tags: [leetcode]
+---
+
+```yaml leetcode
+test:
+  checks:
+    - name: a
+      kind: build
+      argv: [\"make\"]
+    - name: b
+      kind: build
+      argv: [\"make\", \"b\"]
+```
+
+## Tests
+
+```json check=a
+[{\"input\": {}, \"expected\": 1}]
+```
+
+```json check=b
+[{\"input\": {}, \"expected\": 2}]
+```
+
+## Final Tests
+
+```json check=b
+[{\"input\": {}, \"expected\": 3}]
+```
+";
+
+    /// Adds a case to check `i`, at the end of its public run or of its hidden run, and mirrors it
+    /// into the flat `tests` / `finalTests` at the position that keeps them in check order.
+    fn add(v: &mut Value, i: usize, public: bool, expected: u32) {
+        let case = json!({"input": {}, "expected": expected});
+        let cs = v["checks"].as_array().unwrap().clone();
+        fn n(c: &Value, hidden: bool) -> u64 {
+            let all = c["cases"].as_array().unwrap().len() as u64;
+            let p = c["publicCount"].as_u64().unwrap();
+            if hidden { all - p } else { p }
+        }
+        let before: u64 = cs[..i].iter().map(|c| n(c, !public)).sum();
+        let at = (before + n(&cs[i], !public)) as usize;
+        let list = if public { "tests" } else { "finalTests" };
+        v[list].as_array_mut().unwrap().insert(at, case.clone());
+        let b = &mut v["checks"][i];
+        let in_check = if public {
+            n(&cs[i], false)
+        } else {
+            n(&cs[i], false) + n(&cs[i], true)
+        } as usize;
+        b["cases"].as_array_mut().unwrap().insert(in_check, case);
+        if public {
+            b["publicCount"] = json!(n(&cs[i], false) + 1);
+        }
+    }
+
+    fn grown(edits: &[(usize, bool, u32)]) -> LeetCodeExercise {
+        let mut v: Value = serde_json::to_value(parse(MULTI)).unwrap();
+        for &(i, public, e) in edits {
+            add(&mut v, i, public, e);
+        }
+        serde_json::from_value(v).unwrap()
+    }
+
+    fn counts(out: &str) -> Vec<usize> {
+        let v = serde_json::to_value(parse(out)).unwrap();
+        (0..2)
+            .map(|i| v["checks"][i]["cases"].as_array().map_or(0, Vec::len))
+            .collect()
+    }
+
+    #[test]
+    fn new_cases_in_a_multi_check_project_bind_to_their_check() {
+        let x = parse(MULTI);
+        assert!(x.warnings.is_empty(), "{:?}", x.warnings);
+        let blocks = layout(MULTI).unwrap();
+        // (edits, cases per check afterwards)
+        type Edits = &'static [(usize, bool, u32)];
+        let table: [(Edits, [usize; 2]); 7] = [
+            (&[(1, true, 9)], [1, 3]),
+            (&[(1, false, 9)], [1, 3]),
+            (&[(0, true, 9)], [2, 2]),
+            (&[(0, false, 9)], [2, 2]),
+            (&[(0, true, 8), (1, true, 9)], [2, 3]),
+            (&[(0, false, 8), (1, false, 9), (0, true, 7)], [3, 3]),
+            (&[(0, true, 8), (0, true, 9), (1, false, 7)], [3, 3]),
+        ];
+        for (edits, want) in table {
+            let y = grown(edits);
+            let out = assemble(&y, Some(&blocks)).unwrap_or_else(|e| panic!("{edits:?}: {e:?}"));
+            assert_eq!(write_guard(&y, &out), Ok(()), "{edits:?}\n{out}");
+            assert_eq!(counts(&out), want, "{edits:?}\n{out}");
+        }
+    }
+
+    #[test]
+    fn renaming_a_check_is_refused_never_mis_bound() {
+        let blocks = layout(MULTI).unwrap();
+        let mut v: Value = serde_json::to_value(parse(MULTI)).unwrap();
+        v["checks"][1]["name"] = json!("c");
+        let y: LeetCodeExercise = serde_json::from_value(v).unwrap();
+        // the old `check=b` fences name nothing now: the guard catches the mismatch
+        let r = assemble(&y, Some(&blocks));
+        assert!(r.map_or(true, |out| write_guard(&y, &out).is_err()));
     }
 }

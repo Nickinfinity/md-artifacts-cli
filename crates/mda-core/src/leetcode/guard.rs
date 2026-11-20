@@ -2,7 +2,7 @@
 //! change is unchanged. H6.0 stub with the pinned signature; T6.3 owns this file.
 
 use super::{Attempt, AttemptEntry, LeetCodeExercise, LeetCodeStatus, resolve_lang_id};
-use crate::error::NotSerializableReason;
+use crate::error::{NotSerializableReason, Refused};
 
 type MetaOf<'a> = (&'a String, &'a Option<String>, &'a Option<String>);
 
@@ -132,7 +132,7 @@ pub fn outcome_guard(
 /// assert!(write_guard(&x, "---\ntitle: T\n---\n").is_ok());
 /// assert!(write_guard(&x, "---\ntitle: U\n---\n").is_err());
 /// ```
-pub fn write_guard(want: &LeetCodeExercise, out: &str) -> Result<(), NotSerializableReason> {
+pub fn write_guard(want: &LeetCodeExercise, out: &str) -> Result<(), Refused> {
     use serde_json::Value;
     const FM: [&str; 6] = [
         "title",
@@ -151,24 +151,27 @@ pub fn write_guard(want: &LeetCodeExercise, out: &str) -> Result<(), NotSerializ
         _ => None,
     };
     let (Some(got), Some(want)) = (strip(&crate::leetcode::parse(out)), strip(want)) else {
-        return Err(NotSerializableReason::Other);
+        return Err(NotSerializableReason::Other.into());
     };
     if got == want {
         return Ok(());
     }
     let mut keys: Vec<&String> = want.keys().chain(got.keys()).collect();
     keys.retain(|k| want.get(*k) != got.get(*k));
-    if keys.iter().any(|k| k.as_str() == "status") {
-        Err(NotSerializableReason::Status)
+    let reason = if keys.iter().any(|k| k.as_str() == "status") {
+        NotSerializableReason::Status
     } else if keys.iter().any(|k| k.as_str() == "attempts") {
-        Err(NotSerializableReason::Attempts)
+        NotSerializableReason::Attempts
     } else if keys.iter().any(|k| FM.contains(&k.as_str())) {
-        Err(NotSerializableReason::Frontmatter)
+        NotSerializableReason::Frontmatter
     } else if keys.iter().any(|k| k.as_str() != "description") {
-        Err(NotSerializableReason::Fence)
+        NotSerializableReason::Fence
     } else {
-        Err(NotSerializableReason::Other)
-    }
+        NotSerializableReason::Other
+    };
+    // First differing key in `want`'s wire order (preserve_order); keys only in `got` follow.
+    let field = keys.first().map(|k| (*k).clone());
+    Err(Refused { reason, field })
 }
 
 #[cfg(test)]
@@ -301,19 +304,41 @@ mod tests {
         let src = "---\ntitle: T\n---\n\nDesc.\n\n```yaml leetcode\nfunction: f\n```\n";
         let want = parse(src);
         let t = src.replace("title: T", "title: U");
-        assert_eq!(
-            write_guard(&want, &t),
-            Err(NotSerializableReason::Frontmatter)
-        );
+        assert_eq!(why(&want, &t), Err(NotSerializableReason::Frontmatter));
         let f = src.replace("function: f", "function: g");
-        assert_eq!(write_guard(&want, &f), Err(NotSerializableReason::Fence));
+        assert_eq!(why(&want, &f), Err(NotSerializableReason::Fence));
         let s = src.replace("---\n\nDesc", "status: solved\n---\n\nDesc");
-        assert_eq!(write_guard(&want, &s), Err(NotSerializableReason::Status));
+        assert_eq!(why(&want, &s), Err(NotSerializableReason::Status));
         let a = format!(
             "{src}\n# Attempts\n\n## python\n<!-- attempt: {{\"at\":\"a\",\"duration\":\"1s\",\"passed\":true}} -->\n```python\ny\n```\n"
         );
-        assert_eq!(write_guard(&want, &a), Err(NotSerializableReason::Attempts));
+        assert_eq!(why(&want, &a), Err(NotSerializableReason::Attempts));
         let d = src.replace("Desc.", "Other.");
-        assert_eq!(write_guard(&want, &d), Err(NotSerializableReason::Other));
+        assert_eq!(why(&want, &d), Err(NotSerializableReason::Other));
+    }
+
+    fn why(w: &LeetCodeExercise, o: &str) -> Result<(), NotSerializableReason> {
+        write_guard(w, o).map_err(|e| e.reason)
+    }
+
+    #[test]
+    fn write_guard_names_the_differing_field() {
+        use crate::leetcode::{CaseValue, OrderedMap, TestCase};
+        let src = "---\ntitle: T\n---\n\nDesc.\n\n```yaml leetcode\nfunction: f\n```\n";
+        let want = parse(src);
+        let t = src.replace("title: T", "title: U");
+        assert_eq!(
+            write_guard(&want, &t).unwrap_err().field.as_deref(),
+            Some("title")
+        );
+        let mut w2 = parse(src);
+        w2.tests.push(TestCase::Call {
+            input: OrderedMap(vec![]),
+            expected: CaseValue::Int(1),
+        });
+        assert_eq!(
+            write_guard(&w2, src).unwrap_err().field.as_deref(),
+            Some("tests")
+        );
     }
 }

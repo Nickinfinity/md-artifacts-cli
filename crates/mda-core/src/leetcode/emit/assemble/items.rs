@@ -1,10 +1,12 @@
 //! Per-block decisions for changed fields: list items (one emit per index, ruling 2), case fences
 //! (Q-82), the description, and the shrink rule (a tail item's blocks go).
 
-use super::{Act, Asm, Diff, Res};
+use super::grow::{named, section};
+use super::{Act, Asm, Diff, Res, at};
+use crate::leetcode::checks::base_ref;
 use crate::leetcode::emit::{case_fence, example, file_fence, setup, solution};
 use crate::leetcode::project::attr;
-use crate::leetcode::{Block, BlockKind as K, LayoutField, LeetCodeExercise};
+use crate::leetcode::{Block, BlockKind as K, CheckBase, LayoutField, LeetCodeExercise};
 use crate::parse::text::js_trim;
 
 /// A language-keyed item keeps its raw `## <lang>` heading while its language is unchanged
@@ -71,7 +73,7 @@ impl Asm<'_> {
             if matches!(b.kind, K::FmOpen | K::FmKey | K::FmClose) {
                 continue; // whole: `frontmatter()`
             }
-            if !b.fields.iter().any(|f| self.diff.changed(*f)) {
+            if !b.fields.iter().any(|f| self.diff.changed(*f)) && !self.bound_changed(b) {
                 continue;
             }
             match b.kind {
@@ -81,6 +83,24 @@ impl Asm<'_> {
             }
         }
         Ok(())
+    }
+
+    /// A check-bound case fence whose check's cases in that section differ, though the flat
+    /// indices it maps to did not (another check grew in front of it).
+    fn bound_changed(&self, b: &Block) -> bool {
+        let public = match b.fields.first().map(|f| Diff::key(*f).0).as_deref() {
+            Some("tests") => true,
+            Some("finalTests") => false,
+            _ => return false,
+        };
+        let info = b.raw.lines().next().and_then(|l| l.strip_prefix("```"));
+        let Some(n) = info.and_then(|i| attr(i, "check")) else {
+            return false;
+        };
+        match (named(self.x, n), named(self.old, n)) {
+            (Some(x), Some(o)) => section(x, public) != section(o, public),
+            _ => false,
+        }
     }
 
     /// Decide a changed block that is not frontmatter or a config key.
@@ -104,7 +124,7 @@ impl Asm<'_> {
             self.set(j, Act::Drop);
             return Ok(());
         }
-        let (text, headed, keep_head) = item_text(self.x, self.old, key, i)?;
+        let (text, headed, keep_head) = at(item_text(self.x, self.old, key, i), key)?;
         if key == "solutions" {
             self.unlabel(j);
         }
@@ -144,21 +164,58 @@ impl Asm<'_> {
             self.set(j, Act::Drop); // the same cases again: one fence is enough
             return Ok(());
         }
+        let info = b.raw.lines().next().and_then(|l| l.strip_prefix("```"));
+        let check = info.and_then(|i| attr(i, "check"));
+        // A check-bound fence holds its check's cases (flat indices shift when another check
+        // grows); the check's first fence of the section takes them all, later ones go.
+        let bound = check.and_then(|n| named(self.x, n));
         let list = if key == "tests" {
             &self.x.tests
         } else {
             &self.x.final_tests
         };
-        let kept = list.get(a..=z).or_else(|| list.get(a..)).unwrap_or(&[]);
-        if kept.is_empty() {
-            self.set(j, Act::Drop);
-            return Ok(());
+        let kept = match bound {
+            Some(c) => {
+                if !self.done.insert((format!("{key}@{}", c.name), 0)) {
+                    self.set(j, Act::Drop);
+                    return Ok(());
+                }
+                section(c, key == "tests")
+            }
+            None => list.get(a..=z).or_else(|| list.get(a..)).unwrap_or(&[]),
+        };
+        let mut texts = match bound {
+            Some(c) => self.lead(key, c)?,
+            None => vec![],
+        };
+        if !kept.is_empty() {
+            texts.push(case_fence(kept, check).map_err(|r| r.at(key))?);
         }
-        let info = b.raw.lines().next().and_then(|l| l.strip_prefix("```"));
-        let check = info.and_then(|i| attr(i, "check"));
-        let text = case_fence(kept, check)?;
-        self.set(j, Act::Replace(text, false));
+        if texts.is_empty() {
+            self.set(j, Act::Drop);
+        } else {
+            self.set(j, Act::Replace(texts.join("\n"), false));
+        }
         Ok(())
+    }
+
+    /// Fences of the checks before `c` that had no cases in this section of the old file: they
+    /// go in front of `c`'s fence, so the file keeps the checks' order (the flat `tests` order).
+    fn lead(&mut self, key: &str, c: &CheckBase) -> Res<Vec<String>> {
+        let public = key == "tests";
+        let mut out = vec![];
+        for d in self.x.checks.iter().flatten().map(base_ref) {
+            if d.name == c.name {
+                break;
+            }
+            let cs = section(d, public);
+            let had = named(self.old, &d.name).is_some_and(|o| !section(o, public).is_empty());
+            if had || cs.is_empty() || !self.done.insert((format!("{key}@{}", d.name), 0)) {
+                continue;
+            }
+            out.push(case_fence(cs, Some(&d.name)).map_err(|r| r.at(key))?);
+        }
+        Ok(out)
     }
 
     /// The first block carrying `description` gets the new text; later prose of it goes, blank
@@ -166,7 +223,7 @@ impl Asm<'_> {
     fn description_block(&mut self, j: usize, b: &Block) -> Res {
         self.check()?;
         if self.done.insert(("description".to_owned(), 0)) {
-            let t = super::super::description(self.x)?;
+            let t = super::super::description(self.x).map_err(|r| r.at("description"))?;
             self.set(j, Act::Replace(format!("\n{t}\n"), false));
         } else if !(b.kind == K::Prose && js_trim(&b.raw).is_empty()) {
             self.set(j, Act::Drop);
@@ -180,7 +237,7 @@ impl Asm<'_> {
         {
             return Ok(());
         }
-        let t = super::super::description(self.x)?;
+        let t = super::super::description(self.x).map_err(|r| r.at("description"))?;
         let at = self
             .blocks
             .iter()

@@ -262,6 +262,17 @@ fn string_array(raw: &str) -> Option<Vec<String>> {
         .collect()
 }
 
+/// The fields every check kind shares (the one match over the five kinds).
+pub(crate) fn base_ref(c: &ProjectCheck) -> &CheckBase {
+    match c {
+        ProjectCheck::Call(x) => &x.base,
+        ProjectCheck::Build(x) => &x.base,
+        ProjectCheck::DomAssert(x) => &x.base,
+        ProjectCheck::CssAssert(x) => &x.base,
+        ProjectCheck::Http(x) => &x.base,
+    }
+}
+
 fn base_mut(c: &mut ProjectCheck) -> &mut CheckBase {
     match c {
         ProjectCheck::Call(x) => &mut x.base,

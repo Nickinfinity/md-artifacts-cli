@@ -151,6 +151,33 @@ pub const LEETCODE_RULE_CODES: &[&str] = &[
 /// the file is left byte-for-byte unchanged. Param `reason` ([`NotSerializableReason`]).
 pub const LEETCODE_NOT_SERIALIZABLE: &str = "leetcode.not_serializable";
 
+/// A `leetcode.not_serializable` refusal that may name the top-level exercise key that differs
+/// (wire key only, never a value). Params `reason` and, when known, `field`.
+///
+/// # Examples
+///
+/// ```
+/// use mda_core::error::{NotSerializableReason, Refused};
+/// let r = Refused::from(NotSerializableReason::Other);
+/// assert_eq!(r.field, None);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Refused {
+    /// Why the write was refused.
+    pub reason: NotSerializableReason,
+    /// The top-level wire key of the exercise that differs, when the refusal knows it.
+    pub field: Option<String>,
+}
+
+impl From<NotSerializableReason> for Refused {
+    fn from(reason: NotSerializableReason) -> Self {
+        Self {
+            reason,
+            field: None,
+        }
+    }
+}
+
 /// The `reason` vocabulary of `leetcode.not_serializable` (W6 H6.0).
 ///
 /// # Examples
@@ -176,6 +203,14 @@ pub enum NotSerializableReason {
 }
 
 impl NotSerializableReason {
+    /// This reason, naming the top-level wire key `field` that caused it.
+    pub fn at(self, field: &str) -> Refused {
+        Refused {
+            reason: self,
+            field: Some(field.to_owned()),
+        }
+    }
+
     /// The wire spelling.
     pub fn as_str(self) -> &'static str {
         match self {

@@ -15,11 +15,38 @@ mod tests;
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use crate::error::NotSerializableReason as Why;
+use crate::error::{NotSerializableReason as Why, Refused};
 use crate::leetcode::{Block, BlockKind as K, LeetCodeExercise, MAX_LAYOUT_BLOCKS, parse};
 use diff::Diff;
 
-type Res<T = ()> = Result<T, Why>;
+type Res<T = ()> = Result<T, Refused>;
+
+/// Name the top-level wire key `field` on a refusal that does not already carry one.
+pub(super) fn at<T>(r: Res<T>, field: &str) -> Res<T> {
+    r.map_err(|mut e| {
+        e.field.get_or_insert_with(|| field.to_owned());
+        e
+    })
+}
+
+/// The frontmatter key a refusal comes from, when a validator names it (else the probe failed on a
+/// combination: no field).
+fn fm_field(x: &LeetCodeExercise) -> Option<&'static str> {
+    use crate::leetcode::{validate_tag, validate_title};
+    if validate_title(&x.title).is_err() {
+        Some("title")
+    } else if x
+        .algorithm
+        .as_deref()
+        .is_some_and(|a| validate_title(a).is_err())
+    {
+        Some("algorithm")
+    } else if x.tags.iter().any(|t| validate_tag(t).is_err()) {
+        Some("tags")
+    } else {
+        None
+    }
+}
 
 /// Layout text this big is refused before it is parsed (the op caps lower; this is the backstop).
 const MAX_RAW_BYTES: usize = 16 * 1024 * 1024;
@@ -60,7 +87,7 @@ impl Asm<'_> {
     /// Refuse as soon as the emitted text is over budget.
     pub fn check(&self) -> Res {
         if self.used > self.cap {
-            return Err(Why::Other);
+            return Err(Why::Other.into());
         }
         Ok(())
     }
@@ -91,7 +118,10 @@ impl Asm<'_> {
         if !(self.fresh || self.diff.fm()) {
             return Ok(());
         }
-        let canon = super::frontmatter(self.x)?;
+        let canon = super::frontmatter(self.x).map_err(|r| match fm_field(self.x) {
+            Some(f) => r.at(f),
+            None => r.into(),
+        })?;
         // Keys the model does not carry (`aliases`, `created`, Dataview fields) are the author's:
         // they stay, raw, after the canonical keys.
         let mut text = canon.strip_suffix("---\n").unwrap_or(&canon).to_owned();
@@ -135,7 +165,7 @@ impl Asm<'_> {
         }
         out.push_str(self.ins.get(&self.blocks.len()).map_or("", String::as_str));
         if out.len() > self.cap {
-            return Err(Why::Other);
+            return Err(Why::Other.into());
         }
         Ok(out)
     }
@@ -147,7 +177,7 @@ pub(super) fn run(x: &LeetCodeExercise, layout: Option<&[Block]>) -> Res<String>
         .iter()
         .fold(0usize, |n, b| n.saturating_add(b.raw.len()));
     if blocks.len() > MAX_LAYOUT_BLOCKS || raw_len > MAX_RAW_BYTES {
-        return Err(Why::Other);
+        return Err(Why::Other.into());
     }
     let raw: String = blocks.iter().map(|b| b.raw.as_str()).collect();
     let old = parse(&raw);
