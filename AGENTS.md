@@ -3,6 +3,13 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
+> **Status (2026-11-25): W8 of plan `type-locations-leetcode` done (MAC-31) — agent client trials**: cold `claude -p` sonnet
+> clients, given only the format spec, PROTOCOL and `--help`, recreate real exercises through `mda`; first run 81/118, after one
+> fix loop the minimum final set (all 22 project exercises, function regression, README probe, 11 variations, 3 other-leg) is
+> 40/40 at pass@2. Fixes: CRLF normalised at `leetcode::parse` (F1), `leetcode.not_serializable{reason, field?}`, whole-number
+> floats in request cases are integers (`model/de.rs`), new cases in multi-check layout writes bind to their check
+> (`emit/assemble/grow.rs`, `checks::base_ref`), spec §10.3 mirror rule + §10.4 "Writing an exercise by hand"; harness
+> `docs/conformance-gen/leetcode/agent_trials/` (local-only); protocol 2.6, engine 0.16.0, tag pending.
 > **Status (2026-11-12): W7 of plan `type-locations-leetcode` landed (MAC-30) — real-vault round trip** — `leetcode.write`
 > (`mda-ops/src/leetcode_put.rs`: create or hash-checked replace, re-parse guard `write_guard`), the opt-in layout carrier
 > (`leetcode.read {layout}`, `leetcode/layout/`, spec §10.5), canonical emitters + assembler (`leetcode/emit/`, spec §3.9;
