@@ -1,0 +1,48 @@
+{
+  "title": "Case",
+  "leetcodeType": "package",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {
+    "javascript": [
+      "lodash",
+      "@scope/pkg@1.2.3"
+    ],
+    "java": [
+      "com.google.guava:guava:33.0.0-jre"
+    ],
+    "rust": [
+      "serde@1.0"
+    ]
+  },
+  "solutionFiles": [],
+  "checks": [],
+  "warnings": [],
+  "unimplementedKinds": []
+}

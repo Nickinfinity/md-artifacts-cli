@@ -1,0 +1,4 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/t.md", title = "T", leetcodeType = "function", difficulty = "Easy" }
+expect_error = "op.bad_request"
+expect_files = { "LeetCode/t.md" = false }

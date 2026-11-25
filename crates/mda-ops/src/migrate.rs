@@ -172,7 +172,7 @@ impl From<Skip> for OpError {
     }
 }
 
-/// Plan core (M-7): walk the six type dirs, run `make` on each file's bytes, collect changes and
+/// Plan core (M-7): walk every type dir, run `make` on each file's bytes, collect changes and
 /// skips in walk order. Writes nothing.
 fn plan_all<C>(
     ctx: &Ctx,

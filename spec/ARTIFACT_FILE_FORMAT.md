@@ -300,6 +300,7 @@ registry (`registry.rs`) is the single source for these properties.
 | `AIAgentsConfig` | `AIAgentsConf/` | optional | flags, code fence, or bare body | yes (authoring) / one region to write | **yes** | §5.2. May be an index (§8) |
 | `Variables` | `Variables/` | n/a | the vks fence | yes (sub-sets) | no | §3, §6 |
 | `AIPrompt` | `AIPrompts/` | always `markdown` | **flags** | yes (named regions) | no | §5.3 |
+| `LeetCode` | `LeetCode/` | n/a | its own format | n/a | no | Exercises: `spec/LEETCODE_FILE_FORMAT.md` (registry `format: leetcode`, disabled by default). Generic content ops answer `artifact.unsupported_type`; tree, rename (without a model), delete and `naming.check` accept it |
 
 **Whole-file types** produce a file in a workspace folder instead of text for insertion. Only these
 two types may be indexes. The engine performs that write (decision E-1), contained to a root the client
@@ -866,8 +867,8 @@ One migration: a **plan** op that writes nothing and an **apply** op that rewrit
 `migrate.frontmatter.plan|apply` (CLI `mda migrate frontmatter plan|apply`). Never automatic. (The vks
 migration, `migrate.vks.plan|apply`, was removed at W7e with the dialect it converted, §9.6.) Rules:
 
-- **Scope:** the six type directories (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`,
-  `AIPrompts/`, `Variables/`), walked once with one shared budget (depth 32, 10 000 entries, 64 MiB
+- **Scope:** every type's directory (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`,
+  `AIPrompts/`, `Variables/`, `LeetCode/`; each at its location, §15), walked once with one shared budget (depth 32, 10 000 entries, 64 MiB
   read; past it → `walk.limit{limit, max}`). Symlinked directories are **never descended** (deviation
   from the extension, which descends contained ones); a symlinked `.md` file inside the vault is read
   and written through (as `artifact.update`). `.obsidian/`, `.mda/`, `.git/`, `.trash/` are out of
@@ -888,10 +889,16 @@ migration, `migrate.vks.plan|apply`, was removed at W7e with the dialect it conv
 
 Inside the first frontmatter block, when no `artifactType:` key exists, the first `type:` line whose
 trimmed value is a legacy name (the registry type name in lowercase, plus `agent` → `AIAgentsConfig`;
-`AIPrompt` has none) is rewritten to `artifactType: <TypeName>`, keeping its line ending. Unknown
+`AIPrompt` and `LeetCode` have none) is rewritten to `artifactType: <TypeName>`, keeping its line ending. Unknown
 values are left silently. Skipped with a code: a blank line before the frontmatter
 (`migrate.leading_blank`), a quoted value (`migrate.quoted_type{value}`). Every other byte — `index:`,
 `paths:`, unknown keys, block-list `tags:`/`paths:` (§1.1; not normalised) — is preserved.
+
+**LeetCode discriminator** (since 2.6, D-37): when the frontmatter has exactly one `artifactType:` line and its trimmed
+value is exactly `leetcode`, that line becomes `artifactType: LeetCode`. A quoted `"leetcode"` / `'leetcode'` is skipped
+(`migrate.quoted_type{value}`); `LeetCode` (done), case variants (`LEETCODE`, `Leetcode`), a trailing comment and two
+`artifactType` lines are left silently. With an `artifactType:` line present the `type:` rule above never runs. The rule is
+**path-blind** (D-38): any file in the walk with exactly that value is rewritten, wherever its type directory.
 
 ### 11.2 *(removed — W7e)*
 

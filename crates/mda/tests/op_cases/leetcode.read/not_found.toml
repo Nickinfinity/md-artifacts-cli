@@ -1,0 +1,4 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/missing.md" }
+expect_error = "path.not_found"
+expect_error_params = { path = "LeetCode/missing.md" }

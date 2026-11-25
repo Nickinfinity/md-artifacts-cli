@@ -1,0 +1,5 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/new.md", model = { artifactType = "LeetCode", title = "Two Sum", blocks = [{ code = "x" }] } }
+expect_error = "artifact.unsupported_type"
+expect_error_params = { type = "LeetCode" }
+expect_files = { "LeetCode/new.md" = false }

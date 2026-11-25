@@ -7,4 +7,5 @@ expect = [
   { type = "Template", dir = "Templates", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "Templates" } },
   { type = "Variables", dir = "Variables", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "Variables" } },
   { type = "AIPrompt", dir = "AIPrompts", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "AIPrompts" } },
+  { type = "LeetCode", dir = "LeetCode", format = "leetcode", enabled = false, dirExists = false, location = { vault = "$VAULT", dir = "LeetCode" } },
 ]

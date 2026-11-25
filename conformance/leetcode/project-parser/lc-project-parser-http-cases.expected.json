@@ -1,0 +1,132 @@
+{
+  "title": "Case",
+  "leetcodeType": "package",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/sum?a=2&b=3"
+      },
+      "expect": {
+        "status": 200,
+        "body": {
+          "sum": 5
+        }
+      }
+    },
+    {
+      "expect": {
+        "status": 404
+      },
+      "request": {
+        "method": "GET",
+        "path": "/nope"
+      },
+      "note": "key order kept"
+    },
+    {
+      "input": {},
+      "expected": 1
+    }
+  ],
+  "finalTests": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/sum?a=-5&b=-5"
+      },
+      "expect": {
+        "status": 200,
+        "body": {
+          "sum": -10
+        }
+      }
+    }
+  ],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {},
+  "solutionFiles": [],
+  "checks": [
+    {
+      "name": "sum endpoint",
+      "kind": "http",
+      "package": "api",
+      "cases": [
+        {
+          "request": {
+            "method": "GET",
+            "path": "/sum?a=2&b=3"
+          },
+          "expect": {
+            "status": 200,
+            "body": {
+              "sum": 5
+            }
+          }
+        },
+        {
+          "expect": {
+            "status": 404
+          },
+          "request": {
+            "method": "GET",
+            "path": "/nope"
+          },
+          "note": "key order kept"
+        },
+        {
+          "request": {
+            "method": "GET",
+            "path": "/sum?a=-5&b=-5"
+          },
+          "expect": {
+            "status": 200,
+            "body": {
+              "sum": -10
+            }
+          }
+        }
+      ],
+      "publicCount": 2
+    },
+    {
+      "name": "page",
+      "kind": "dom-assert",
+      "file": "index.html",
+      "cases": [
+        {
+          "input": {},
+          "expected": 1
+        }
+      ],
+      "publicCount": 1
+    }
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

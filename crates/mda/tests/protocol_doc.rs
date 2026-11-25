@@ -11,7 +11,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use mda_ops::error::{ALL_CODES, RENDER_WARNING_CODES};
+use mda_ops::error::{ALL_CODES, LEETCODE_WARNING_CODES, RENDER_WARNING_CODES};
 
 type Params = BTreeMap<String, (BTreeSet<String>, BTreeSet<String>)>;
 
@@ -218,7 +218,13 @@ fn codes_match_all_codes() {
 #[test]
 fn warnings_match() {
     let md = doc();
-    let real = strings(RENDER_WARNING_CODES);
+    // One `## 6.` table for every warning code: render and LeetCode parse warnings (D-36).
+    let union: Vec<&str> = RENDER_WARNING_CODES
+        .iter()
+        .chain(LEETCODE_WARNING_CODES)
+        .copied()
+        .collect();
+    let real = strings(&union);
     assert_eq!(
         diff(&row_names(&sec(&md, "## 6. Warning codes")), &real),
         Vec::<String>::new()

@@ -6,7 +6,7 @@ use std::path::Path;
 use mda_core::model::ParsedArtifact;
 use mda_core::naming::{NameError, validate_dir_segment};
 use mda_core::parse::{decode, parse_from_content};
-use mda_core::registry::{ArtifactType, type_for_dir};
+use mda_core::registry::{ArtifactType, Format, type_for_dir};
 use mda_vault::{
     DirState, Root, VaultError, contain, content_hash, dir_state, list_dir, read_bounded,
 };
@@ -90,7 +90,7 @@ pub struct TreeResponse {
 ///
 /// ```
 /// let f = mda_ops::artifact::TreeFile { path: "Snippets/a.md".into(), name: "a".into(),
-///     title: None, description: None, tags: None, error: None };
+///     title: None, description: None, tags: None, leetcode: None, error: None };
 /// assert_eq!(serde_json::to_string(&f).unwrap(), r#"{"path":"Snippets/a.md","name":"a"}"#);
 /// ```
 #[derive(Debug, PartialEq, Eq, serde::Serialize)]
@@ -103,8 +103,33 @@ pub struct TreeFile {
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<String>>,
+    /// LeetCode rows only (D-25): the picker fields, from the frontmatter-only `summary`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub leetcode: Option<LeetCodeTree>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<TreeError>,
+}
+
+/// The LeetCode fields of a tree row.
+///
+/// # Examples
+///
+/// ```
+/// use mda_ops::artifact::LeetCodeTree;
+/// use mda_core::leetcode::{LeetCodeDifficulty, LeetCodeStatus};
+/// let t = LeetCodeTree { leetcode_type: None, difficulty: LeetCodeDifficulty::Easy,
+///     status: LeetCodeStatus::Unsolved, algorithm: None };
+/// assert_eq!(serde_json::to_string(&t).unwrap(), r#"{"difficulty":"easy","status":"unsolved"}"#);
+/// ```
+#[derive(Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LeetCodeTree {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub leetcode_type: Option<mda_core::leetcode::LeetcodeType>,
+    pub difficulty: mda_core::leetcode::LeetCodeDifficulty,
+    pub status: mda_core::leetcode::LeetCodeStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub algorithm: Option<String>,
 }
 
 /// Why one listed file could not be read.
@@ -189,6 +214,36 @@ pub(crate) fn artifact_path(p: &str) -> Result<ArtifactType, OpError> {
     }
 }
 
+/// The generic ops parse the artifact format; a type in another format (LeetCode) is refused by
+/// type, pure, before any I/O. Delete, verbatim rename, tree and `naming.check` skip this.
+pub(crate) fn generic_type(t: ArtifactType) -> Result<ArtifactType, OpError> {
+    if t.info().format == Format::Artifact {
+        Ok(t)
+    } else {
+        Err(OpError::new(error::ARTIFACT_UNSUPPORTED_TYPE).with("type", t.as_str()))
+    }
+}
+
+/// `artifact_path` then `generic_type`: the path rule first, so a bad path stays `bad_path`.
+pub(crate) fn generic_path(p: &str) -> Result<ArtifactType, OpError> {
+    generic_type(artifact_path(p)?)
+}
+
+/// The `leetcode.*` path rule (before any I/O): `artifact_path`, then the type's format must be
+/// LeetCode, else `artifact.bad_path` (the inverse of `generic_path`).
+pub(crate) fn leetcode_path(p: &str) -> Result<ArtifactType, OpError> {
+    match artifact_path(p)? {
+        t if t.info().format == Format::LeetCode => Ok(t),
+        _ => Err(bad_path(p)),
+    }
+}
+
+/// `locate` for the generic ops: refuses non-artifact-format types before `locate`'s I/O.
+pub(crate) fn locate_generic(ctx: &Ctx, virt: &str) -> Result<Resolved, OpError> {
+    generic_path(virt)?;
+    locate(ctx, virt)
+}
+
 /// D-5 + W1 review (b): the artifact path rule, then the virtual → physical mapping, then at a
 /// root location the canonical path may hold no `.`-component (a symlink into `.obsidian`).
 pub(crate) fn locate(ctx: &Ctx, virt: &str) -> Result<Resolved, OpError> {
@@ -215,16 +270,18 @@ pub(crate) fn no_dot_below_root(place: &Place, rel: &str, virt: &str) -> Result<
 /// Read and parse one artifact on a resolved location: reads the physical `rel`, parses (types)
 /// and names errors by the virtual path.
 pub(crate) fn load_at(r: &Resolved) -> Result<ReadResponse, OpError> {
-    load_in(&r.place.root, &r.rel, &r.virt)
-}
-
-fn load_in(root: &Root, rel: &str, virt: &str) -> Result<ReadResponse, OpError> {
-    let bytes = read_bounded(root, Path::new(rel), MAX_ARTIFACT_BYTES)
-        .map_err(|e| vault_error_at(e, root, virt))?;
+    let bytes = read_at(r)?;
     Ok(ReadResponse {
-        artifact: parse_from_content(&decode(&bytes), virt),
+        artifact: parse_from_content(&decode(&bytes), &r.virt),
         hash: content_hash(&bytes),
     })
+}
+
+/// The raw bytes of one file on a resolved location: bounded by `MAX_ARTIFACT_BYTES` before
+/// reading, contained, errors named by the virtual path. One read serves both hash and parse.
+pub(crate) fn read_at(r: &Resolved) -> Result<Vec<u8>, OpError> {
+    read_bounded(&r.place.root, Path::new(&r.rel), MAX_ARTIFACT_BYTES)
+        .map_err(|e| vault_error_at(e, &r.place.root, &r.virt))
 }
 
 /// `artifact.read`: parse one artifact file.
@@ -237,7 +294,7 @@ fn load_in(root: &Root, rel: &str, virt: &str) -> Result<ReadResponse, OpError> 
 /// assert_eq!(artifact::read(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn read(ctx: &Ctx, req: ReadRequest) -> Result<ReadResponse, OpError> {
-    load_at(&locate(ctx, &req.path)?)
+    load_at(&locate_generic(ctx, &req.path)?)
 }
 
 /// `artifact.tree`: one level of a type directory.
@@ -302,6 +359,9 @@ fn tree_file(ty: ArtifactType, place: &Place, rel: &str, virt: &str, file: &str)
         rel: phys,
         virt: path.clone(),
     };
+    if ty.info().format == Format::LeetCode {
+        return leetcode_row(&r, path, name);
+    }
     match load_at(&r).map(|r| r.artifact) {
         Ok(a) => TreeFile {
             path,
@@ -309,15 +369,109 @@ fn tree_file(ty: ArtifactType, place: &Place, rel: &str, virt: &str, file: &str)
             title: a.frontmatter.title,
             description: a.frontmatter.description,
             tags: a.frontmatter.tags,
+            leetcode: None,
             error: None,
         },
-        Err(e) => TreeFile {
-            path,
-            name,
-            title: None,
-            description: None,
-            tags: None,
-            error: Some(TreeError { code: e.code }),
-        },
+        Err(e) => err_row(path, name, e.code),
+    }
+}
+
+fn err_row(path: String, name: String, code: &'static str) -> TreeFile {
+    TreeFile {
+        path,
+        name,
+        title: None,
+        description: None,
+        tags: None,
+        leetcode: None,
+        error: Some(TreeError { code }),
+    }
+}
+
+/// A LeetCode row: `read_at` bytes (bounded), decoded, then the frontmatter-only `summary`;
+/// a non-exercise carries only the error (no title/tags leak).
+fn leetcode_row(r: &Resolved, path: String, name: String) -> TreeFile {
+    let src = match read_at(r) {
+        Ok(b) => decode(&b),
+        Err(e) => return err_row(path, name, e.code),
+    };
+    if !mda_core::leetcode::is_exercise(&src) {
+        return err_row(path, name, error::LEETCODE_NOT_EXERCISE);
+    }
+    let s = mda_core::leetcode::summary(&src);
+    TreeFile {
+        path,
+        name,
+        title: Some(s.title).filter(|t| !t.is_empty()),
+        description: None,
+        tags: Some(s.tags).filter(|t| !t.is_empty()),
+        leetcode: Some(LeetCodeTree {
+            leetcode_type: s.leetcode_type,
+            difficulty: s.difficulty,
+            status: s.status,
+            algorithm: s.algorithm,
+        }),
+        error: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// 🔒 W5 A2 #8: a never-closing frontmatter at exactly the cap is a bounded row, one byte
+    /// more is `file.too_large`; neither row carries body text. (Generated here: fixtures are
+    /// orchestrator-owned and the op-case harness cannot synthesize files.)
+    #[test]
+    fn leetcode_tree_hostile_size_pair() {
+        let dir = std::env::temp_dir().join(format!("mda-tree-hostile-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join(".obsidian")).unwrap();
+        std::fs::create_dir_all(dir.join("LeetCode")).unwrap();
+        let head = "---\nartifactType: LeetCode\nSECRET: ";
+        let pad = |n: usize| format!("{head}{}", "x".repeat(n - head.len()));
+        std::fs::write(dir.join("LeetCode/at.md"), pad(MAX_ARTIFACT_BYTES as usize)).unwrap();
+        std::fs::write(
+            dir.join("LeetCode/over.md"),
+            pad(MAX_ARTIFACT_BYTES as usize + 1),
+        )
+        .unwrap();
+        let ctx = Ctx::new(Some(crate::Root::new(&dir).unwrap())).with_config_dir(dir.join("cfg"));
+        let req = TreeRequest {
+            artifact_type: ArtifactType::LeetCode,
+            dir: None,
+        };
+        let t = tree(&ctx, req).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        let json = serde_json::to_string(&t).unwrap();
+        assert!(!json.contains("SECRET") && !json.contains("xxxx"));
+        assert_eq!(
+            t.files[0].error.as_ref().unwrap().code,
+            "leetcode.not_exercise"
+        );
+        assert_eq!(t.files[1].error.as_ref().unwrap().code, "file.too_large");
+    }
+
+    #[test]
+    fn leetcode_path_accepts_only_the_leetcode_type() {
+        assert_eq!(
+            leetcode_path("LeetCode/ex.md").unwrap(),
+            ArtifactType::LeetCode
+        );
+        assert_eq!(
+            leetcode_path("LeetCode/a/b.md").unwrap(),
+            ArtifactType::LeetCode
+        );
+        for p in [
+            "Snippets/a.md",
+            "LeetCode/ex.txt",
+            "LeetCode/../x.md",
+            "LeetCode",
+            "x.md",
+        ] {
+            let e = leetcode_path(p).unwrap_err();
+            assert_eq!(e.code, error::ARTIFACT_BAD_PATH, "{p}");
+            assert_eq!(e.params.get("path").map(String::as_str), Some(p));
+        }
     }
 }

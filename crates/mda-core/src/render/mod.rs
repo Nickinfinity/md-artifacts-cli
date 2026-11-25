@@ -29,8 +29,9 @@ pub const MAX_LOOP_DEPTH: usize = 64;
 /// [`check_values`].
 pub type Values = BTreeMap<String, crate::vks::VksValue>;
 
-/// One render warning: a code from [`crate::error::RENDER_WARNING_CODES`] plus string params
-/// (`line`, and `name` or `path`). Same JSON shape as an error.
+/// One warning: a code from [`crate::error::RENDER_WARNING_CODES`] (params `line`, and `name` or
+/// `path`) or from [`crate::error::LEETCODE_WARNING_CODES`] (built as a `Warning { code, params }`
+/// literal: no `line`). String params; same JSON shape as an error.
 ///
 /// # Examples
 ///

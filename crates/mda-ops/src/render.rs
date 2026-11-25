@@ -6,7 +6,7 @@ use mda_core::render::{
     check_values, has_terminal_control, join_lines, select_block,
 };
 
-use crate::artifact::{MAX_ARTIFACT_BYTES, load_at, locate};
+use crate::artifact::{MAX_ARTIFACT_BYTES, load_at, locate_generic};
 use crate::{Ctx, OpError, error};
 
 /// `artifact.render` params: the artifact path, an optional block index, optional unsaved code for
@@ -67,7 +67,7 @@ pub fn render_error(e: RenderError) -> OpError {
 /// assert_eq!(render::render(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn render(ctx: &Ctx, req: RenderRequest) -> Result<Rendered, OpError> {
-    let r = locate(ctx, &req.path)?;
+    let r = locate_generic(ctx, &req.path)?;
     // Before any I/O: `render` collects every token match before its step budget applies, so an
     // oversize `code` must be refused here, and bad values must not cost a 1 MiB read.
     if let Some(c) = &req.code

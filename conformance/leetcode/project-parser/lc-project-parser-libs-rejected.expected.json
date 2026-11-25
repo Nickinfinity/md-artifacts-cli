@@ -1,0 +1,56 @@
+{
+  "title": "Case",
+  "leetcodeType": "package",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {
+    "python": [
+      "requests==2.31.0",
+      "numpy"
+    ]
+  },
+  "solutionFiles": [],
+  "checks": [],
+  "warnings": [
+    {
+      "code": "leetcode.libs.rejected",
+      "params": {
+        "ecosystem": "pip",
+        "specs": "$(rm -rf /)"
+      }
+    },
+    {
+      "code": "leetcode.libs.no_registry",
+      "params": {
+        "language": "cobol"
+      }
+    }
+  ],
+  "unimplementedKinds": []
+}

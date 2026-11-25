@@ -1,0 +1,45 @@
+{
+  "title": "Hostile",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "",
+  "functions": {},
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [
+    {
+      "input": {
+        "__proto__": {
+          "polluted": true
+        }
+      },
+      "expected": {
+        "constructor": 1
+      }
+    }
+  ],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "warnings": [],
+  "unimplementedKinds": []
+}

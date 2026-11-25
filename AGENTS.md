@@ -3,6 +3,31 @@
 Guidance for AI agents working in this repository. **Trust the tree over this file** where they
 disagree, and fix this file in the same change.
 
+> **Status (2026-11-25): W8 of plan `type-locations-leetcode` done (MAC-31) — agent client trials**: cold `claude -p` sonnet
+> clients, given only the format spec, PROTOCOL and `--help`, recreate real exercises through `mda`; first run 81/118, after one
+> fix loop the minimum final set (all 22 project exercises, function regression, README probe, 11 variations, 3 other-leg) is
+> 40/40 at pass@2. Fixes: CRLF normalised at `leetcode::parse` (F1), `leetcode.not_serializable{reason, field?}`, whole-number
+> floats in request cases are integers (`model/de.rs`), new cases in multi-check layout writes bind to their check
+> (`emit/assemble/grow.rs`, `checks::base_ref`), spec §10.3 mirror rule + §10.4 "Writing an exercise by hand"; harness
+> `docs/conformance-gen/leetcode/agent_trials/` (local-only); protocol 2.6, engine 0.16.0, tag pending.
+> **Status (2026-11-12): W7 of plan `type-locations-leetcode` landed (MAC-30) — real-vault round trip** — `leetcode.write`
+> (`mda-ops/src/leetcode_put.rs`: create or hash-checked replace, re-parse guard `write_guard`), the opt-in layout carrier
+> (`leetcode.read {layout}`, `leetcode/layout/`, spec §10.5), canonical emitters + assembler (`leetcode/emit/`, spec §3.9;
+> `emit/quote.rs` the only quoting), the model deserializes (`model/de.rs`), HTTP test cases verbatim (§10.2); on the local
+> harness `docs/conformance-gen/leetcode/roundtrip.py` all 87 real exercises recreate byte for byte, rewrite canonically and match
+> the extension's parse (CLI and serve); protocol 2.6, engine 0.16.0, tag pending.
+> **Status (2026-11-11): W4–W6 of plan `type-locations-leetcode` landed (MAC-27, MAC-28, MAC-29)** — the LeetCode parser
+> `leetcode::parse` (`mda-core/src/leetcode/`: config blocks, frontmatter, cases, project/checks, packages, program, libs, sections;
+> every `conformance/leetcode/` case green), `leetcode.read`, `artifact.tree` summaries (`TreeFile.leetcode`), `vault.validate`
+> rules (`leetcode.rule.*`), pure patchers (`leetcode/patch/`), the skeleton (`skeleton.rs`, spec §3.8), `leetcode.record_outcome`
+> (re-parse guard `guard.rs`, `leetcode.not_serializable{reason}`) and `leetcode.create`; CLI `mda leetcode read|outcome|new`;
+> protocol **2.6**, engine `0.16.0` (no tag until W7 — real-vault round trip).
+> **Status (2026-11-04): W3 of plan `type-locations-leetcode` Phase 2 landed (MAC-26)** — registry row 7 `LeetCode` (`Format`,
+> `format: "leetcode"`, disabled by default; `types.list` rows carry `format`); spec `spec/LEETCODE_FILE_FORMAT.md` (imported from the
+> extension at `84c437d`, §10 wire shape + the 36 `leetcode.*` warning codes `LEETCODE_WARNING_CODES`); wire model
+> `mda-core/src/leetcode/model/` (`Serialize` only, `OrderedMap` keeps declared key order, `Default` = undeclared values; parser stub
+> until W4); generic content ops refuse LeetCode paths/types `artifact.unsupported_type` before any I/O; `migrate.frontmatter`
+> rewrites exactly `artifactType: leetcode` → `LeetCode`; protocol 2.6 unreleased (header 2.6 since W6).
 > **Status (2026-11-04): type locations landed (MAC-24, MAC-25; plan `type-locations-leetcode` Phase 1)** — every wire path is
 > virtual `<TypeDir>/<rel>`, mapped through the type's machine-file location (`[types.<T>] vault/dir/root`; resolver
 > `mda-ops/src/location.rs`, write side `location/set.rs`, spec §15); `types.list` rows gain `location`; `types.set_location`,
@@ -148,6 +173,7 @@ md-artifacts-cli/
 │   │       ├── multi_index.rs # index links, safe_rel_path (rejection authority)
 │   │       ├── varset/        # shapes, sub-sets, search text; score.rs: scoring, order, apply (W5b)
 │   │       ├── variables.rs   # Variables-file edits: sub-sets, vars, name rule, shapes (W5)
+│   │       ├── leetcode/      # LeetCode exercises: model/ (the §10 wire types + layout carrier), the parser (W4), layout/ (block producer, W7), emit/ (canonical emitters + assembler, W7)
 │   │       ├── migrate/       # {mod, frontmatter}.rs — the pure frontmatter migration rewrite (W6, spec §11; vks removed W7e)
 │   │       └── error.rs       # vks.* code constants + VarsError
 │   ├── mda-vault/             # ALL filesystem access
@@ -185,7 +211,7 @@ md-artifacts-cli/
 │   │       └── debug.rs       # the one logger (stderr or --log-file)
 │   ├── mda-tui/               # RESERVED — created by the TUI plan. ratatui/crossterm live only here
 │   └── mda-mcp/               # RESERVED — created by the MCP plan
-├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.5) — orchestrator-owned
+├── spec/                      # ARTIFACT_FILE_FORMAT.md (on-disk format) · PROTOCOL.md (wire protocol 2.6) — orchestrator-owned
 ├── conformance/               # language-neutral parity fixtures (see below) — orchestrator-owned
 ├── scripts/vault_parity.py    # local-only RPC-vs-CLI client parity over a copy of a real vault (stdlib Python)
 ├── docs/                      # gitignored working area (plans, references) — never committed
@@ -231,7 +257,7 @@ shape. Codes are part of the protocol; renaming one is a breaking change.
 - **stdout carries protocol lines only**: one JSON object per line, flushed after each. Logs go to
   stderr. The workspace lints deny `print_stdout` and `dbg_macro`; `serve` writes through one
   writer.
-- **Authority: `spec/PROTOCOL.md`** (protocol `2.5`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`–`2.5` additive (ER-3; ER-4 + ER-6; ER-7 + ER-5; W4; type locations)). Its method, error-code and warning-code
+- **Authority: `spec/PROTOCOL.md`** (protocol `2.6`: `1.0` frozen in W7, `1.1`/`1.2` additive minors W7c/W7d, `2.0` the first major W7e, `2.1`–`2.6` additive (ER-3; ER-4 + ER-6; ER-7 + ER-5; W4; type locations; the LeetCode type)). Its method, error-code and warning-code
   tables are guarded by `crates/mda/tests/protocol_doc.rs` (set-equal to `system.ops`, `ALL_CODES`,
   `RENDER_WARNING_CODES`): a new op or code needs a doc row or the gate fails.
 - `initialize` first: the client sends its protocol version, the server answers with its own plus
@@ -263,7 +289,7 @@ the engine validates (`validate_vault`: exists, a directory, `.obsidian/` a dire
   `MDA_CONFIG_DIR`; in-process tests use `Ctx::with_config_dir`; `std::env::set_var` is forbidden.
 
 Artifact directory names are fixed (`Snippets/`, `Commands/`, `Templates/`, `AIAgentsConf/`,
-`AIPrompts/`, `Variables/`).
+`AIPrompts/`, `Variables/`, `LeetCode/` — exercises, own format `spec/LEETCODE_FILE_FORMAT.md`; generic content ops refuse it).
 
 ### Listing *(E-11)*
 
@@ -297,6 +323,8 @@ Each fact lives in exactly one place. Re-implementing one is the regression this
 | Migrations (frontmatter) | `mda-core/src/migrate/` |
 | The migration / validate scope walk | `mda-ops/src/migrate.rs` (`scope`) over `walk_md` |
 | Var-set scoring, apply, search text | `mda-core/src/varset/` |
+| LeetCode layout blocks (raw ranges, field mapping) | `mda-core/src/leetcode/layout/` (types: `leetcode/model/layout.rs`) |
+| LeetCode canonical emission, scalar quoting | `mda-core/src/leetcode/emit/` (`quote.rs` the only quoting) |
 | The render variable rule | `mda-core/src/render/` (`variable_names`) |
 | Path containment | `mda-vault/src/contain.rs` |
 | The path form that leaves the engine (no `\\?\`) | `mda-vault/src/contain.rs` (`plain_path`) |
@@ -398,7 +426,7 @@ analysis:
   (`render.contains_escape`); `--json` returns the response unchanged.
 - **MCP write tools are off unless `--allow-write`** (when MCP exists): at least `artifact.create|update|patch|delete|rename`,
   `artifact.write_file`, `index.run|create`, `vault.select|use`, `types.set_enabled|set_location`, `types.move.apply`, `vars.file.new`, `vars.meta.tags`,
-  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`.
+  `vars.subset.*`, `vars.var.*`, `varsets.save`, `migrate.frontmatter.apply`, `leetcode.record_outcome`, `leetcode.create`, `leetcode.write`.
 
 A task touching any of these surfaces is marked 🔒 in its plan; its hostile-input test asserts the
 **sink** (the file outside the vault is unchanged; stdout carried only protocol lines; nothing was

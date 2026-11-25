@@ -1,0 +1,47 @@
+{
+  "title": "Case",
+  "leetcodeType": "function",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "libs": {
+    "python": [
+      "requests"
+    ]
+  },
+  "warnings": [
+    {
+      "code": "leetcode.config.duplicate_key",
+      "params": {
+        "count": "2",
+        "key": "libs",
+        "winner": "first"
+      }
+    }
+  ],
+  "unimplementedKinds": []
+}

@@ -1,0 +1,4 @@
+vault = "vault_leetcode"
+params = { path = "Snippets/a.md" }
+expect_error = "artifact.bad_path"
+expect_error_params = { path = "Snippets/a.md" }

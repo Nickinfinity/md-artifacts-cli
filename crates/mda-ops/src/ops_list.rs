@@ -2,8 +2,9 @@
 
 use crate::registry::{OpSpec, typed};
 use crate::{
-    artifact, artifact_rename, artifact_write, index, index_create, migrate, naming, prefill,
-    render, system, types, types_move, validate, vars, varsets, vault, write_file,
+    artifact, artifact_rename, artifact_write, index, index_create, leetcode, leetcode_create,
+    leetcode_put, leetcode_write, migrate, naming, prefill, render, system, types, types_move,
+    validate, vars, varsets, vault, write_file,
 };
 
 pub(crate) static OPS: &[OpSpec] = &[
@@ -76,6 +77,26 @@ pub(crate) static OPS: &[OpSpec] = &[
         name: "index.run",
         summary: "Write every step of a template index into a workspace",
         handler: |c, v| typed(c, v, index::run),
+    },
+    OpSpec {
+        name: "leetcode.create",
+        summary: "Create a LeetCode exercise from the canonical skeleton",
+        handler: |c, v| typed(c, v, leetcode_create::create),
+    },
+    OpSpec {
+        name: "leetcode.read",
+        summary: "Parse one LeetCode exercise",
+        handler: |c, v| typed(c, v, leetcode::read),
+    },
+    OpSpec {
+        name: "leetcode.record_outcome",
+        summary: "Record a run outcome: status, solved meta, attempt",
+        handler: |c, v| typed(c, v, leetcode_write::record_outcome),
+    },
+    OpSpec {
+        name: "leetcode.write",
+        summary: "Write a LeetCode exercise from the model, re-emitting unchanged layout blocks",
+        handler: |c, v| typed(c, v, leetcode_put::write),
     },
     OpSpec {
         name: "migrate.frontmatter.apply",

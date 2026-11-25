@@ -1,0 +1,5 @@
+vault = "vault_leetcode"
+params = {}
+expect = { changes = [
+  { path = "LeetCode/legacy.md", hash = "5843232fc88002a79b515ab52fb40d8e51ac54fd7e45e3fddacc77e0ecdf6375", oldLine = "artifactType: leetcode", newLine = "artifactType: LeetCode", artifactType = "LeetCode" },
+], skipped = [] }

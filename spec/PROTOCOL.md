@@ -8,11 +8,11 @@ extension today; MCP later reuses the framing). `mda serve` implements it.
 > warning-code tables below are **guarded** by `crates/mda/tests/protocol_doc.rs`: they must stay
 > set-equal to `system.ops`, `ALL_CODES` and the render warning codes, or the gate fails.
 
-**Protocol version:** `2.5`
+**Protocol version:** `2.6`
 
 **Max line:** `16777216` bytes
 
-Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` (W7c) and `1.2` (W7d) were additive minors; `2.0` (W7e, 2026-10-20, §7.2) is the first major; `2.1` (ER-3, 2026-10-29) `2.2` (ER-4 + ER-6, 2026-10-30) `2.3` (ER-7 + ER-5, 2026-10-30) `2.4` (Unicode slugs, cross-platform names, 2026-10-30) and `2.5` (type locations, 2026-11-04) additive minors. Within a major every change is additive (§7).
+Frozen at engine-port W7 (2026-10-17) as `1.0`; `1.1` (W7c) and `1.2` (W7d) were additive minors; `2.0` (W7e, 2026-10-20, §7.2) is the first major; `2.1` (ER-3, 2026-10-29) `2.2` (ER-4 + ER-6, 2026-10-30) `2.3` (ER-7 + ER-5, 2026-10-30) `2.4` (Unicode slugs, cross-platform names, 2026-10-30) `2.5` (type locations, 2026-11-04) and `2.6` (the LeetCode type, 2026-11-11) additive minors. Within a major every change is additive (§7).
 
 ## 1. Transport
 
@@ -51,8 +51,9 @@ The first request must be `initialize`:
 ```
 
 - `params.protocol` is `"MAJOR.MINOR"`; other keys (e.g. `clientInfo`) are tolerated and ignored.
-- Result: `{"protocol":"2.5","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
-  per type `type, dir, contexts, defaultEnabled, writesFile, outputNameKey?, multiBlock, language?`.
+- Result: `{"protocol":"2.6","engine":"<semver>","types":[…]}`. `types` is the artifact-type registry:
+  per type `type, dir, contexts, defaultEnabled, writesFile, outputNameKey?, multiBlock, language?, format?` (`format`
+  is `"leetcode"` for the exercise type and absent for the generic format, since 2.6).
 - A missing or non-string `protocol` → −32000 `op.bad_request` (no `reason`).
 - The major is the text before the first `.`; a different major → −32000 `protocol.version_mismatch`
   `{client, server}`. The session stays uninitialized and the client may retry. A minor difference is
@@ -82,6 +83,10 @@ the op's cases, which double as examples (§9).
 | `index.create` | [`crates/mda/tests/op_cases/index.create/`](../crates/mda/tests/op_cases/index.create/) |
 | `index.plan` | [`crates/mda/tests/op_cases/index.plan/`](../crates/mda/tests/op_cases/index.plan/) |
 | `index.run` | [`crates/mda/tests/op_cases/index.run/`](../crates/mda/tests/op_cases/index.run/) |
+| `leetcode.create` | [`crates/mda/tests/op_cases/leetcode.create/`](../crates/mda/tests/op_cases/leetcode.create/) |
+| `leetcode.read` | [`crates/mda/tests/op_cases/leetcode.read/`](../crates/mda/tests/op_cases/leetcode.read/) |
+| `leetcode.record_outcome` | [`crates/mda/tests/op_cases/leetcode.record_outcome/`](../crates/mda/tests/op_cases/leetcode.record_outcome/) |
+| `leetcode.write` | [`crates/mda/tests/op_cases/leetcode.write/`](../crates/mda/tests/op_cases/leetcode.write/) |
 | `migrate.frontmatter.apply` | [`crates/mda/tests/op_cases/migrate.frontmatter.apply/`](../crates/mda/tests/op_cases/migrate.frontmatter.apply/) |
 | `migrate.frontmatter.plan` | [`crates/mda/tests/op_cases/migrate.frontmatter.plan/`](../crates/mda/tests/op_cases/migrate.frontmatter.plan/) |
 | `naming.check` | [`crates/mda/tests/op_cases/naming.check/`](../crates/mda/tests/op_cases/naming.check/) |
@@ -129,6 +134,10 @@ the op's cases, which double as examples (§9).
   every param value is a string.
 - Clients key on `data.code` and localise; the engine sends no prose. The one exception is
   `op.bad_request`'s `reason`: informational, unstable across engine versions, never localised.
+  Since 2.6 the LeetCode write ops send these `reason` values for refused request fields:
+  `solved_requires_status`, `code_too_large`, `bad_language`, `title`, `tag`; and `leetcode.read` /
+  `leetcode.write` send `layout_too_large` (more than 20 000 layout blocks) and `layout` (a supplied layout
+  that does not match the file, or raw text holding NUL or U+FEFF).
 
 ## 5. Error codes
 
@@ -223,6 +232,13 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 | `move.overlap` | `dir` |
 | `move.left_behind` | `count` |
 | `move.source_kept` | `path` |
+| `artifact.unsupported_type` | `type` |
+| `leetcode.not_exercise` | `path` |
+| `leetcode.rule.body_key` | `keys` |
+| `leetcode.rule.legacy_type` | — |
+| `leetcode.rule.key_order` | `key`, `before` |
+| `leetcode.rule.discriminator` | `found` |
+| `leetcode.not_serializable` | `reason`, `field?` (2.6: the top-level exercise key that does not read back, when the refusal knows it) |
 | `migrate.up_to_date` | — |
 | `migrate.leading_blank` | — |
 | `migrate.quoted_type` | `value` |
@@ -232,7 +248,8 @@ when the op holds a vault, else as the client sent them. A `vks.*` `line` is the
 
 Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `artifact.write_file`,
 `render.text` and `index.run`, never as errors. `line` is 1-based; one of `name` (`VK-x`) or `path`
-(`VK-a.b`) names the token.
+(`VK-a.b`) names the token. LeetCode parse warnings (`leetcode.*`, since 2.6) arrive in an exercise's `warnings`; their params
+are strings (lists `", "`-joined) and carry no `line` (`LEETCODE_FILE_FORMAT.md` §10.4).
 
 | Code | Params |
 |---|---|
@@ -244,6 +261,42 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 | `render.not_scalar` | `line`, `name?`, `path?` |
 | `render.join_record` | `line`, `name?`, `path?` |
 | `render.join_empty` | `line`, `name?`, `path?` |
+| `leetcode.frontmatter.ignored_key` | `key` |
+| `leetcode.type.unknown` | `declared`, `derived` |
+| `leetcode.config.indented` | `line` |
+| `leetcode.config.key_in_frontmatter` | `key` |
+| `leetcode.config.duplicate_key` | `key`, `count`, `winner` |
+| `leetcode.config.unterminated_fence` | — |
+| `leetcode.config.hidden_by_open_fence` | — |
+| `leetcode.program.no_channel` | — |
+| `leetcode.program.unknown_channel` | `channel` |
+| `leetcode.program.entry_rejected` | `entry`, `reason` |
+| `leetcode.files.unknown_role` | `role` |
+| `leetcode.libs.no_registry` | `language` |
+| `leetcode.libs.rejected` | `specs`, `ecosystem` |
+| `leetcode.checks.not_a_list` | `got` |
+| `leetcode.checks.reserved_kind` | `name`, `kind` |
+| `leetcode.checks.unknown_kind` | `name`, `kind` |
+| `leetcode.checks.http_needs_package` | `name` |
+| `leetcode.checks.build_needs_argv` | `name` |
+| `leetcode.checks.needs_file` | `name` |
+| `leetcode.checks.call_needs_function` | `name` |
+| `leetcode.checks.fence_unbound` | — |
+| `leetcode.checks.fence_unknown_check` | `name` |
+| `leetcode.config.unknown_key` | `key`, `suggestion` |
+| `leetcode.packages.not_a_list` | `got` |
+| `leetcode.packages.missing_name` | — |
+| `leetcode.packages.dir_rejected` | `name`, `dir`, `reason` |
+| `leetcode.packages.missing_field` | `name`, `field` |
+| `leetcode.packages.argv_not_array` | `name`, `field` |
+| `leetcode.packages.argv_empty` | `name`, `field` |
+| `leetcode.packages.argv_substitution` | `name`, `field`, `element` |
+| `leetcode.packages.expose_name_invalid` | `name` |
+| `leetcode.packages.expose_name_reserved` | `name` |
+| `leetcode.packages.expose_value_not_loopback` | `name`, `value` |
+| `leetcode.packages.too_many` | `count`, `max` |
+| `leetcode.packages.duplicate_name` | `name` |
+| `leetcode.packages.cycle` | `path` |
 
 ## 7. Compatibility
 
@@ -268,6 +321,7 @@ Render warnings arrive in `warnings: [{code, params}]` of `artifact.render`, `ar
 | `2.3` | 0.13.0 | One-line Command join (format spec §4.3) and the output name. **Request:** optional `join` (`and` \| `seq` \| `continuation` \| `pwsh` \| `cmd`) on `artifact.render` and `render.text`. **Response:** `joined: true` when `join` was sent (absent otherwise). **Code:** `render.unjoinable{line, reason, name?}`. **Method:** `naming.output` (the file name `artifact.write_file` would write; nothing written). Without `join` every render request and response is unchanged |
 | `2.4` | 0.14.0 | Unicode slugs and cross-platform vault names (format spec §14.1–§14.1b). **Code:** `naming.not_nfc`. **Param:** `segment?` on `naming.*` (a directory segment was refused; a stem error never carries it). **Behaviour:** default names keep Unicode letters and digits (`Café notes` → `café-notes`; were ASCII-only — ASCII titles unchanged) for `naming.check`, `vars.file.new`, `varsets.save`, `index.create`; the Windows reserved list is complete (`COM0`, `LPT0`, `COM¹²³`, `LPT¹²³`, `CONIN$`, `CONOUT$`, `CON .txt`), also for output names; new vault names refuse non-NFC text and invisible format characters (`naming.control_char`); new directory segments of name-creating writes are checked (an existing directory is exempt unless its name is reserved), so `index.create` refuses a source folder named like a device; on Windows, paths leaving the engine are plain, not `\\?\` (§11). **Request:** optional `updateLinks` on `artifact.rename`. **Response:** `updatedIndexes: [{path, hash}]` when it was sent. **Code:** `rename.link_update_failed{index, reason}` (a warning) |
 | `2.5` | 0.15.0 | Type locations (format spec §15): every path stays `<TypeDir>/<rel>`, now virtual. **Codes:** `config.location_conflict{type, other}`, `config.location_invalid{type, reason}`. **Behaviour:** a corrupt machine `config.toml` is now read, and refused with `config.invalid`, by type-scoped ops even under `--vault` (it was ignored there). **Methods:** `types.set_location`, `types.move.plan`, `types.move.apply`. **Response:** `types.list` rows gain `location: {vault, dir?, root?}`; a row whose location is broken (`config.location_conflict`, `config.location_invalid`, `artifact.bad_path`) is `{type, dir, error: {code}}` instead of failing the call. **Codes:** `move.target_exists{path}`, `move.plan_stale{path}`, `move.bad_path{path}`, `move.overlap{dir}`; warnings `move.left_behind{count}`, `move.source_kept{path}` (in `warnings` of `types.move.*`). Without location keys every other request and response is unchanged |
+| `2.6` *(unreleased)* | 0.16.0 | The `LeetCode` artifact type (`spec/LEETCODE_FILE_FORMAT.md`). **Registry:** a 7th row `LeetCode` (`format: "leetcode"`, `defaultEnabled: false`, `contexts: []`) in `initialize.types`, `vault.inspect` `dirs` and `types.list`; a client iterating the registry sees it. **Field:** `format?` on registry rows and `types.list` rows (absent = the generic format). **Codes:** `artifact.unsupported_type{type}` (generic content ops on a LeetCode path or type), `leetcode.not_exercise{path}`; the `leetcode.*` warning table (§6) comes with the parser. **Behaviour:** a non-`LeetCode/` file with `artifactType: LeetCode` now parses as type `LeetCode`; an existing `LeetCode/` folder is walked by `vault.validate`, `migrate.*` and the rename link scan even when the type is disabled; `artifact.create` with a LeetCode model answers `artifact.unsupported_type` (was `op.bad_request`). **Method:** `leetcode.read {path} → {exercise, hash}`. **Field:** `TreeFile.leetcode?` on `artifact.tree {type: LeetCode}` rows. **Codes:** `leetcode.rule.body_key{keys}`, `leetcode.rule.legacy_type`, `leetcode.rule.key_order{key, before}`, `leetcode.rule.discriminator{found}` (`vault.validate` errors). **Behaviour:** `vault.validate` checks LeetCode files with the structural rules, so it can newly exit 1 on a LeetCode vault. **Methods:** `leetcode.record_outcome {path, expectedHash, status, language, solved?: {solvedAt, duration?}, attempt?: {at, duration, passed, bigO?, confidence?, code}} → {path, hash}` (writes `status`, the solved meta and an attempt under the content hash; the engine now writes `status` on the extension's behalf) and `leetcode.create {path, title, leetcodeType, difficulty, algorithm?, tags?} → {path, hash}` (the format spec §3.8 skeleton, never clobbers). **Code:** `leetcode.not_serializable{reason}`, `reason` ∈ `status`, `meta`, `attempts`, `frontmatter`, `fence`, `other` (the write would not read back as asked; nothing written). **Reasons:** `op.bad_request` `reason` `solved_requires_status`, `code_too_large`, `bad_language`, `title`, `tag`. **Method:** `leetcode.write {path, exercise, layout?, expectedHash?} → {path, hash}` — a whole exercise from the model: no `expectedHash` creates (never clobbers, `file.exists`), with it a hash-checked replace (`file.conflict`; `path.not_found` when absent; `leetcode.not_exercise` for a non-exercise); an unchanged layout block is re-emitted byte for byte; `exercise.warnings` / `unimplementedKinds` are accepted and ignored; the re-parse guard refuses with `leetcode.not_serializable{reason, field?}` (`field`: the first top-level exercise key that does not read back, when known; W8). **Field:** `leetcode.read` request `layout?: bool`; response `layout?` — ordered blocks `{raw, kind, fields}` whose `raw` texts concatenate to the file (format spec §10.5). **Reasons:** `op.bad_request` `layout_too_large`, `layout` |
 
 ### 7.2 What 2.0 removed
 

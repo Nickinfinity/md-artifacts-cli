@@ -1,0 +1,4 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/ex.md", expectedHash = "bcf0f7f8fd6d231d52a1309b62889f5265b6dc814991ac88a25e6cd39bdc8b25" }
+expect = { path = "LeetCode/ex.md" }
+expect_files = { "LeetCode/ex.md" = false }

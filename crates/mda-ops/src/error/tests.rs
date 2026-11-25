@@ -95,7 +95,7 @@ fn naming_codes_listed() {
 
 #[test]
 fn warning_codes_are_not_error_codes() {
-    for c in RENDER_WARNING_CODES {
+    for c in RENDER_WARNING_CODES.iter().chain(LEETCODE_WARNING_CODES) {
         assert!(!ALL_CODES.contains(c), "{c}");
     }
 }
@@ -158,6 +158,27 @@ fn vars_error_maps_unchanged() {
     let e = OpError::from(v);
     assert_eq!(e.code, "vks.control_char");
     assert_eq!(e.params["var"], "VK-a");
+}
+
+#[test]
+fn leetcode_rule_codes_listed_with_exact_json() {
+    for c in LEETCODE_RULE_CODES {
+        assert!(ALL_CODES.contains(c), "{c}");
+    }
+    assert_eq!(
+        serde_json::to_value(OpError::new(LEETCODE_RULE_LEGACY_TYPE)).unwrap(),
+        serde_json::json!({"code": "leetcode.rule.legacy_type", "params": {}})
+    );
+    assert_eq!(
+        serde_json::to_value(
+            OpError::new(LEETCODE_RULE_KEY_ORDER)
+                .with("key", "leetcodeType")
+                .with("before", "title")
+        )
+        .unwrap(),
+        serde_json::json!({"code": "leetcode.rule.key_order",
+            "params": {"key": "leetcodeType", "before": "title"}})
+    );
 }
 
 #[test]
@@ -434,7 +455,7 @@ fn w6_codes_exact_json() {
         assert!(ALL_CODES.contains(&e.code), "{} not in ALL_CODES", e.code);
         assert_eq!(serde_json::to_value(e).unwrap(), want);
     }
-    assert_eq!(ALL_CODES.len(), 89);
+    assert_eq!(ALL_CODES.len(), 96);
     assert_eq!(
         ARTIFACT_UNREPRESENTABLE,
         mda_core::error::ARTIFACT_UNREPRESENTABLE
@@ -473,6 +494,11 @@ fn move_codes_exact_json() {
         (MOVE_OVERLAP, "dir", "Lib"),
         (MOVE_LEFT_BEHIND, "count", "2"),
         (MOVE_SOURCE_KEPT, "path", "Snippets/a.md"),
+        (ARTIFACT_UNSUPPORTED_TYPE, "type", "LeetCode"),
+        (LEETCODE_NOT_EXERCISE, "path", "LeetCode/note.md"),
+        (LEETCODE_RULE_BODY_KEY, "keys", "function, params"),
+        (LEETCODE_RULE_DISCRIMINATOR, "found", "Leetcode"),
+        (LEETCODE_NOT_SERIALIZABLE, "reason", "fence"),
     ];
     for (code, key, val) in cases {
         assert!(ALL_CODES.contains(&code), "{code} not in ALL_CODES");

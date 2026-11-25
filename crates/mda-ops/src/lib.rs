@@ -8,6 +8,10 @@ pub mod artifact_write;
 pub mod error;
 pub mod index;
 pub mod index_create;
+pub mod leetcode;
+pub mod leetcode_create;
+pub mod leetcode_put;
+pub mod leetcode_write;
 pub mod location;
 pub mod migrate;
 pub mod naming;
@@ -26,7 +30,7 @@ pub mod vault;
 pub mod write_file;
 
 pub use error::OpError;
-pub use mda_core::registry::{ArtifactType, TYPES};
+pub use mda_core::registry::{ArtifactType, Format, TYPES};
 pub use mda_vault::{Root, plain_path};
 pub use registry::{Ctx, OpSpec, Source, check_names, dispatch, dispatch_in, ops, typed};
 
@@ -35,6 +39,6 @@ pub use registry::{Ctx, OpSpec, Source, check_names, dispatch, dispatch_in, ops,
 /// # Examples
 ///
 /// ```
-/// assert_eq!(mda_ops::PROTOCOL, "2.5");
+/// assert_eq!(mda_ops::PROTOCOL, "2.6");
 /// ```
-pub const PROTOCOL: &str = "2.5";
+pub const PROTOCOL: &str = "2.6";

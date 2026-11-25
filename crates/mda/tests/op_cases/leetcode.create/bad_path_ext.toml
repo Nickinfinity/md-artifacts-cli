@@ -1,0 +1,4 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/x.txt", title = "T", leetcodeType = "function", difficulty = "easy" }
+expect_error = "artifact.bad_path"
+expect_files = { "LeetCode/x.txt" = false }

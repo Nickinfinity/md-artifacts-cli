@@ -1,0 +1,6 @@
+# NUL in a create layout.
+vault = "vault_leetcode"
+params = { "path" = "LeetCode/nul.md", "exercise" = { "title" = "Valid Anagram", "leetcodeType" = "function", "difficulty" = "easy", "functionName" = "isAnagram", "status" = "attempted", "params" = [{ "name" = "s", "type" = "string" }, { "name" = "t", "type" = "string" }], "returns" = "bool", "description" = "Return whether two strings are anagrams of each other.", "examples" = [], "tests" = [{ "input" = { "s" = "anagram", "t" = "nagaram" }, "expected" = true }], "finalTests" = [], "test" = { "type" = "call", "timeoutMs" = 5000 }, "setups" = [{ "language" = "python", "code" = "def isAnagram(s, t):\n    pass" }], "practice" = { "options" = ["noCompletion", "noAiAgents"], "timeLimitMinutes" = 0, "locked" = false }, "solutions" = [{ "language" = "python", "code" = "def isAnagram(s, t):\n    return sorted(s) == sorted(t)" }], "attempts" = [{ "language" = "python", "code" = "def isAnagram(s, t):\n    return s == t", "at" = "2026-11-01T09:00:00Z", "duration" = "4m10s", "passed" = false }], "tags" = ["leetcode", "strings"], "warnings" = [], "unimplementedKinds" = [] }, "layout" = [{ "raw" = "a\u0000b", "kind" = "prose", "fields" = [] }] }
+expect_error = "op.bad_request"
+expect_error_params = { "reason" = "layout" }
+expect_files = { "LeetCode/nul.md" = false }

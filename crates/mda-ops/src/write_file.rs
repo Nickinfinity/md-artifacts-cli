@@ -9,7 +9,7 @@ use mda_core::naming::output_name;
 use mda_core::render::{Values, Warning, check_values, render_artifact};
 use mda_vault::{Root, VaultError, content_hash, create_new, read_bounded, replace};
 
-use crate::artifact::{MAX_ARTIFACT_BYTES, load_at, locate, segments};
+use crate::artifact::{MAX_ARTIFACT_BYTES, load_at, locate_generic, segments};
 use crate::error::{vault_error, vault_error_at};
 use crate::render::render_error;
 use crate::{Ctx, OpError, error};
@@ -69,7 +69,7 @@ pub struct WriteFileResponse {
 /// assert_eq!(write_file::write_file(&Ctx::new(None), req).unwrap_err().code, "vault.not_selected");
 /// ```
 pub fn write_file(ctx: &Ctx, req: WriteFileRequest) -> Result<WriteFileResponse, OpError> {
-    let r = locate(ctx, &req.path)?;
+    let r = locate_generic(ctx, &req.path)?;
     if !Path::new(&req.workspace_root).is_absolute() {
         return Err(
             OpError::new(error::OP_BAD_REQUEST).with("reason", "workspaceRoot must be absolute")

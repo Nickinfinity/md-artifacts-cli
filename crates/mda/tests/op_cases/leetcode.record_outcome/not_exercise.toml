@@ -1,0 +1,5 @@
+vault = "vault_leetcode"
+params = { path = "LeetCode/legacy.md", expectedHash = "5843232fc88002a79b515ab52fb40d8e51ac54fd7e45e3fddacc77e0ecdf6375", status = "solved", language = "python" }
+expect_error = "leetcode.not_exercise"
+expect_error_params = { path = "LeetCode/legacy.md" }
+expect_files = { "LeetCode/legacy.md" = "---\nartifactType: leetcode\nleetcodeType: function\ntitle: Legacy\ndifficulty: easy\nstatus: unsolved\ntags: [leetcode]\n---\n\nAn exercise still carrying the extension's lowercase discriminator.\n" }

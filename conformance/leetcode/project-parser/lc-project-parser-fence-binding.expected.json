@@ -1,0 +1,86 @@
+{
+  "title": "Case",
+  "leetcodeType": "package",
+  "difficulty": "easy",
+  "functionName": "",
+  "status": "unsolved",
+  "params": [],
+  "returns": "",
+  "description": "",
+  "examples": [],
+  "tests": [
+    {
+      "input": {},
+      "expected": 1
+    },
+    {
+      "input": {},
+      "expected": 2
+    },
+    {
+      "input": {},
+      "expected": 3
+    }
+  ],
+  "finalTests": [],
+  "test": {
+    "type": "call",
+    "timeoutMs": 5000
+  },
+  "setups": [],
+  "practice": {
+    "options": [
+      "noCompletion",
+      "noAiAgents"
+    ],
+    "timeLimitMinutes": 0,
+    "locked": false
+  },
+  "solutions": [],
+  "attempts": [],
+  "tags": [
+    "leetcode"
+  ],
+  "files": [],
+  "libs": {},
+  "solutionFiles": [],
+  "checks": [
+    {
+      "name": "a",
+      "kind": "build",
+      "argv": [
+        "make"
+      ],
+      "cases": [],
+      "publicCount": 0
+    },
+    {
+      "name": "b",
+      "kind": "build",
+      "argv": [
+        "make",
+        "b"
+      ],
+      "cases": [
+        {
+          "input": {},
+          "expected": 3
+        }
+      ],
+      "publicCount": 1
+    }
+  ],
+  "warnings": [
+    {
+      "code": "leetcode.checks.fence_unbound",
+      "params": {}
+    },
+    {
+      "code": "leetcode.checks.fence_unknown_check",
+      "params": {
+        "name": "zzz"
+      }
+    }
+  ],
+  "unimplementedKinds": []
+}

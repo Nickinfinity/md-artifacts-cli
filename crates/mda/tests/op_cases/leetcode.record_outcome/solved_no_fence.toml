@@ -1,0 +1,6 @@
+# Q-53: no bare java fence under # Solutions.
+vault = "vault_leetcode"
+params = { path = "LeetCode/write.md", expectedHash = "0f86b84b41a297c44b72adaf423e1d477ce159f47fe10581d80908ec52255184", status = "solved", language = "java", solved = { solvedAt = "2026-11-05T10:00:00Z", duration = "1s" } }
+expect_error = "leetcode.not_serializable"
+expect_error_params = { reason = "meta" }
+expect_files = { "LeetCode/write.md" = "---\nartifactType: LeetCode\nleetcodeType: function\ntitle: Valid Anagram\ndifficulty: easy\nstatus: attempted\ntags: [leetcode, strings]\n---\n\nReturn whether two strings are anagrams of each other.\n\n```yaml leetcode\nfunction: isAnagram\nparams:\n  - name: s\n    type: string\n  - name: t\n    type: string\nreturns: bool\n```\n\n## Tests\n```json\n[\n  { \"input\": { \"s\": \"anagram\", \"t\": \"nagaram\" }, \"expected\": true }\n]\n```\n\n# Setup\n\n## Python\n```python\ndef isAnagram(s, t):\n    pass\n```\n\n# Solutions\n\n## Python\n```python\ndef isAnagram(s, t):\n    return sorted(s) == sorted(t)\n```\n\n# Attempts\n\n## Python\n<!-- attempt: { \"at\": \"2026-11-01T09:00:00Z\", \"duration\": \"4m10s\", \"passed\": false } -->\n```python\ndef isAnagram(s, t):\n    return s == t\n```\n" }

@@ -1,0 +1,14 @@
+vault = "vault_leetcode"
+params = {}
+
+[expect]
+files = 8
+errors = 2
+warnings = 2
+truncated = false
+issues = [
+  { path = "LeetCode/legacy.md", code = "migrate.pending", severity = "warning", params = {kind = "frontmatter"} },
+  { path = "LeetCode/note.md", code = "leetcode.not_exercise", severity = "warning", params = {} },
+  { path = "LeetCode/rules.md", code = "leetcode.rule.body_key", severity = "error", params = {keys = "function"} },
+  { path = "LeetCode/rules.md", code = "leetcode.rule.key_order", severity = "error", params = {key = "leetcodeType", before = "title"} },
+]
